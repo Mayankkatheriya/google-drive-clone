@@ -1,7 +1,7 @@
 import React from "react";
 import Header from "./components/header/Header";
 import Sidebar from "./components/sidebar/Sidebar";
-import Data from "./components/Data/Data";
+import Data from "./components/data/Data";
 
 function App() {
   return (
