@@ -14,14 +14,14 @@ function App() {
       children: [
         {
           path: '/',
+          element: <Login />
+        },
+        {
+          path: '/home',
           element: <Home />
         },
       ]
     },
-    {
-      path: 'login',
-      element: <Login />
-    }
   ])
 
   return (

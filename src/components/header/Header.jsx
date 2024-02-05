@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import styled from "styled-components";
-import { Avatar } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
@@ -28,7 +27,7 @@ const Header = () => {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user);
-        navigate("/");
+        navigate("/home");
       }
     });
   }, [userName]);
@@ -46,7 +45,7 @@ const Header = () => {
       try {
         await signOut(auth);
         dispatch(setSignOutState());
-        navigate("/login");
+        navigate("/");
       } catch (error) {
         console.log("Error signing out: ", error.message);
       }
