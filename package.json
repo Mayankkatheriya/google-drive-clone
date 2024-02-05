@@ -14,9 +14,11 @@
     "@emotion/styled": "^11.8.1",
     "@mui/icons-material": "^5.5.0",
     "@mui/material": "^5.5.0",
+    "@reduxjs/toolkit": "^2.1.0",
     "firebase": "^10.8.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-redux": "^9.1.0",
     "react-router-dom": "^6.22.0",
     "styled-components": "^6.1.8"
   },
