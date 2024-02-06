@@ -1,11 +1,145 @@
-import React from 'react'
+import React from "react";
+import styled from "styled-components";
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import { auth, provider } from "../../firebase";
+import { signInWithPopup } from "firebase/auth";
+import { useDispatch } from "react-redux";
+import {
+  setUserLoginDetails,
+} from "../../store/UserSlice";
 
 const Login = () => {
-  return (
-    <div>
-      Login
-    </div>
-  )
-}
+  const dispatch = useDispatch();
 
-export default Login
+  const handleAuth = async () => {
+      try {
+        const result = await signInWithPopup(auth, provider);
+        setUser(result.user);
+      } catch (error) {
+        console.error(error.message);
+      }
+  };
+
+  const setUser = (user) => {
+    dispatch(
+      setUserLoginDetails({
+        name: user.displayName,
+        email: user.email,
+        photo: user.photoURL,
+      })
+    );
+  };
+
+  return (
+    <Container>
+      <Box>
+        <img src="drive.svg" alt="" />
+        <h3>Google Drive</h3>
+        <button onClick={handleAuth}>Get Started</button>
+        <p>A cloud-based storage service that enables users to store and access files online</p>
+        <p>Developed with <FavoriteIcon /> by <a href = "https://www.linkedin.com/in/mayank-gupta-752328173/" target = "_blank"  >Mayank Gupta</a> </p>
+      </Box>
+    </Container>
+  );
+};
+
+const Container = styled.div`
+  width: 100%;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: linear-gradient(45deg, #fff1eb 0%, #ace0f9 100%);
+`;
+
+const Box = styled.div`
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 3px 3px 3px #414141, 5px 5px 5px 5px #646464;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+
+  img {
+    width: 80px;
+    margin-bottom: 0.5rem;
+  }
+  h3 {
+    margin-bottom: 1rem;
+    color: #646464;
+  }
+
+  button {
+    appearance: button;
+    width: 100%;
+    max-width: 280px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    margin-bottom: 2rem;
+    height: 55px;
+    text-align: center;
+    border: none;
+    background-size: 300% 100%;
+    border-radius: 50px;
+    moz-transition: all 0.4s ease-in-out;
+    -o-transition: all 0.4s ease-in-out;
+    -webkit-transition: all 0.4s ease-in-out;
+    transition: all 0.4s ease-in-out;
+    background-image: linear-gradient(
+      to right,
+      #25aae1,
+      #4481eb,
+      #04befe,
+      #3f86ed
+    );
+    box-shadow: 0 4px 15px 0 rgba(65, 132, 234, 0.75);
+
+    &:hover {
+      background-position: 100% 0;
+      moz-transition: all 0.4s ease-in-out;
+      -o-transition: all 0.4s ease-in-out;
+      -webkit-transition: all 0.4s ease-in-out;
+      transition: all 0.4s ease-in-out;
+    }
+    &:focus {
+      outline: none;
+    }
+    &:active {
+      border-width: 4px 0 0;
+    }
+    &:after {
+      background-clip: padding-box;
+      background-color: #1cb0f6;
+      border: solid transparent;
+      border-radius: 16px;
+      border-width: 0 0 4px;
+      bottom: -4px;
+      content: "";
+      left: 0;
+      position: absolute;
+      right: 0;
+      top: 0;
+      z-index: -1;
+    }
+  }
+  
+  p {
+    text-align: center;
+    font-weight: 600;
+    font-size: 12px;
+    color: #646464;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+
+    svg {
+      font-size: 14px;
+    }
+  }
+`;
+
+export default Login;

@@ -16,7 +16,7 @@ import {
   setSignOutState,
   setUserLoginDetails,
 } from "../../store/UserSlice";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -114,6 +114,7 @@ const Container = styled.div`
   background-color: #ffffff;
   padding: 2px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 2px 2px #cecece;
 `;
 
 const Wrapper = styled.div`

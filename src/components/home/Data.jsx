@@ -1,13 +1,15 @@
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import ListIcon from "@mui/icons-material/List";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import styled from "styled-components";
 import React, { useEffect, useState } from "react";
 import { db, auth } from "../../firebase";
 import { collection, onSnapshot, doc, deleteDoc, query, where } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import {
+  ArrowDDownIcon,
+  ListsIcon,
+  InfoIcon,
+  FileIcon,
+  ArrowDownIcon,
+} from "./SvgIcons";
 
 const Data = () => {
   const [files, setFiles] = useState([]);
@@ -78,11 +80,11 @@ const Data = () => {
       <DataHeader>
         <div className="headerLeft">
           <p>My Drive</p>
-          <ArrowDropDownIcon />
+          <ArrowDDownIcon />
         </div>
         <div className="headerRight">
-          <ListIcon />
-          <InfoOutlinedIcon />
+          <ListsIcon />
+          <InfoIcon />
         </div>
       </DataHeader>
       <div>
@@ -95,7 +97,7 @@ const Data = () => {
                   href={file.data.fileURL}
                   target="_blank"
                 >
-                  <InsertDriveFileIcon />
+                  <FileIcon />
                   <p>{file.data.filename}</p>
                 </DataFile>
               );
@@ -106,7 +108,7 @@ const Data = () => {
           <DataListRow>
             <p>
               <b>
-                <ArrowDownwardIcon /> Name
+                <ArrowDownIcon /> Name
               </b>
             </p>
             <p>
@@ -124,7 +126,7 @@ const Data = () => {
             <DataListRow key={file.id}>
               <a href={file.data.fileURL} target="_blank">
                 <p>
-                  <InsertDriveFileIcon />
+                  <FileIcon />
                   <span>{file.data.filename}</span>
                 </p>
               </a>

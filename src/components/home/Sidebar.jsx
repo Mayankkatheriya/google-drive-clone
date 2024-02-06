@@ -65,7 +65,7 @@ const Sidebar = () => {
         <ModalPopup>
           <form onSubmit={handleUpload}>
             <ModalHeading>
-              <h3>Select file you want to upload</h3>
+              <h3>{uploading ? "Uploading..." : "Select file you want to upload"}</h3>
             </ModalHeading>
             <ModalBody>
               {uploading ? (
