@@ -70,7 +70,7 @@ const Header = () => {
     <Container>
       <Wrapper>
         <LogoWrapper>
-        <Menubar />
+        {userName && ( <Menubar />) }
         <Logo>
           <img src="./google-logo.png" alt="" />
           <span>Drive</span>
