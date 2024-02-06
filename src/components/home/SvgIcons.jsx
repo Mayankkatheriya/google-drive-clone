@@ -16,6 +16,10 @@ import ListIcon from "@mui/icons-material/List";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
+import AudioFileOutlinedIcon from '@mui/icons-material/AudioFileOutlined';
+import VideoLibraryOutlinedIcon from '@mui/icons-material/VideoLibraryOutlined';
 
 export const MobileScreenShareIcon = () => <MobileScreenShareOutlinedIcon />;
 export const DevicesIcons = () => <DevicesIcon />;
@@ -34,3 +38,7 @@ export const ListsIcon = () => <ListIcon />;
 export const InfoIcon = () => <InfoOutlinedIcon />;
 export const FileIcon = () => <InsertDriveFileIcon />;
 export const ArrowDownIcon = () => <ArrowDownwardIcon />;
+export const PdfIcon = () => <PictureAsPdfIcon />;
+export const PermMediaIcon = () => <PermMediaOutlinedIcon />;
+export const AudioIcon = () => <AudioFileOutlinedIcon />;
+export const VideoIcon = () => <VideoLibraryOutlinedIcon />;

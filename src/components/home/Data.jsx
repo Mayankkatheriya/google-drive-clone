@@ -1,7 +1,14 @@
 import styled from "styled-components";
 import React, { useEffect, useState } from "react";
 import { db, auth } from "../../firebase";
-import { collection, onSnapshot, doc, deleteDoc, query, where } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  doc,
+  deleteDoc,
+  query,
+  where,
+} from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import {
   ArrowDDownIcon,
@@ -9,6 +16,10 @@ import {
   InfoIcon,
   FileIcon,
   ArrowDownIcon,
+  PdfIcon,
+  PermMediaIcon,
+  AudioIcon,
+  VideoIcon,
 } from "./SvgIcons";
 
 const Data = () => {
@@ -74,6 +85,20 @@ const Data = () => {
     }
   };
 
+  const fileIcon = (type) => {
+    return type.includes("pdf") ? (
+      <PdfIcon />
+    ) : type.includes("image") ? (
+      <PermMediaIcon />
+    ) : type.includes("video") ? (
+      <VideoIcon />
+    ) : type.includes("audio") ? (
+      <AudioIcon />
+    ) : (
+      <FileIcon />
+    );
+  };
+
   return (
     <DataContainer>
       {console.log(files)}
@@ -89,20 +114,12 @@ const Data = () => {
       </DataHeader>
       <div>
         <DataGrid>
-          {files.map((file, idx) => {
-            if (idx <= 3) {
-              return (
-                <DataFile
-                  key={file.id}
-                  href={file.data.fileURL}
-                  target="_blank"
-                >
-                  <FileIcon />
-                  <p>{file.data.filename}</p>
-                </DataFile>
-              );
-            }
-          })}
+          {files.slice(0, 4).map((file) => (
+            <DataFile key={file.id} href={file.data.fileURL} target="_blank">
+              {fileIcon(file.data.contentType)}
+              <p>{file.data.filename}</p>
+            </DataFile>
+          ))}
         </DataGrid>
         <div>
           <DataListRow>
@@ -126,7 +143,7 @@ const Data = () => {
             <DataListRow key={file.id}>
               <a href={file.data.fileURL} target="_blank">
                 <p>
-                  <FileIcon />
+                  {fileIcon(file.data.contentType)}
                   <span>{file.data.filename}</span>
                 </p>
               </a>
@@ -230,7 +247,7 @@ const DataListRow = styled.div`
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 16px;
+    font-size: 13px;
 
     button {
       background-color: #fff;

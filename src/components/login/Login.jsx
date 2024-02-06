@@ -1,23 +1,21 @@
 import React from "react";
 import styled from "styled-components";
-import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import { auth, provider } from "../../firebase";
 import { signInWithPopup } from "firebase/auth";
 import { useDispatch } from "react-redux";
-import {
-  setUserLoginDetails,
-} from "../../store/UserSlice";
+import { setUserLoginDetails } from "../../store/UserSlice";
 
 const Login = () => {
   const dispatch = useDispatch();
 
   const handleAuth = async () => {
-      try {
-        const result = await signInWithPopup(auth, provider);
-        setUser(result.user);
-      } catch (error) {
-        console.error(error.message);
-      }
+    try {
+      const result = await signInWithPopup(auth, provider);
+      setUser(result.user);
+    } catch (error) {
+      console.error(error.message);
+    }
   };
 
   const setUser = (user) => {
@@ -36,9 +34,23 @@ const Login = () => {
         <img src="drive.svg" alt="" />
         <h3>Google Drive</h3>
         <button onClick={handleAuth}>Get Started</button>
-        <p>A cloud-based storage service that enables users to store and access files online</p>
-        <p>Developed with <FavoriteIcon /> by <a href = "https://www.linkedin.com/in/mayank-gupta-752328173/" target = "_blank"  >Mayank Gupta</a> </p>
+        <p>
+          A cloud-based storage service that enables users to store and access
+          files online
+        </p>
+        <p>
+          Developed with <FavoriteIcon /> by{" "}
+          <a
+            href="https://www.linkedin.com/in/mayank-gupta-752328173/"
+            target="_blank"
+          >
+            Mayank Gupta
+          </a>{" "}
+        </p>
       </Box>
+      <ImageContainer>
+        <img src="/login.gif" alt="" />
+      </ImageContainer>
     </Container>
   );
 };
@@ -49,17 +61,20 @@ const Container = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  background-image: linear-gradient(45deg, #fff1eb 0%, #ace0f9 100%);
+  gap: 2rem;
+  padding: 1rem;
 `;
 
 const Box = styled.div`
+  flex: 1;
   width: 100%;
+  height: 100%;
   max-width: 500px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  box-shadow: 3px 3px 3px #414141, 5px 5px 5px 5px #646464;
+  /* box-shadow: 3px 3px 3px #979797, 5px 5px 5px 5px #bdbdbd; */
   padding: 1rem 2rem;
   border-radius: 10px;
 
@@ -112,22 +127,8 @@ const Box = styled.div`
     &:active {
       border-width: 4px 0 0;
     }
-    &:after {
-      background-clip: padding-box;
-      background-color: #1cb0f6;
-      border: solid transparent;
-      border-radius: 16px;
-      border-width: 0 0 4px;
-      bottom: -4px;
-      content: "";
-      left: 0;
-      position: absolute;
-      right: 0;
-      top: 0;
-      z-index: -1;
-    }
   }
-  
+
   p {
     text-align: center;
     font-weight: 600;
@@ -139,6 +140,25 @@ const Box = styled.div`
     svg {
       font-size: 14px;
     }
+  }
+  @media screen and (max-width: 850px) {
+    max-width: 100%;
+    height: calc(100vh - 80px);
+  }
+`;
+
+const ImageContainer = styled.div`
+  flex: 1;
+  min-width: 280px;
+  max-width: 800px;
+  height: 400px;
+  img {
+    width: 100%;
+    height: 100%;
+  }
+
+  @media screen and (max-width: 850px) {
+    display: none;
   }
 `;
 
