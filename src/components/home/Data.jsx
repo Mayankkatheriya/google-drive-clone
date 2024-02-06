@@ -5,24 +5,43 @@ import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import styled from "styled-components";
 import React, { useEffect, useState } from "react";
-import { db } from "../../firebase";
-import { collection, onSnapshot } from "firebase/firestore";
+import { db, auth } from "../../firebase";
+import { collection, onSnapshot, doc, deleteDoc, query, where } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 const Data = () => {
   const [files, setFiles] = useState([]);
+  const options = { timeZone: "Asia/Kolkata" };
 
   useEffect(() => {
-    const filesData = collection(db, "myfiles");
-    const unsubscribe = onSnapshot(filesData, (snapshot) => {
-      setFiles(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          data: doc.data(),
-        }))
-      );
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const filesData = collection(db, "myfiles");
+        const unsubscribeFiles = onSnapshot(
+          query(filesData, where("userId", "==", user.uid)),
+          (snapshot) => {
+            setFiles(() => {
+              const fileArr = snapshot.docs
+                .map((doc) => ({
+                  id: doc.id,
+                  data: doc.data(),
+                }))
+                .sort(
+                  (a, b) =>
+                    b.data.timestamp?.seconds - a.data.timestamp?.seconds
+                );
+              console.log(fileArr);
+              return fileArr;
+            });
+          }
+        );
+
+        // Cleanup the files subscription when the component unmounts
+        return () => unsubscribeFiles();
+      }
     });
 
-    // Cleanup the subscription when the component unmounts
+    // Cleanup the user subscription when the component unmounts
     return () => unsubscribe();
   }, []);
 
@@ -33,6 +52,24 @@ const Data = () => {
     const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this file?"
+      );
+
+      if (confirmed) {
+        // Reference to the document in Firestore
+        const docRef = doc(db, "myfiles", id);
+
+        // Delete the document
+        await deleteDoc(docRef);
+      }
+    } catch (error) {
+      console.error("Error deleting document: ", error);
+    }
   };
 
   return (
@@ -50,12 +87,20 @@ const Data = () => {
       </DataHeader>
       <div>
         <DataGrid>
-          {files.map((file) => (
-            <DataFile key={file.id} href={file.data.fileURL} target="_blank">
-              <InsertDriveFileIcon />
-              <p>{file.data.filename}</p>
-            </DataFile>
-          ))}
+          {files.map((file, idx) => {
+            if (idx <= 3) {
+              return (
+                <DataFile
+                  key={file.id}
+                  href={file.data.fileURL}
+                  target="_blank"
+                >
+                  <InsertDriveFileIcon />
+                  <p>{file.data.filename}</p>
+                </DataFile>
+              );
+            }
+          })}
         </DataGrid>
         <div>
           <DataListRow>
@@ -65,15 +110,16 @@ const Data = () => {
               </b>
             </p>
             <p>
-              <b>Owner</b>
-            </p>
-            <p>
               <b>Last Modified</b>
             </p>
             <p>
               <b>File Size</b>
             </p>
+            <p>
+              <b>Options</b>
+            </p>
           </DataListRow>
+
           {files.map((file) => (
             <DataListRow key={file.id}>
               <a href={file.data.fileURL} target="_blank">
@@ -82,11 +128,24 @@ const Data = () => {
                   <span>{file.data.filename}</span>
                 </p>
               </a>
-              <p>Owner </p>
-              <p>
-                {new Date(file.data.timestamp?.seconds * 1000).toUTCString()}
-              </p>
               <p>{changeBytes(file.data.size)}</p>
+              <p>
+                {new Date(file.data.timestamp?.seconds * 1000).toLocaleString(
+                  "en-US",
+                  options
+                )}
+              </p>
+              <p>
+                <button onClick={() => handleDelete(file.id)}>Delete</button>
+                <a
+                  href={file.data.fileURL}
+                  download={file.data.name}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Download
+                </a>
+              </p>
             </DataListRow>
           ))}
         </div>
@@ -96,7 +155,6 @@ const Data = () => {
 };
 
 const DataContainer = styled.div`
-  flex: 1 1;
   padding: 10px 0px 0px 20px;
 `;
 
@@ -116,6 +174,8 @@ const DataHeader = styled.div`
 `;
 
 const DataGrid = styled.div`
+  width: 100%;
+  overflow: hidden;
   display: flex;
   align-items: center;
   margin-top: 30px;
@@ -151,6 +211,7 @@ const DataListRow = styled.div`
   grid-template-columns: 2fr 1fr 1.5fr 1fr;
   border-bottom: 1px solid #ccc;
   padding: 10px;
+
   a {
     text-decoration: none;
     p {
@@ -163,9 +224,25 @@ const DataListRow = styled.div`
   }
   p:last-child {
     justify-content: flex-end;
+    padding-right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+
+    button {
+      background-color: #fff;
+      border: none;
+      color: red;
+    }
+
+    a {
+      color: #000;
+    }
   }
   p,
-  a {
+  a,
+  button {
     display: flex;
     align-items: center;
     justify-content: flex-start;

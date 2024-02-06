@@ -1,10 +1,12 @@
 import React, { useEffect } from "react";
 import styled from "styled-components";
-import SearchIcon from "@mui/icons-material/Search";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import AppsOutlinedIcon from "@mui/icons-material/AppsOutlined";
-import FormatAlignCenterOutlinedIcon from "@mui/icons-material/FormatAlignCenterOutlined";
+import {
+  FormatIcon,
+  SettingsIcon,
+  AppsIcon,
+  HelpIcon,
+  SearchIcons,
+} from "../home/SvgIcons";
 import { auth, provider } from "../../firebase";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { useDispatch, useSelector } from "react-redux";
@@ -76,19 +78,19 @@ const Header = () => {
           <>
             <InputContainer>
               <SearchContainer>
-                <SearchIcon />
+                <SearchIcons />
                 <input type="text" placeholder="Search in Drive" />
-                <FormatAlignCenterOutlinedIcon />
+                <FormatIcon />
               </SearchContainer>
             </InputContainer>
 
             <RightContainer>
               <LeftSection>
-                <HelpOutlineIcon />
-                <SettingsOutlinedIcon />
+                <HelpIcon />
+                <SettingsIcon />
               </LeftSection>
               <RightSection>
-                <AppsOutlinedIcon className="app" />
+                <AppsIcon className="app" />
                 <SignOut>
                   <UserImg src={userPhoto} alt={userName} />
                   <DropDown>

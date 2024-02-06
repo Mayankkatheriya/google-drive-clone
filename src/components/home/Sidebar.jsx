@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { Modal } from "@mui/material";
-import { db, storage } from "../../firebase";
+import { db, storage, auth } from "../../firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import {
@@ -13,6 +13,7 @@ import {
   DeleteOutlineIcon,
   CloudQueueIcons,
 } from "./SvgIcons"; // Adjust the path accordingly
+import Loader from "../loaders/Loader";
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -37,8 +38,10 @@ const Sidebar = () => {
 
       // Check if snapshot.totalBytes is defined, use 0 if not
       const size = snapshot.metadata.size || 0;
-      
+
+      // Associate the file with the authenticated user ID
       await addDoc(collection(db, "myfiles"), {
+        userId: auth.currentUser.uid,
         timestamp: serverTimestamp(),
         filename: file.name,
         fileURL: url,
@@ -66,7 +69,9 @@ const Sidebar = () => {
             </ModalHeading>
             <ModalBody>
               {uploading ? (
-                <UploadingPara>Uploading...</UploadingPara>
+                <UploadingPara>
+                  <Loader />
+                </UploadingPara>
               ) : (
                 <>
                   <input
@@ -140,6 +145,8 @@ const Sidebar = () => {
 const SidebarContainer = styled.div`
   padding-top: 10px;
   border-right: 1px solid lightgray;
+  /* position: sticky;
+  top: 52px; */
 `;
 const SidebarBtn = styled.div`
   button {
@@ -194,7 +201,8 @@ const SidebarOption = styled.div`
 const ModalPopup = styled.div`
   top: 50%;
   background-color: #fff;
-  width: 500px;
+  width: 100%;
+  max-width: 500px;
   margin: 0px auto;
   position: relative;
   transform: translateY(-50%);
@@ -232,13 +240,12 @@ const ModalBody = styled.div`
   }
 `;
 
-const UploadingPara = styled.p`
-  background: green;
-  color: #fff;
-  margin: 20px;
-  text-align: center;
+const UploadingPara = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   padding: 10px;
-  letter-spacing: 1px;
 `;
 
 export default Sidebar;
