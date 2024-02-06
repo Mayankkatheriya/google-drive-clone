@@ -1,32 +1,37 @@
 import React from "react";
-import { createBrowserRouter, RouterProvider, } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "./components/Layout";
 import Login from "./components/login/Login";
 import Home from "./components/home/Home";
 import { store } from "./store/Store";
-import { Provider } from 'react-redux';
+import { Provider } from "react-redux";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const router = createBrowserRouter([
     {
-      path: '/',
+      path: "/",
       element: <Layout />,
       children: [
         {
-          path: '/',
-          element: <Login />
+          path: "/",
+          element: <Login />,
         },
         {
-          path: '/home',
-          element: <Home />
+          path: "/home",
+          element: (
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          ),
         },
-      ]
+      ],
     },
-  ])
+  ]);
 
   return (
-    <Provider store = {store}>
-      <RouterProvider router = {router} />
+    <Provider store={store}>
+      <RouterProvider router={router} />
     </Provider>
   );
 }
