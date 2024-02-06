@@ -2,15 +2,22 @@ import React from "react";
 import Sidebar from "./Sidebar";
 import Data from "./Data";
 import Split from "react-split";
+import styled from "styled-components";
 
 const Home = () => {
   return (
-      <Split minSize={200} sizes={[15, 85]} direction="horizontal" className="split"
-      >
+      <HomeContainer>
         <Sidebar />
         <Data />
-      </Split>
+      </HomeContainer>
   );
 };
+
+const HomeContainer = styled.div`
+width: 100%;
+  display: flex;
+  flex: 1;
+  position: relative;
+`;
 
 export default Home;

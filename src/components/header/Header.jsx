@@ -6,6 +6,7 @@ import {
   AppsIcon,
   HelpIcon,
   SearchIcons,
+  Menubar,
 } from "../home/SvgIcons";
 import { auth, provider } from "../../firebase";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -68,10 +69,13 @@ const Header = () => {
   return (
     <Container>
       <Wrapper>
+        <LogoWrapper>
+        <Menubar />
         <Logo>
           <img src="./google-logo.png" alt="" />
           <span>Drive</span>
         </Logo>
+        </LogoWrapper>
         {!userName ? (
           <Login onClick={handleAuth}>Login</Login>
         ) : (
@@ -109,6 +113,7 @@ export default Header;
 
 const Container = styled.div`
   position: sticky;
+  width: 100%;
   top: 0;
   z-index: 999;
   background-color: #ffffff;
@@ -122,6 +127,13 @@ const Wrapper = styled.div`
   align-items: center;
   justify-content: space-between;
   margin: 10px 20px;
+`;
+
+const LogoWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 `;
 
 const Logo = styled.div`
@@ -159,6 +171,10 @@ const Login = styled.a`
 
 const InputContainer = styled.div`
   flex: 1;
+
+  @media screen and (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const RightContainer = styled.div`
@@ -231,6 +247,10 @@ const LeftSection = styled(RightSection)`
 
   svg {
     margin: 0 10px;
+  }
+
+  @media screen and (max-width: 768px) {
+    display: none;
   }
 `;
 const UserImg = styled.img`

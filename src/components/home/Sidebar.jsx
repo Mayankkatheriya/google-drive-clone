@@ -145,8 +145,8 @@ const Sidebar = () => {
 const SidebarContainer = styled.div`
   padding-top: 10px;
   border-right: 1px solid lightgray;
-  /* position: sticky;
-  top: 52px; */
+  width: 200px;
+  position: relative;
 `;
 const SidebarBtn = styled.div`
   button {

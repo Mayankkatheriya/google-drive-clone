@@ -20,6 +20,7 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
 import AudioFileOutlinedIcon from '@mui/icons-material/AudioFileOutlined';
 import VideoLibraryOutlinedIcon from '@mui/icons-material/VideoLibraryOutlined';
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 
 export const MobileScreenShareIcon = () => <MobileScreenShareOutlinedIcon />;
 export const DevicesIcons = () => <DevicesIcon />;
@@ -42,3 +43,4 @@ export const PdfIcon = () => <PictureAsPdfIcon />;
 export const PermMediaIcon = () => <PermMediaOutlinedIcon />;
 export const AudioIcon = () => <AudioFileOutlinedIcon />;
 export const VideoIcon = () => <VideoLibraryOutlinedIcon />;
+export const Menubar = () => <MenuRoundedIcon />;

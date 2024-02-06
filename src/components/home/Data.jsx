@@ -174,7 +174,9 @@ const Data = () => {
 };
 
 const DataContainer = styled.div`
+  flex: 1;
   padding: 10px 0px 0px 20px;
+  overflow: hidden;
 `;
 
 const DataHeader = styled.div`
@@ -199,6 +201,10 @@ const DataGrid = styled.div`
   align-items: center;
   margin-top: 30px;
   margin-bottom: 30px;
+
+  @media screen and (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const DataFile = styled.a`
@@ -233,11 +239,21 @@ const DataListRow = styled.div`
 
   a {
     text-decoration: none;
+
     p {
       color: gray;
       span {
         color: #000;
         font-weight: 600;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        @media screen and (max-width: 768px) {
+          width: 10ch;
+        }
       }
     }
   }

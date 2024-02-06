@@ -18,7 +18,7 @@ button {
   cursor: pointer;
 }
 
-.gutter {
+/* .gutter {
   background-color: #eee;
   background-repeat: no-repeat;
   background-position: center;
@@ -28,8 +28,4 @@ button {
 }
 .gutter.gutter-horizontal:hover {
   cursor: col-resize;
-}
-.split {
-  display: flex;
-  flex: 1;
-}
+} */
