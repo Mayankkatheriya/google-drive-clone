@@ -6,8 +6,8 @@ import {
   AppsIcon,
   HelpIcon,
   SearchIcons,
-  Menubar,
-} from "../home/SvgIcons";
+  MenuIcon,
+} from "../SvgIcons";
 import { auth, provider } from "../../firebase";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,12 +17,14 @@ import {
   setSignOutState,
   setUserLoginDetails,
 } from "../../store/UserSlice";
+import { selectSidebarBool, setSidebarBool } from "../../store/BoolSlice";
 import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const dispatch = useDispatch();
   const userName = useSelector(selectUserName);
   const userPhoto = useSelector(selectUserPhoto);
+  const sidebarBool = useSelector(selectSidebarBool);
   const navigate = useNavigate();
 
   // Check if the user is authenticated
@@ -60,17 +62,20 @@ const Header = () => {
     dispatch(
       setUserLoginDetails({
         name: user.displayName,
-        email: user.email,
         photo: user.photoURL,
       })
     );
   };
 
+  const handleSideBar = () => {
+    dispatch(setSidebarBool(!sidebarBool))
+  }
+
   return (
     <Container>
       <Wrapper>
         <LogoWrapper>
-        {userName && ( <Menubar />) }
+        <div className="menu-icon" onClick={handleSideBar}>{userName && <MenuIcon/>}</div>
         <Logo>
           <img src="./google-logo.png" alt="" />
           <span>Drive</span>
@@ -134,6 +139,10 @@ const LogoWrapper = styled.div`
   align-items: center;
   justify-content: center;
   gap: 10px;
+
+  .menu-icon {
+    cursor: pointer;
+  }
 `;
 
 const Logo = styled.div`

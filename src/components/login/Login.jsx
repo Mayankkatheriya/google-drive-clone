@@ -34,19 +34,21 @@ const Login = () => {
         <img src="drive.svg" alt="" />
         <h3>Google Drive</h3>
         <button onClick={handleAuth}>Get Started</button>
-        <p>
-          A cloud-based storage service that enables users to store and access
-          files online
-        </p>
-        <p>
-          Developed with <FavoriteIcon /> by{" "}
-          <a
-            href="https://www.linkedin.com/in/mayank-gupta-752328173/"
-            target="_blank"
-          >
-            Mayank Gupta
-          </a>{" "}
-        </p>
+        <div className="text">
+          <p>
+            A cloud-based storage service that enables users to store and access
+            files online
+          </p>
+          <p>
+            Developed with <FavoriteIcon /> by{" "}
+            <a
+              href="https://www.linkedin.com/in/mayank-gupta-752328173/"
+              target="_blank"
+            >
+              Mayank Gupta
+            </a>{" "}
+          </p>
+        </div>
       </Box>
       <ImageContainer>
         <img src="/login.gif" alt="" />
@@ -81,6 +83,7 @@ const Box = styled.div`
   img {
     width: 80px;
     margin-bottom: 0.5rem;
+    margin-top: 2rem;
   }
   h3 {
     margin-bottom: 1rem;
@@ -129,21 +132,25 @@ const Box = styled.div`
     }
   }
 
-  p {
-    text-align: center;
-    font-weight: 600;
-    font-size: 12px;
-    color: #646464;
-    letter-spacing: 1px;
-    margin-bottom: 1rem;
+  .text {
+    margin-top: auto;
+    p {
+      text-align: center;
+      font-weight: 600;
+      font-size: 12px;
+      color: #646464;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
 
-    svg {
-      font-size: 14px;
+      svg {
+        font-size: 14px;
+      }
     }
   }
+
   @media screen and (max-width: 850px) {
     max-width: 100%;
-    height: calc(100vh - 80px);
+    height: calc(100vh - 100px);
   }
 `;
 

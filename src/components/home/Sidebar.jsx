@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { Modal } from "@mui/material";
 import { db, storage, auth } from "../../firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -12,12 +12,16 @@ import {
   StarBorderIcon,
   DeleteOutlineIcon,
   CloudQueueIcons,
-} from "./SvgIcons"; // Adjust the path accordingly
+} from "../SvgIcons"; // Adjust the path accordingly
 import Loader from "../loaders/Loader";
+import { useSelector } from "react-redux";
+import { selectSidebarBool } from "../../store/BoolSlice";
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState(null);
+  const sidebarBool = useSelector(selectSidebarBool);
+  console.log(sidebarBool);
 
   const handleFile = (e) => {
     console.log(e.target.files);
@@ -65,7 +69,9 @@ const Sidebar = () => {
         <ModalPopup>
           <form onSubmit={handleUpload}>
             <ModalHeading>
-              <h3>{uploading ? "Uploading..." : "Select file you want to upload"}</h3>
+              <h3>
+                {uploading ? "Uploading..." : "Select file you want to upload"}
+              </h3>
             </ModalHeading>
             <ModalBody>
               {uploading ? (
@@ -87,7 +93,7 @@ const Sidebar = () => {
         </ModalPopup>
       </Modal>
 
-      <SidebarContainer>
+      <SidebarContainer sidebarbool={sidebarBool ? "true"  : "false"}>
         <SidebarBtn>
           <button onClick={() => setOpen(true)}>
             <img
@@ -145,8 +151,15 @@ const Sidebar = () => {
 const SidebarContainer = styled.div`
   padding-top: 10px;
   border-right: 1px solid lightgray;
-  width: 200px;
-  position: relative;
+  transition: all 0.1s linear;
+  position: ${(props) => (props.sidebarbool === "true" ? `relative` : "absolute")};
+  left: ${(props) => (props.sidebarbool === "true" ? `0` : "-100%")};
+
+  @media screen and (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 const SidebarBtn = styled.div`
   button {
@@ -162,6 +175,25 @@ const SidebarBtn = styled.div`
       font-size: 16px;
       margin-right: 20px;
       margin-left: 10px;
+
+      /* @media screen and (max-width: 768px) {
+        display: none;
+      } */
+    }
+
+    @media screen and (max-width: 768px) {
+      background: transparent;
+      border: none;
+      display: flex;
+      align-items: center;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      margin-left: 0;
+
+      span {
+        display: none;
+      }
     }
   }
 `;
@@ -170,11 +202,17 @@ const SidebarOptions = styled.div`
   margin-top: 10px;
   .progress_bar {
     padding: 0px 20px;
+    @media screen and (max-width: 768px) {
+      display: none;
+    }
   }
   .progress_bar span {
     display: block;
     color: #333;
     font-size: 13px;
+    @media screen and (max-width: 768px) {
+      display: none;
+    }
   }
 `;
 
@@ -195,6 +233,10 @@ const SidebarOption = styled.div`
     font-size: 13px;
     font-weight: 500;
     color: rgb(78, 78, 78);
+
+    @media screen and (max-width: 768px) {
+      display: none;
+    }
   }
 `;
 

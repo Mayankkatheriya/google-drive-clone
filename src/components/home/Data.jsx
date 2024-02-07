@@ -20,7 +20,7 @@ import {
   PermMediaIcon,
   AudioIcon,
   VideoIcon,
-} from "./SvgIcons";
+} from "../SvgIcons";
 
 const Data = () => {
   const [files, setFiles] = useState([]);
@@ -112,6 +112,7 @@ const Data = () => {
           <InfoIcon />
         </div>
       </DataHeader>
+      <h4>Recents</h4>
       <div>
         <DataGrid>
           {files.slice(0, 4).map((file) => (
@@ -129,10 +130,10 @@ const Data = () => {
               </b>
             </p>
             <p>
-              <b>Last Modified</b>
-            </p>
-            <p>
               <b>File Size</b>
+            </p>
+            <p className="modified">
+              <b>Last Modified</b>
             </p>
             <p>
               <b>Options</b>
@@ -148,7 +149,7 @@ const Data = () => {
                 </p>
               </a>
               <p>{changeBytes(file.data.size)}</p>
-              <p>
+              <p className="modified">
                 {new Date(file.data.timestamp?.seconds * 1000).toLocaleString(
                   "en-US",
                   options
@@ -177,6 +178,16 @@ const DataContainer = styled.div`
   flex: 1;
   padding: 10px 0px 0px 20px;
   overflow: hidden;
+
+  h4 {
+    font-size: 14px;
+    margin-top: 30px;
+    margin-bottom: -20px;
+
+    @media screen and (max-width: 768px) {
+      display: none;
+    }
+  }
 `;
 
 const DataHeader = styled.div`
@@ -289,6 +300,13 @@ const DataListRow = styled.div`
     svg {
       font-size: 22px;
       margin: 10px;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    grid-template-columns: 2fr 1fr 1fr;
+    .modified {
+      display: none;
     }
   }
 `;
