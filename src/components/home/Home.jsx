@@ -1,6 +1,6 @@
 import React from "react";
-import Sidebar from "./Sidebar";
-import Data from "./Data";
+import Sidebar from "./sidebar/Sidebar";
+import Data from "./homeData/Data";
 import styled from "styled-components";
 
 const Home = () => {

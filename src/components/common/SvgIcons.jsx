@@ -14,7 +14,7 @@ import FormatAlignCenterOutlinedIcon from "@mui/icons-material/FormatAlignCenter
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ListIcon from "@mui/icons-material/List";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
@@ -38,7 +38,7 @@ export const FormatIcon = () => <FormatAlignCenterOutlinedIcon />;
 export const ArrowDDownIcon = () => <ArrowDropDownIcon />;
 export const ListsIcon = () => <ListIcon />;
 export const InfoIcon = () => <InfoOutlinedIcon />;
-export const FileIcon = () => <InsertDriveFileIcon />;
+export const FileIcon = () => <DescriptionOutlinedIcon />;
 export const ArrowDownIcon = () => <ArrowDownwardIcon />;
 export const PdfIcon = () => <PictureAsPdfIcon />;
 export const PermMediaIcon = () => <PermMediaOutlinedIcon />;

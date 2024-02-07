@@ -1,13 +1,5 @@
 import React, { useEffect } from "react";
 import styled from "styled-components";
-import {
-  FormatIcon,
-  SettingsIcon,
-  AppsIcon,
-  HelpIcon,
-  SearchIcons,
-  MenuIcon,
-} from "../SvgIcons";
 import { auth, provider } from "../../firebase";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { useDispatch, useSelector } from "react-redux";
@@ -19,6 +11,10 @@ import {
 } from "../../store/UserSlice";
 import { selectSidebarBool, setSidebarBool } from "../../store/BoolSlice";
 import { useNavigate } from "react-router-dom";
+import LogoWrapperComponent from "./LogoWrapper";
+import SearchBar from "./SearchBar";
+import LeftIcons from "./LeftIcons";
+import ProfileSection from "./ProfileSection";
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -70,39 +66,23 @@ const Header = () => {
   return (
     <Container>
       <Wrapper>
-        <LogoWrapper>
-        <div className="menu-icon" onClick={() => dispatch(setSidebarBool(!sidebarBool))}>{userName && <MenuIcon/>}</div>
-        <Logo>
-          <img src="./google-logo.png" alt="" />
-          <span>Drive</span>
-        </Logo>
-        </LogoWrapper>
+        <LogoWrapperComponent
+          onClick={() => dispatch(setSidebarBool(!sidebarBool))}
+          userName={userName}
+        />
         {!userName ? (
           <Login onClick={handleAuth}>Login</Login>
         ) : (
           <>
-            <InputContainer>
-              <SearchContainer>
-                <SearchIcons />
-                <input type="text" placeholder="Search in Drive" />
-                <FormatIcon />
-              </SearchContainer>
-            </InputContainer>
-
+            <SearchBar />
+            
             <RightContainer>
-              <LeftSection>
-                <HelpIcon />
-                <SettingsIcon />
-              </LeftSection>
-              <RightSection>
-                <AppsIcon className="app" />
-                <SignOut>
-                  <UserImg src={userPhoto} alt={userName} />
-                  <DropDown>
-                    <span onClick={handleAuth}>Sign out</span>
-                  </DropDown>
-                </SignOut>
-              </RightSection>
+              <LeftIcons />
+              <ProfileSection
+                userPhoto={userPhoto}
+                userName={userName}
+                handleAuth={handleAuth}
+              />
             </RightContainer>
           </>
         )}
@@ -130,34 +110,6 @@ const Wrapper = styled.div`
   margin: 10px 20px;
 `;
 
-const LogoWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-
-  .menu-icon {
-    cursor: pointer;
-  }
-`;
-
-const Logo = styled.div`
-  display: flex;
-  align-items: center;
-
-  img {
-    width: 40px;
-    height: 40px;
-  }
-
-  span {
-    font-family: "Product Sans", Arial, sans-serif;
-    color: #5f6368;
-    font-size: 22px;
-    padding-left: 8px;
-  }
-`;
-
 const Login = styled.a`
   background-color: #fff;
   padding: 8px 16px;
@@ -174,131 +126,7 @@ const Login = styled.a`
   }
 `;
 
-const InputContainer = styled.div`
-  flex: 1;
-
-  @media screen and (max-width: 768px) {
-    display: none;
-  }
-`;
-
 const RightContainer = styled.div`
   display: flex;
   align-items: center;
-`;
-
-const SearchContainer = styled.div`
-  width: 64%;
-  height: 50px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.09);
-  border-radius: 30px;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 /0.05);
-
-  svg:first-child {
-    cursor: pointer;
-    margin-left: 10px;
-    color: #5f6368;
-  }
-
-  input {
-    font-size: 16px;
-    padding: 0 10px;
-    outline: none;
-    width: 90%;
-    height: 80%;
-    font-family: Sans, Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
-    margin: 0 auto;
-    background-color: transparent;
-    :focus {
-      outline: none;
-    }
-
-    border: none;
-  }
-
-  svg:last-child {
-    cursor: pointer;
-    margin-right: 10px;
-    color: #5f6368;
-  }
-`;
-
-const RightSection = styled.div`
-  display: flex;
-  align-items: center;
-
-  svg {
-    font-size: 35px;
-    color: #5f6368;
-    padding: 5px;
-    cursor: pointer;
-    border-radius: 50%;
-    transition: all 200ms ease-out;
-    :hover {
-      background-color: rgba(0, 0, 0, 0.09);
-    }
-  }
-
-  .app {
-    margin-right: 15px;
-  }
-`;
-
-const LeftSection = styled(RightSection)`
-  margin-right: 40px;
-
-  svg {
-    margin: 0 10px;
-  }
-
-  @media screen and (max-width: 768px) {
-    display: none;
-  }
-`;
-const UserImg = styled.img`
-  height: 100%;
-
-  @media (max-width: 830px) {
-    height: 40px;
-  }
-`;
-
-const DropDown = styled.div`
-  position: absolute;
-  top: 50px;
-  right: -18px;
-  background: #fff;
-  border: 1px solid rgba(151, 151, 151, 0.34);
-  border-radius: 4px;
-  box-shadow: rgb(0 0 0 / 50%) 0px 0px 18px 0px;
-  padding: 10px;
-  font-size: 14px;
-  letter-spacing: 3px;
-  width: 100px;
-  opacity: 0;
-`;
-const SignOut = styled.div`
-  position: relative;
-  height: 48px;
-  width: 48px;
-  display: flex;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-
-  ${UserImg} {
-    border-radius: 50%;
-    width: 100%;
-    height: 100%;
-  }
-
-  &:hover {
-    ${DropDown} {
-      opacity: 1;
-      transition-duration: 1s;
-    }
-  }
 `;

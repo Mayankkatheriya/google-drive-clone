@@ -31,9 +31,9 @@ const Login = () => {
   return (
     <Container>
       <Box>
-        <img src="drive.svg" alt="" />
+        <img src="drive.svg" alt="Google Drive Logo" />
         <h3>Google Drive</h3>
-        <button onClick={handleAuth}>Get Started</button>
+        <Button onClick={handleAuth}>Get Started</Button>
         <div className="text">
           <p>
             A cloud-based storage service that enables users to store and access
@@ -44,6 +44,7 @@ const Login = () => {
             <a
               href="https://www.linkedin.com/in/mayank-gupta-752328173/"
               target="_blank"
+              rel="noopener noreferrer"
             >
               Mayank Gupta
             </a>{" "}
@@ -51,7 +52,7 @@ const Login = () => {
         </div>
       </Box>
       <ImageContainer>
-        <img src="/login.gif" alt="" />
+        <img src="/login.gif" alt="Login" />
       </ImageContainer>
     </Container>
   );
@@ -76,7 +77,6 @@ const Box = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  /* box-shadow: 3px 3px 3px #979797, 5px 5px 5px 5px #bdbdbd; */
   padding: 1rem 2rem;
   border-radius: 10px;
 
@@ -85,51 +85,10 @@ const Box = styled.div`
     margin-bottom: 0.5rem;
     margin-top: 2rem;
   }
+
   h3 {
     margin-bottom: 1rem;
     color: #646464;
-  }
-
-  button {
-    appearance: button;
-    width: 100%;
-    max-width: 280px;
-    font-size: 16px;
-    font-weight: 600;
-    color: #fff;
-    cursor: pointer;
-    margin-bottom: 2rem;
-    height: 55px;
-    text-align: center;
-    border: none;
-    background-size: 300% 100%;
-    border-radius: 50px;
-    moz-transition: all 0.4s ease-in-out;
-    -o-transition: all 0.4s ease-in-out;
-    -webkit-transition: all 0.4s ease-in-out;
-    transition: all 0.4s ease-in-out;
-    background-image: linear-gradient(
-      to right,
-      #25aae1,
-      #4481eb,
-      #04befe,
-      #3f86ed
-    );
-    box-shadow: 0 4px 15px 0 rgba(65, 132, 234, 0.75);
-
-    &:hover {
-      background-position: 100% 0;
-      moz-transition: all 0.4s ease-in-out;
-      -o-transition: all 0.4s ease-in-out;
-      -webkit-transition: all 0.4s ease-in-out;
-      transition: all 0.4s ease-in-out;
-    }
-    &:focus {
-      outline: none;
-    }
-    &:active {
-      border-width: 4px 0 0;
-    }
   }
 
   .text {
@@ -159,6 +118,7 @@ const ImageContainer = styled.div`
   min-width: 280px;
   max-width: 800px;
   height: 400px;
+
   img {
     width: 100%;
     height: 100%;
@@ -166,6 +126,41 @@ const ImageContainer = styled.div`
 
   @media screen and (max-width: 850px) {
     display: none;
+  }
+`;
+
+const Button = styled.button`
+  appearance: button;
+  width: 100%;
+  max-width: 280px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  margin-bottom: 2rem;
+  height: 55px;
+  text-align: center;
+  border: none;
+  background-size: 300% 100%;
+  border-radius: 50px;
+  transition: all 0.4s ease-in-out;
+  background-image: linear-gradient(
+    to right,
+    #25aae1,
+    #4481eb,
+    #04befe,
+    #3f86ed
+  );
+  box-shadow: 0 4px 15px 0 rgba(65, 132, 234, 0.75);
+
+  &:hover {
+    background-position: 100% 0;
+  }
+  &:focus {
+    outline: none;
+  }
+  &:active {
+    border-width: 4px 0 0;
   }
 `;
 
