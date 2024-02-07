@@ -67,15 +67,11 @@ const Header = () => {
     );
   };
 
-  const handleSideBar = () => {
-    dispatch(setSidebarBool(!sidebarBool))
-  }
-
   return (
     <Container>
       <Wrapper>
         <LogoWrapper>
-        <div className="menu-icon" onClick={handleSideBar}>{userName && <MenuIcon/>}</div>
+        <div className="menu-icon" onClick={() => dispatch(setSidebarBool(!sidebarBool))}>{userName && <MenuIcon/>}</div>
         <Logo>
           <img src="./google-logo.png" alt="" />
           <span>Drive</span>

@@ -20,10 +20,12 @@ import {
   PermMediaIcon,
   AudioIcon,
   VideoIcon,
+  MoreOptionsIcon,
 } from "../SvgIcons";
 
 const Data = () => {
   const [files, setFiles] = useState([]);
+  const [optionsVisible, setOptionsVisible] = useState(null);
   const options = { timeZone: "Asia/Kolkata" };
 
   useEffect(() => {
@@ -82,6 +84,8 @@ const Data = () => {
       }
     } catch (error) {
       console.error("Error deleting document: ", error);
+    } finally {
+      setOptionsVisible(id);
     }
   };
 
@@ -97,6 +101,11 @@ const Data = () => {
     ) : (
       <FileIcon />
     );
+  };
+
+  const handleOptionsClick = (id) => {
+    // Toggle the options visibility
+    setOptionsVisible((prevVisible) => (prevVisible === id ? null : id));
   };
 
   return (
@@ -115,7 +124,7 @@ const Data = () => {
       <h4>Recents</h4>
       <div>
         <DataGrid>
-          {files.slice(0, 4).map((file) => (
+          {files.slice(0, 3).map((file) => (
             <DataFile key={file.id} href={file.data.fileURL} target="_blank">
               {fileIcon(file.data.contentType)}
               <p>{file.data.filename}</p>
@@ -156,15 +165,29 @@ const Data = () => {
                 )}
               </p>
               <p>
-                <button onClick={() => handleDelete(file.id)}>Delete</button>
-                <a
-                  href={file.data.fileURL}
-                  download={file.data.name}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <div
+                  title="Options"
+                  onClick={() => handleOptionsClick(file.id)}
+                  style={{ cursor: "pointer" }}
                 >
-                  Download
-                </a>
+                  <MoreOptionsIcon />
+                </div>
+                {optionsVisible === file.id && (
+                  <div className="options">
+                    <a
+                      href={file.data.fileURL}
+                      download={file.data.name}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Download
+                    </a>
+                    <hr />
+                    <button onClick={() => handleDelete(file.id)}>
+                      Delete
+                    </button>
+                  </div>
+                )}
               </p>
             </DataListRow>
           ))}
@@ -177,7 +200,6 @@ const Data = () => {
 const DataContainer = styled.div`
   flex: 1;
   padding: 10px 0px 0px 20px;
-  overflow: hidden;
 
   h4 {
     font-size: 14px;
@@ -269,21 +291,43 @@ const DataListRow = styled.div`
     }
   }
   p:last-child {
-    justify-content: flex-end;
+    justify-self: flex-end;
     padding-right: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
     font-size: 13px;
+    position: relative;
 
-    button {
+    .options {
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      gap: 10px;
+      position: absolute;
       background-color: #fff;
-      border: none;
-      color: red;
-    }
+      border: 2px solid #ccc;
+      top: 60%;
+      right: calc(50%);
+      cursor: pointer;
+      z-index: 10;
 
-    a {
-      color: #000;
+      hr {
+        width: 100%;
+      }
+
+      button {
+        background-color: #fff;
+        border: none;
+        color: red;
+        padding: 6px 10px;
+        padding-top: 0;
+      }
+
+      a {
+        width: 100%;
+        /* background-color: #fff; */
+        color: #000;
+        padding: 6px 10px;
+        padding-bottom: 0;
+      }
     }
   }
   p,

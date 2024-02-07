@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 import { Modal } from "@mui/material";
 import { db, storage, auth } from "../../firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -14,13 +14,14 @@ import {
   CloudQueueIcons,
 } from "../SvgIcons"; // Adjust the path accordingly
 import Loader from "../loaders/Loader";
-import { useSelector } from "react-redux";
-import { selectSidebarBool } from "../../store/BoolSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { selectSidebarBool, setSidebarBool } from "../../store/BoolSlice";
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState(null);
   const sidebarBool = useSelector(selectSidebarBool);
+  const dispatch = useDispatch()
   console.log(sidebarBool);
 
   const handleFile = (e) => {
@@ -95,7 +96,7 @@ const Sidebar = () => {
 
       <SidebarContainer sidebarbool={sidebarBool ? "true"  : "false"}>
         <SidebarBtn>
-          <button onClick={() => setOpen(true)}>
+          <button title="New File" onClick={() => {setOpen(true); dispatch(setSidebarBool(false))}}>
             <img
               src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2236%22 height=%2236%22 viewBox=%220 0 36 36%22%3E%3Cpath fill=%22%2334A853%22 d=%22M16 16v14h4V20z%22/%3E%3Cpath fill=%22%234285F4%22 d=%22M30 16H20l-4 4h14z%22/%3E%3Cpath fill=%22%23FBBC05%22 d=%22M6 16v4h10l4-4z%22/%3E%3Cpath fill=%22%23EA4335%22 d=%22M20 16V6h-4v14z%22/%3E%3Cpath fill=%22none%22 d=%22M0 0h36v36H0z%22/%3E%3C/svg%3E"
               alt=""
@@ -105,27 +106,27 @@ const Sidebar = () => {
         </SidebarBtn>
 
         <SidebarOptions>
-          <SidebarOption>
+          <SidebarOption title="My Drive">
             <MobileScreenShareIcon />
             <span>My Drive</span>
           </SidebarOption>
-          <SidebarOption>
+          <SidebarOption title="Computers">
             <DevicesIcons />
             <span>Computers</span>
           </SidebarOption>
-          <SidebarOption>
+          <SidebarOption title="Shared with me">
             <PeopleAltIcon />
             <span>Shared with me</span>
           </SidebarOption>
-          <SidebarOption>
+          <SidebarOption title="Recent">
             <QueryBuilderIcon />
             <span>Recent</span>
           </SidebarOption>
-          <SidebarOption>
+          <SidebarOption title="Starred">
             <StarBorderIcon />
             <span>Starred</span>
           </SidebarOption>
-          <SidebarOption>
+          <SidebarOption title="Trash">
             <DeleteOutlineIcon />
             <span>Trash</span>
           </SidebarOption>
@@ -134,7 +135,7 @@ const Sidebar = () => {
         <hr />
 
         <SidebarOptions>
-          <SidebarOption>
+          <SidebarOption title="Storage">
             <CloudQueueIcons />
             <span>Storage</span>
           </SidebarOption>
