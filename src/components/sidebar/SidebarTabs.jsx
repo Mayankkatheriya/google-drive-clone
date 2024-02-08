@@ -9,15 +9,24 @@ import {
   DeleteOutlineIcon,
   CloudQueueIcons,
 } from "../common/SvgIcons";
+import { NavLink } from "react-router-dom";
 
 const SidebarTabs = () => {
   return (
     <>
       <SidebarOptions>
-        <SidebarOption title="My Drive">
-          <MobileScreenShareIcon />
-          <span>My Drive</span>
-        </SidebarOption>
+        <NavLink to={"/home"}>
+          {({ isActive }) => (
+            <SidebarOption
+              title="My Drive"
+              className={isActive ? "tab-active" : ""}
+            >
+              <MobileScreenShareIcon />
+              <span>My Drive</span>
+            </SidebarOption>
+          )}
+        </NavLink>
+
         <SidebarOption title="Computers">
           <DevicesIcons />
           <span>Computers</span>
@@ -26,18 +35,43 @@ const SidebarTabs = () => {
           <PeopleAltIcon />
           <span>Shared with me</span>
         </SidebarOption>
-        <SidebarOption title="Recent">
-          <QueryBuilderIcon />
-          <span>Recent</span>
-        </SidebarOption>
-        <SidebarOption title="Starred">
-          <StarBorderIcon />
-          <span>Starred</span>
-        </SidebarOption>
-        <SidebarOption title="Trash">
-          <DeleteOutlineIcon />
-          <span>Trash</span>
-        </SidebarOption>
+
+        <NavLink to={"/recent"}>
+          {({ isActive }) => (
+            <SidebarOption
+              to={"/recent"}
+              className={isActive ? "tab-active" : ""}
+              title="Recent"
+            >
+              <QueryBuilderIcon />
+              <span>Recent</span>
+            </SidebarOption>
+          )}
+        </NavLink>
+
+        <NavLink to={"/starred"}>
+          {({ isActive }) => (
+            <SidebarOption
+              title="Starred"
+              className={isActive ? "tab-active" : ""}
+            >
+              <StarBorderIcon />
+              <span>Starred</span>
+            </SidebarOption>
+          )}
+        </NavLink>
+
+        <NavLink to={"/trash"}>
+          {({ isActive }) => (
+            <SidebarOption
+              title="Trash"
+              className={isActive ? "tab-active" : ""}
+            >
+              <DeleteOutlineIcon />
+              <span>Trash</span>
+            </SidebarOption>
+          )}
+        </NavLink>
       </SidebarOptions>
 
       <hr />
@@ -58,6 +92,15 @@ const SidebarTabs = () => {
 
 const SidebarOptions = styled.div`
   margin-top: 10px;
+
+  a {
+    text-decoration: none;
+  }
+
+  .tab-active {
+    background: whitesmoke;
+  }
+
   .progress_bar {
     padding: 0px 20px;
     @media screen and (max-width: 768px) {
