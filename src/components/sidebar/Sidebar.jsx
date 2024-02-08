@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { db, storage, auth } from "../../../firebase";
+import { db, storage, auth } from "../../firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useDispatch, useSelector } from "react-redux";
-import { selectSidebarBool, setSidebarBool } from "../../../store/BoolSlice";
+import { selectSidebarBool, setSidebarBool } from "../../store/BoolSlice";
 import FileUploadModal from "./FileUploadModal";
 import AddFile from "./AddFile";
 import SidebarTabs from "./SidebarTabs";

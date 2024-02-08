@@ -1,5 +1,5 @@
 import React from "react";
-import Sidebar from "./sidebar/Sidebar";
+import Sidebar from "../sidebar/Sidebar";
 import Data from "./homeData/Data";
 import styled from "styled-components";
 

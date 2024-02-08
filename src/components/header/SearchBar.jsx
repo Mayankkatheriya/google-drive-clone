@@ -1,17 +1,13 @@
 import React from "react";
 import styled from "styled-components";
-import {
-    FormatIcon,
-    SearchIcons,
-  } from "../common/SvgIcons";
+import { SearchIcons } from "../common/SvgIcons";
 
 const SearchBar = () => {
   return (
     <InputContainer>
       <SearchContainer>
-        <SearchIcons />
         <input type="text" placeholder="Search in Drive" />
-        <FormatIcon />
+        <SearchIcons />
       </SearchContainer>
     </InputContainer>
   );

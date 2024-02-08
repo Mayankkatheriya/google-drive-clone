@@ -5,7 +5,7 @@ import FileIcons from "../../common/FileIcons";
 const RecentDataGrid = ({ files }) => {
   return (
     <DataGrid>
-      {files.slice(0, 3).map((file) => (
+      {files.slice(0, 4).map((file) => (
         <DataFile key={file.id} href={file.data.fileURL} target="_blank">
           <FileIcons type={file.data.contentType} />
           <p title={file.data.filename}>{file.data.filename}</p>

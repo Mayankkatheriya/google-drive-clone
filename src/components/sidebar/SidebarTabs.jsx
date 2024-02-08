@@ -8,7 +8,7 @@ import {
   StarBorderIcon,
   DeleteOutlineIcon,
   CloudQueueIcons,
-} from "../../common/SvgIcons";
+} from "../common/SvgIcons";
 
 const SidebarTabs = () => {
   return (

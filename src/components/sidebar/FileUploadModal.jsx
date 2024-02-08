@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { Modal } from "@mui/material";
-import Loader from "../../loaders/Loader";
+import Loader from "../loaders/Loader";
 
 const FileUploadModal = ({
   open,

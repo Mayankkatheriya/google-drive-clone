@@ -10,13 +10,6 @@ import {
   where,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import {
-  FileIcon,
-  PdfIcon,
-  PermMediaIcon,
-  AudioIcon,
-  VideoIcon,
-} from "../../common/SvgIcons";
 import HomeDataHeader from "./HomeDataHeader";
 import RecentDataGrid from "./RecentDataGrid";
 import MainData from "./MainData";
@@ -42,7 +35,6 @@ const Data = () => {
                   (a, b) =>
                     b.data.timestamp?.seconds - a.data.timestamp?.seconds
                 );
-              console.log(fileArr);
               return fileArr;
             });
           }
