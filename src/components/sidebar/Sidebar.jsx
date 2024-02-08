@@ -31,7 +31,6 @@ const Sidebar = () => {
       const storageRef = ref(storage, `files/${file.name}`);
       const snapshot = await uploadBytes(storageRef, file);
       const url = await getDownloadURL(snapshot.ref);
-      console.log(snapshot);
 
       // Check if snapshot.totalBytes is defined, use 0 if not
       const size = snapshot.metadata.size || 0;
@@ -44,6 +43,7 @@ const Sidebar = () => {
         fileURL: url,
         size: size,
         contentType: snapshot.metadata.contentType,
+        starred: false,
       });
 
       // Reset state and close modal
@@ -70,7 +70,6 @@ const Sidebar = () => {
         <AddFile
           onClick={() => {
             setOpen(true);
-            dispatch(setSidebarBool(false));
           }}
         />
 

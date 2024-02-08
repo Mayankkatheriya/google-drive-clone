@@ -22,6 +22,7 @@ import AudioFileOutlinedIcon from '@mui/icons-material/AudioFileOutlined';
 import VideoLibraryOutlinedIcon from '@mui/icons-material/VideoLibraryOutlined';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import StarOutlinedIcon from '@mui/icons-material/StarOutlined';
 
 export const MobileScreenShareIcon = () => <MobileScreenShareOutlinedIcon />;
 export const DevicesIcons = () => <DevicesIcon />;
@@ -46,3 +47,4 @@ export const AudioIcon = () => <AudioFileOutlinedIcon />;
 export const VideoIcon = () => <VideoLibraryOutlinedIcon />;
 export const MoreOptionsIcon = () => <MoreHorizIcon />;
 export const MenuIcon = () => <MenuRoundedIcon />;
+export const StarFilledIcon = () => <StarOutlinedIcon />;

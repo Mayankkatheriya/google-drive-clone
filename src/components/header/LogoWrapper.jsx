@@ -1,19 +1,22 @@
-import React from 'react'
-import styled from 'styled-components';
-import {
-    MenuIcon,
-} from "../common/SvgIcons";
+import React from "react";
+import styled from "styled-components";
+import { MenuIcon } from "../common/SvgIcons";
+import { Link } from "react-router-dom";
 
-const LogoWrapperComponent = ({onClick, userName}) => {
+const LogoWrapperComponent = ({ onClick, userName }) => {
   return (
     <LogoWrapper>
-    <div className="menu-icon" onClick={onClick}>{userName && <MenuIcon/>}</div>
-    <Logo>
-      <img src="./google-logo.png" alt="" />
-      <span>Drive</span>
-    </Logo>
+      <div className="menu-icon" onClick={onClick}>
+        {userName && <MenuIcon />}
+      </div>
+      <Link to={"/home"}>
+        <Logo>
+          <img src="./google-logo.png" alt="" />
+          <span>Drive</span>
+        </Logo>
+      </Link>
     </LogoWrapper>
-  )
+  );
 };
 
 const LogoWrapper = styled.div`
@@ -44,4 +47,4 @@ const Logo = styled.div`
   }
 `;
 
-export default LogoWrapperComponent
+export default LogoWrapperComponent;

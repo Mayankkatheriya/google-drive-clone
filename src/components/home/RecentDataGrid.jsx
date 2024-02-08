@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import FileIcons from "../../common/FileIcons";
+import FileIcons from "../common/FileIcons";
 
 const RecentDataGrid = ({ files }) => {
   return (

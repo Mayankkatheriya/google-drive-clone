@@ -1,12 +1,12 @@
 import React from "react";
 import styled from "styled-components";
-import { ArrowDDownIcon, ListsIcon, InfoIcon } from "../../common/SvgIcons";
+import { ArrowDDownIcon, ListsIcon, InfoIcon } from "./SvgIcons";
 
-const HomeDataHeader = () => {
+const PageHeader = ({pageTitle}) => {
   return (
     <DataHeader>
       <div className="headerLeft">
-        <p>My Drive</p>
+        <p>{pageTitle}</p>
         <ArrowDDownIcon />
       </div>
       <div className="headerRight">
@@ -26,10 +26,11 @@ const DataHeader = styled.div`
   .headerLeft {
     display: flex;
     align-items: center;
+    font-weight: 600;
   }
   .headerRight svg {
     margin: 0px 10px;
   }
 `;
 
-export default HomeDataHeader;
+export default PageHeader;

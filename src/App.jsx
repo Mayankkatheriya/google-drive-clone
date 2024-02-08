@@ -2,7 +2,6 @@ import React from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "./components/Layout";
 import Login from "./components/login/Login";
-import Home from "./components/home/Home";
 import ErrorPage from "./components/ErrorPage";
 import { store } from "./store/Store";
 import { Provider } from "react-redux";
@@ -11,6 +10,7 @@ import Recent from "./components/recent/Recent";
 import Starred  from "./components/starred/Starred";
 import Trash from './components/trash/Trash';
 import SearchItems from './components/search/SearchItems';
+import Data from "./components/home/Data";
 
 function App() {
   const router = createBrowserRouter([
@@ -32,7 +32,7 @@ function App() {
       children: [
         {
           path: "/home",
-          element: <Home />,
+          element: <Data />,
         },
         {
           path: "/recent",

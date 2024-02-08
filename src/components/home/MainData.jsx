@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
-import { ArrowDownIcon, MoreOptionsIcon } from "../../common/SvgIcons";
-import { changeBytes } from "../../common/common";
-import { convertDates } from "../../common/convertDates";
-import FileIcons from "../../common/FileIcons";
+import { ArrowDownIcon, MoreOptionsIcon, StarFilledIcon, StarBorderIcon, } from "../common/SvgIcons";
+import { changeBytes } from "../common/common";
+import { convertDates } from "../common/convertDates";
+import FileIcons from "../common/FileIcons";
 import {
   EmailShareButton,
   FacebookShareButton,
@@ -14,6 +14,7 @@ import {
   LinkedinIcon,
   WhatsappIcon,
 } from "react-share";
+import { handleStarred } from "../common/firebaseApi";
 
 const MainData = ({
   files,
@@ -65,12 +66,15 @@ const MainData = ({
 
       {files.map((file) => (
         <DataListRow key={file.id}>
-          <a href={file.data.fileURL} target="_blank">
-            <p>
+          <div>
+            <p onClick={() => handleStarred(file.id)}>
+            {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
+            </p>
+            <a href={file.data.fileURL} target="_blank">
               <FileIcons type={file.data.contentType} />
               <span title={file.data.filename}>{file.data.filename}</span>
-            </p>
-          </a>
+            </a>
+          </div>
           <div className="fileSize">{changeBytes(file.data.size)}</div>
           <div className="modified">
             {convertDates(file.data.timestamp?.seconds)}
@@ -181,15 +185,15 @@ const DataListRow = styled.div`
     }
   }
 
-  a {
+  div {
     text-decoration: none;
 
-    p {
+    a {
       color: gray;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 0;
       span {
         color: #000;
         font-weight: 600;
@@ -199,6 +203,7 @@ const DataListRow = styled.div`
         overflow: hidden;
         text-overflow: ellipsis;
         word-wrap: break-word;
+        width: 20ch;
 
         @media screen and (max-width: 768px) {
           width: 10ch;
@@ -261,6 +266,10 @@ const OptionsMenu = styled.span`
     display: flex;
     justify-content: center;
     align-items: center;
+
+    a {
+      color: #000;
+    }
 
     &:last-child {
       border-bottom: none;

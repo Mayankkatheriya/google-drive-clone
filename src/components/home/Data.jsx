@@ -1,18 +1,12 @@
 import styled from "styled-components";
 import React, { useEffect, useState } from "react";
-import { db, auth } from "../../../firebase";
-import {
-  collection,
-  onSnapshot,
-  doc,
-  deleteDoc,
-  query,
-  where,
-} from "firebase/firestore";
+import { db, auth } from "../../firebase";
+import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import HomeDataHeader from "./HomeDataHeader";
+import { getFilesForUser } from "../common/firebaseApi";
 import RecentDataGrid from "./RecentDataGrid";
 import MainData from "./MainData";
+import PageHeader from "../common/PageHeader";
 
 const Data = () => {
   const [files, setFiles] = useState([]);
@@ -21,27 +15,12 @@ const Data = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const filesData = collection(db, "myfiles");
-        const unsubscribeFiles = onSnapshot(
-          query(filesData, where("userId", "==", user.uid)),
-          (snapshot) => {
-            setFiles(() => {
-              const fileArr = snapshot.docs
-                .map((doc) => ({
-                  id: doc.id,
-                  data: doc.data(),
-                }))
-                .sort(
-                  (a, b) =>
-                    b.data.timestamp?.seconds - a.data.timestamp?.seconds
-                );
-              return fileArr;
-            });
-          }
-        );
+        const unsubscribeFiles = await getFilesForUser(user.uid, setFiles);
 
-        // Cleanup the files subscription when the component unmounts
-        return () => unsubscribeFiles();
+        // Cleanup the user subscription when the component unmounts
+        return () => {
+          unsubscribeFiles();
+        };
       }
     });
 
@@ -73,9 +52,24 @@ const Data = () => {
     setOptionsVisible((prevVisible) => (prevVisible === id ? null : id));
   };
 
+  const handleStarred = async (id) => {
+    try {
+      const docRef = doc(db, "myfiles", id);
+      const docSnapshot = await getDoc(docRef);
+      if (docSnapshot.exists()) {
+        const currentStarredStatus = docSnapshot.data().starred || false;
+        await updateDoc(docRef, { starred: !currentStarredStatus });
+      } else {
+        console.error("Document does not exist.");
+      }
+    } catch (error) {
+      console.error("Error updating starred status: ", error);
+    }
+  };
+
   return (
     <DataContainer>
-      <HomeDataHeader />
+      <PageHeader pageTitle={"My Drive"} />
       <h4>Recents</h4>
       <div>
         <RecentDataGrid files={files} />
