@@ -109,7 +109,7 @@ const Box = styled.div`
 
   @media screen and (max-width: 850px) {
     max-width: 100%;
-    height: calc(100vh - 100px);
+    height: calc(100vh - 200px);
   }
 `;
 

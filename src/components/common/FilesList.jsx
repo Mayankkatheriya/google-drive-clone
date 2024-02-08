@@ -45,11 +45,11 @@ const FileList = styled.div`
   gap: 20px;
   align-items: center;
   flex-wrap: wrap;
+  margin: 2rem 0;
 `;
 
 const DataFile = styled.div`
   color: #383838;
-  margin-top: 2rem;
   width: 100%;
   max-width: 320px;
   border: 2px solid lightgray;
@@ -57,6 +57,10 @@ const DataFile = styled.div`
   position: relative;
   z-index: 5;
   border-radius: 10px;
+
+  a {
+    color: #383838;
+  }
 
   svg {
     font-size: 120px;
