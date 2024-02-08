@@ -66,6 +66,10 @@ const Container = styled.div`
   align-items: center;
   gap: 2rem;
   padding: 1rem;
+
+    @media screen and (max-width: 850px) {
+    flex-direction: column;
+  }
 `;
 
 const Box = styled.div`
@@ -104,12 +108,11 @@ const Box = styled.div`
       svg {
         font-size: 14px;
       }
+      a {
+        font-weight: 600;
+        font-size: 14px;
+      }
     }
-  }
-
-  @media screen and (max-width: 850px) {
-    max-width: 100%;
-    height: calc(100vh - 200px);
   }
 `;
 
@@ -122,10 +125,6 @@ const ImageContainer = styled.div`
   img {
     width: 100%;
     height: 100%;
-  }
-
-  @media screen and (max-width: 850px) {
-    display: none;
   }
 `;
 
