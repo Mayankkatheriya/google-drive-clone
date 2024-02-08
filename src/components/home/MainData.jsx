@@ -137,7 +137,7 @@ const MainData = ({
                     </WhatsappShareButton>
                   </span>
                 </ShareButton>
-                <span onClick={() => handleDelete(file.id)}>
+                <span onClick={() => handleDelete(file.id, file.data)}>
                   <button>Delete</button>
                 </span>
                 <span className="uploaded">

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { db, auth } from "../../firebase";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { getFilesForUser } from "../common/firebaseApi";
+import { getFilesForUser, postTrashCollection } from "../common/firebaseApi";
 import RecentDataGrid from "./RecentDataGrid";
 import MainData from "./MainData";
 import PageHeader from "../common/PageHeader";
@@ -28,16 +28,19 @@ const Data = () => {
     return () => unsubscribe();
   }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, data) => {
     try {
       const confirmed = window.confirm(
         "Are you sure you want to delete this file?"
       );
-
+  
       if (confirmed) {
         // Reference to the document in Firestore
         const docRef = doc(db, "myfiles", id);
-
+  
+        // Add the file data to the "trash" collection before deleting the document
+        await postTrashCollection(data);
+  
         // Delete the document
         await deleteDoc(docRef);
       }
@@ -50,21 +53,6 @@ const Data = () => {
 
   const handleOptionsClick = (id) => {
     setOptionsVisible((prevVisible) => (prevVisible === id ? null : id));
-  };
-
-  const handleStarred = async (id) => {
-    try {
-      const docRef = doc(db, "myfiles", id);
-      const docSnapshot = await getDoc(docRef);
-      if (docSnapshot.exists()) {
-        const currentStarredStatus = docSnapshot.data().starred || false;
-        await updateDoc(docRef, { starred: !currentStarredStatus });
-      } else {
-        console.error("Document does not exist.");
-      }
-    } catch (error) {
-      console.error("Error updating starred status: ", error);
-    }
   };
 
   return (

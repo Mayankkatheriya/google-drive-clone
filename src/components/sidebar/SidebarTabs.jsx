@@ -82,8 +82,8 @@ const SidebarTabs = () => {
           <span>Storage</span>
         </SidebarOption>
         <div className="progress_bar">
-          <progress size="tiny" value="50" max="100" />
-          <span>105 GB of 200 GB used</span>
+          <progress size="tiny" value="22" max="100" />
+          <span>1.1 GB of 5 GB used</span>
         </div>
       </SidebarOptions>
     </>
@@ -112,6 +112,11 @@ const SidebarOptions = styled.div`
     color: #333;
     font-size: 13px;
     @media screen and (max-width: 768px) {
+      display: none;
+    }
+  }
+  @media screen and (max-width: 768px) {
+    &:last-child {
       display: none;
     }
   }

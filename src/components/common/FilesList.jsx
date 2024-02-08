@@ -3,7 +3,7 @@ import styled from "styled-components";
 import FileIcons from "./FileIcons";
 import { convertDates } from "./convertDates";
 import { changeBytes } from "./common";
-import { handleStarred } from "./firebaseApi";
+import { handleDeleteFromTrash, handleStarred } from "./firebaseApi";
 import { StarBorderIcon, StarFilledIcon } from "./SvgIcons";
 
 const FilesList = ({ data, page = null }) => {
@@ -30,6 +30,11 @@ const FilesList = ({ data, page = null }) => {
               <StarContainer onClick={() => handleStarred(file.id)}>
                 {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
               </StarContainer>
+            )}
+            {page === "trash" && (
+              <DeleteContainer onClick={() => handleDeleteFromTrash(file.id)}>
+                Delete Permanenly
+              </DeleteContainer>
             )}
           </DataFile>
         );
@@ -102,5 +107,14 @@ const StarContainer = styled.div`
     z-index: 10;
   }
 `;
+
+const DeleteContainer = styled.div`
+  width: 100%;
+  padding-bottom: 10px;
+  background: whitesmoke;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 600;
+`
 
 export default FilesList;
