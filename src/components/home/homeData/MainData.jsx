@@ -94,6 +94,13 @@ const MainData = ({
                     Download
                   </a>
                 </span>
+                <span
+                  onClick={() =>
+                    navigator.clipboard.writeText(file.data.fileURL)
+                  }
+                >
+                  Copy Link
+                </span>
                 <ShareButton onClick={handleShareClick}>
                   Share
                   <span className={showShareIcons ? "show" : ""}>
