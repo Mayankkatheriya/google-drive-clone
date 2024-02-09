@@ -25,6 +25,7 @@ import {
 } from "react-share";
 import { handleStarred } from "../common/firebaseApi";
 import { toast } from "react-toastify";
+import Lottie from "../common/Lottie";
 
 const MainData = ({
   files,
@@ -171,9 +172,11 @@ const MainData = ({
           </DataListRow>
         ))
       ) : (
-        <h3 style={{ textAlign: "center", marginTop: "1rem" }}>
-          No files uploaded yet.
-        </h3>
+        <Lottie
+          imagePath={"/homePage.svg"}
+          text1={"A place for all of your files"}
+          text2={"Upload your files here or use the 'New' button to upload"}
+        />
       )}
     </div>
   );

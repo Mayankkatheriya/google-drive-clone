@@ -32,14 +32,21 @@ const SearchItems = () => {
   }, [query]);
 
   useEffect(() => {
-    const searchArr = files.filter((file) => file.data.filename.toLowerCase().includes(query.toLowerCase()));
+    const searchArr = files.filter((file) =>
+      file.data.filename.toLowerCase().includes(query.toLowerCase())
+    );
     setData(searchArr);
   }, [files]);
 
   return (
     <RecentContainer>
       <PageHeader pageTitle={`Searched Files for '${query}'`} />
-      <FilesList data = {data} />
+      <FilesList
+        data={data}
+        imagePath={"/search.svg"}
+        text1={"No matching results"}
+        text2={"Adjust your query or try searching all of Drive"}
+      />
     </RecentContainer>
   );
 };
@@ -49,4 +56,4 @@ const RecentContainer = styled.div`
   padding: 10px 10px 0px 20px;
 `;
 
-export default SearchItems
+export default SearchItems;

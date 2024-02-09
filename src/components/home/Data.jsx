@@ -60,7 +60,7 @@ const Data = () => {
   return (
     <DataContainer>
       <PageHeader pageTitle={"My Drive"} />
-      <h4>Recents</h4>
+      {files.length > 0 && <h4>Recents</h4>}
       <div>
         <RecentDataGrid files={files} />
         <div>

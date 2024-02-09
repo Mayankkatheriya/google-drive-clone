@@ -34,7 +34,13 @@ const Starred = () => {
   return (
     <StarredContainer>
       <PageHeader pageTitle={"Starred"} />
-      <FilesList data= {starredFiles} page="starred"/>
+      <FilesList
+        data={starredFiles}
+        page="starred"
+        imagePath={"/starred.svg"}
+        text1={"No starred files"}
+        text2={"Add stars to things that you want to easily find later"}
+      />
     </StarredContainer>
   );
 };

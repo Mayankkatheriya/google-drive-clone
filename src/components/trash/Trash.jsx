@@ -5,7 +5,7 @@ import FilesList from "../common/FilesList";
 import { getTrashFiles } from "../common/firebaseApi";
 import { auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { toast } from  "react-toastify";
+import { toast } from "react-toastify";
 
 const Trash = () => {
   const [files, setFiles] = useState([]);
@@ -29,7 +29,13 @@ const Trash = () => {
   return (
     <RecentContainer>
       <PageHeader pageTitle={"Trash"} />
-      <FilesList data={files} page={"trash"} />
+      <FilesList
+        data={files}
+        page={"trash"}
+        imagePath={"/trash.svg"}
+        text1={"Nothing in trash"}
+        text2={"Move items you don't need to trash. Items in trash will be deleted forever after you delete it from here"}
+      />
     </RecentContainer>
   );
 };

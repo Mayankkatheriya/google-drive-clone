@@ -28,7 +28,12 @@ const Recent = () => {
   return (
     <RecentContainer>
       <PageHeader pageTitle={"Recents"} />
-      <FilesList data = {files?.slice(0, 9)} />
+      <FilesList
+        data={files?.slice(0, 9)}
+        imagePath={"/recent.svg"}
+        text1={"No recent files"}
+        text2={"See all the files you’ve recently edited or added"}
+      />
     </RecentContainer>
   );
 };

@@ -5,8 +5,9 @@ import { convertDates } from "./convertDates";
 import { changeBytes } from "./common";
 import { handleDeleteFromTrash, handleStarred } from "./firebaseApi";
 import { DeleteIcon, StarBorderIcon, StarFilledIcon } from "./SvgIcons";
+import Lottie from './Lottie';
 
-const FilesList = ({ data, page = null }) => {
+const FilesList = ({ data, page = null, imagePath, text1, text2 }) => {
   return (
     <FileList>
       {data.length > 0 ? (
@@ -42,9 +43,7 @@ const FilesList = ({ data, page = null }) => {
           );
         })
       ) : (
-        <h3 style={{ textAlign: "center", marginTop: "1rem" }}>
-          No files to shown
-        </h3>
+        <Lottie imagePath = {imagePath} text1 = {text1} text2 = {text2} />
       )}
     </FileList>
   );
