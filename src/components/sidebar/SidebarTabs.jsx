@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import {
   MobileScreenShareIcon,
@@ -14,32 +14,89 @@ import {
 } from "../common/SvgIcons";
 import { Modal } from "@mui/material";
 import { NavLink } from "react-router-dom";
+import { getFilesForUser } from "../common/firebaseApi";
+import { auth } from "../../firebase";
+import { changeBytes } from "../common/common";
 
 const SidebarTabs = () => {
-  const [openHelp, setOpenModal] = useState(false)
+  const [openHelp, setOpenModal] = useState(false);
+  const [files, setFiles] = useState([]);
+  const [storage, setStorage] = useState("");
+  const [size, setSize] = useState("");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const unsubscribeFiles = await getFilesForUser(user.uid, (newFiles) => {
+          setFiles(newFiles);
+        });
+        // Cleanup the user subscription when the component unmounts
+        return () => {
+          unsubscribeFiles();
+        };
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const sizes = files?.reduce((sum, file) => sum + file.data.size, 0);
+    setSize(sizes);
+    const storageSize = changeBytes(sizes);
+    setStorage(storageSize);
+  }, [files]);
+
   return (
     <>
       <Modal open={openHelp} onClose={() => setOpenModal(false)}>
         <ModalPopup>
-            <ModalHeading>
-              <h3>
-                Help
-              </h3>
-            </ModalHeading>
-            <ModalBody>
-              <div className="image">
-                <img src="/myimg.png" alt="" />
-              </div>
-              <h2>Mayank Gupta</h2>
-              <h4>Full Stack Web Developer</h4>
-              <p>Contact Me:</p>
-              <div className="links">
-                <a href="https://github.com/Mayankkatheriya" target="_blank" rel="noopener noreferrer"><GitIcon />Github</a>
-                <a href="https://www.linkedin.com/in/mayank-gupta-752328173/" target="_blank" rel="noopener noreferrer"><LinkedIcon />LinkedIn</a>
-                <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer"><InstaIcon />Instagram</a>
-                <a href="https://www.facebook.com/mayakkatheriya/" target="_blank" rel="noopener noreferrer"><FacebookIcon />Facebook</a>
-              </div>
-            </ModalBody>
+          <ModalHeading>
+            <h3>Help</h3>
+          </ModalHeading>
+          <ModalBody>
+            <div className="image">
+              <img src="/myimg.png" alt="" />
+            </div>
+            <h2>Mayank Gupta</h2>
+            <h4>Full Stack Web Developer</h4>
+            <p>Contact Me:</p>
+            <div className="links">
+              <a
+                href="https://github.com/Mayankkatheriya"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <GitIcon />
+                Github
+              </a>
+              <a
+                href="https://www.linkedin.com/in/mayank-gupta-752328173/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <LinkedIcon />
+                LinkedIn
+              </a>
+              <a
+                href="https://www.instagram.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <InstaIcon />
+                Instagram
+              </a>
+              <a
+                href="https://www.facebook.com/mayakkatheriya/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FacebookIcon />
+                Facebook
+              </a>
+            </div>
+          </ModalBody>
         </ModalPopup>
       </Modal>
       <SidebarOptions>
@@ -106,8 +163,8 @@ const SidebarTabs = () => {
           <span>Storage</span>
         </SidebarOption>
         <div className="progress_bar">
-          <progress size="tiny" value="22" max="100" />
-          <span>1.1 GB of 5 GB used</span>
+          <progress size="tiny" value={size} max={5000000000} />
+          <span>{storage} of 5 GB used</span>
         </div>
       </SidebarOptions>
     </>
@@ -154,12 +211,12 @@ const ModalBody = styled.div`
   h4 {
     margin-bottom: 1rem;
     color: #6b6b6b;
-    font-size: .9rem;
+    font-size: 0.9rem;
     letter-spacing: 1px;
   }
 
   p {
-    margin-bottom: .5rem;
+    margin-bottom: 0.5rem;
     text-decoration: underline;
   }
 
@@ -181,15 +238,15 @@ const ModalBody = styled.div`
       }
 
       &:nth-child(2) {
-        color: #0077B5;
+        color: #0077b5;
       }
 
       &:nth-child(3) {
-        color: #CC2E96;
+        color: #cc2e96;
       }
 
       &:nth-child(4) {
-        color: #1197F5;
+        color: #1197f5;
       }
     }
   }

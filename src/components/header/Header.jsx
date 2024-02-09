@@ -141,7 +141,6 @@ const SearchWrapper = styled.div`
     position: absolute;
     top: 80px;
     right: 10px;
-
     animation: mobileMenu 0.3s ease forwards;
     .searchInput {
       display: flex;
@@ -187,6 +186,10 @@ const SearchWrapper = styled.div`
       100% {
         transform: translateY(0);
       }
+    }
+
+    @media screen and (max-width: 430px) {
+      right: 0px;
     }
   }
 `;
