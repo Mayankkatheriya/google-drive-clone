@@ -4,7 +4,7 @@ import FileIcons from "./FileIcons";
 import { convertDates } from "./convertDates";
 import { changeBytes } from "./common";
 import { handleDeleteFromTrash, handleStarred } from "./firebaseApi";
-import { StarBorderIcon, StarFilledIcon } from "./SvgIcons";
+import { DeleteIcon, StarBorderIcon, StarFilledIcon } from "./SvgIcons";
 
 const FilesList = ({ data, page = null }) => {
   return (
@@ -33,7 +33,7 @@ const FilesList = ({ data, page = null }) => {
             )}
             {page === "trash" && (
               <DeleteContainer onClick={() => handleDeleteFromTrash(file.id)}>
-                Delete Permanenly
+                <DeleteIcon />{" Delete Permanenly"}
               </DeleteContainer>
             )}
           </DataFile>
@@ -56,7 +56,7 @@ const FileList = styled.div`
 const DataFile = styled.div`
   color: #383838;
   width: 100%;
-  max-width: 320px;
+  max-width: 300px;
   border: 2px solid lightgray;
   padding: 10px 0px 0px 0px;
   position: relative;
@@ -68,7 +68,7 @@ const DataFile = styled.div`
   }
 
   svg {
-    font-size: 120px;
+    font-size: 70px;
     color: gray;
     margin-bottom: 1rem;
     width: 100%;
@@ -105,6 +105,7 @@ const StarContainer = styled.div`
     font-size: 30px;
     font-weight: 500;
     z-index: 10;
+    color: #FFD400;
   }
 `;
 
@@ -115,6 +116,17 @@ const DeleteContainer = styled.div`
   text-align: center;
   cursor: pointer;
   font-weight: 600;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+
+
+  svg {
+    width: max-content;
+    font-size: 20px;
+    margin: 0;
+  }
 `
 
 export default FilesList;

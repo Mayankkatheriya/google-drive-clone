@@ -23,6 +23,10 @@ import VideoLibraryOutlinedIcon from '@mui/icons-material/VideoLibraryOutlined';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import StarOutlinedIcon from '@mui/icons-material/StarOutlined';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import ReplyOutlinedIcon from '@mui/icons-material/ReplyOutlined';
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
+import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 
 export const MobileScreenShareIcon = () => <MobileScreenShareOutlinedIcon />;
 export const DevicesIcons = () => <DevicesIcon />;
@@ -48,3 +52,7 @@ export const VideoIcon = () => <VideoLibraryOutlinedIcon />;
 export const MoreOptionsIcon = () => <MoreHorizIcon />;
 export const MenuIcon = () => <MenuRoundedIcon />;
 export const StarFilledIcon = () => <StarOutlinedIcon />;
+export const DownloadIcon = () => <FileDownloadOutlinedIcon />;
+export const ShareIcon = () => <ReplyOutlinedIcon />;
+export const DeleteIcon = () => <DeleteRoundedIcon />;
+export const CopyIcon = () => <ContentCopyRoundedIcon />;

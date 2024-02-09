@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
-import { ArrowDownIcon, MoreOptionsIcon, StarFilledIcon, StarBorderIcon, } from "../common/SvgIcons";
+import { ArrowDownIcon, MoreOptionsIcon, StarFilledIcon, StarBorderIcon, DownloadIcon, CopyIcon, DeleteIcon, ShareIcon } from "../common/SvgIcons";
 import { changeBytes } from "../common/common";
 import { convertDates } from "../common/convertDates";
 import FileIcons from "../common/FileIcons";
@@ -67,7 +67,7 @@ const MainData = ({
       {files.map((file) => (
         <DataListRow key={file.id}>
           <div>
-            <p onClick={() => handleStarred(file.id)}>
+            <p className="starr" onClick={() => handleStarred(file.id)}>
             {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
             </p>
             <a href={file.data.fileURL} target="_blank">
@@ -95,7 +95,7 @@ const MainData = ({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Download
+                    <DownloadIcon />{" Download"}
                   </a>
                 </span>
                 <span
@@ -103,10 +103,10 @@ const MainData = ({
                     navigator.clipboard.writeText(file.data.fileURL)
                   }
                 >
-                  Copy Link
+                  <CopyIcon />{" Copy Link"}
                 </span>
                 <ShareButton onClick={handleShareClick}>
-                  Share
+                  <ShareIcon />{" Share"}
                   <span className={showShareIcons ? "show" : ""}>
                     <EmailShareButton
                       url={file.data.fileURL}
@@ -138,7 +138,7 @@ const MainData = ({
                   </span>
                 </ShareButton>
                 <span onClick={() => handleDelete(file.id, file.data)}>
-                  <button>Delete</button>
+                  <button><DeleteIcon />{" Delete"}</button>
                 </span>
                 <span className="uploaded">
                   {convertDates(file.data.timestamp?.seconds)}
@@ -182,6 +182,10 @@ const DataListRow = styled.div`
     svg {
       font-size: 22px;
       margin: 10px;
+    }
+
+    .starr {
+      color: #FFC700
     }
   }
 
@@ -238,8 +242,8 @@ const OptionsMenu = styled.span`
   position: absolute;
   background-color: #fff;
   border: 2px solid #ccc;
-  top: 70%;
-  right: 40%;
+  top: -200%;
+  right: 100%;
   cursor: pointer;
   z-index: 10;
   width: max-content;
@@ -252,10 +256,10 @@ const OptionsMenu = styled.span`
     width: 15px;
     height: 15px;
     background-color: #fff;
-    top: -8px;
-    right: 5px;
+    top: 100px;
+    right: -8px;
     transform: rotate(45deg);
-    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
     border-top: 1px solid #ccc;
   }
 
@@ -264,7 +268,6 @@ const OptionsMenu = styled.span`
     border-bottom: 2px solid #ccc;
     padding: 10px;
     display: flex;
-    justify-content: center;
     align-items: center;
 
     a {
@@ -285,6 +288,9 @@ const OptionsMenu = styled.span`
     background-color: transparent;
     border: none;
     color: red;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   a {
