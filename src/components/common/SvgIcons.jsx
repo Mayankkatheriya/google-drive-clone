@@ -28,6 +28,10 @@ import ReplyOutlinedIcon from '@mui/icons-material/ReplyOutlined';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import FacebookOutlinedIcon from '@mui/icons-material/FacebookOutlined';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import InstagramIcon from '@mui/icons-material/Instagram';
 
 export const MobileScreenShareIcon = () => <MobileScreenShareOutlinedIcon />;
 export const DevicesIcons = () => <DevicesIcon />;
@@ -58,3 +62,7 @@ export const ShareIcon = () => <ReplyOutlinedIcon />;
 export const DeleteIcon = () => <DeleteRoundedIcon />;
 export const CopyIcon = () => <ContentCopyRoundedIcon />;
 export const CloseIcon = () => <CloseRoundedIcon />;
+export const GitIcon = () => <GitHubIcon />;
+export const FacebookIcon = () => <FacebookOutlinedIcon />;
+export const LinkedIcon = () => <LinkedInIcon />;
+export const InstaIcon = () => <InstagramIcon />;

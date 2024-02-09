@@ -9,36 +9,43 @@ import { DeleteIcon, StarBorderIcon, StarFilledIcon } from "./SvgIcons";
 const FilesList = ({ data, page = null }) => {
   return (
     <FileList>
-      {data.map((file) => {
-        return (
-          <DataFile key={file.id}>
-            <a href={file.data.fileURL} target="_blank">
-              <FileIcons type={file.data.contentType} />
-              <DataDetails>
-                <p title={file.data.filename}>{file.data.filename}</p>
-                <span className="uploaded">
-                  {"Uploaded on: "}
-                  {convertDates(file.data.timestamp?.seconds)}
-                </span>
-                <span className="fileSize">
-                  {"Size: "}
-                  {changeBytes(file.data.size)}
-                </span>
-              </DataDetails>
-            </a>
-            {page === "starred" && (
-              <StarContainer onClick={() => handleStarred(file.id)}>
-                {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
-              </StarContainer>
-            )}
-            {page === "trash" && (
-              <DeleteContainer onClick={() => handleDeleteFromTrash(file.id)}>
-                <DeleteIcon />{" Delete Permanenly"}
-              </DeleteContainer>
-            )}
-          </DataFile>
-        );
-      })}
+      {data.length > 0 ? (
+        data.map((file) => {
+          return (
+            <DataFile key={file.id}>
+              <a href={file.data.fileURL} target="_blank">
+                <FileIcons type={file.data.contentType} />
+                <DataDetails>
+                  <p title={file.data.filename}>{file.data.filename}</p>
+                  <span className="uploaded">
+                    {"Uploaded on: "}
+                    {convertDates(file.data.timestamp?.seconds)}
+                  </span>
+                  <span className="fileSize">
+                    {"Size: "}
+                    {changeBytes(file.data.size)}
+                  </span>
+                </DataDetails>
+              </a>
+              {page === "starred" && (
+                <StarContainer onClick={() => handleStarred(file.id)}>
+                  {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
+                </StarContainer>
+              )}
+              {page === "trash" && (
+                <DeleteContainer onClick={() => handleDeleteFromTrash(file.id)}>
+                  <DeleteIcon />
+                  {" Delete Permanenly"}
+                </DeleteContainer>
+              )}
+            </DataFile>
+          );
+        })
+      ) : (
+        <h3 style={{ textAlign: "center", marginTop: "1rem" }}>
+          No files to shown
+        </h3>
+      )}
     </FileList>
   );
 };
@@ -62,6 +69,12 @@ const DataFile = styled.div`
   position: relative;
   z-index: 5;
   border-radius: 10px;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 3px 3px 5px 3px #8a8a8a;
+  }
 
   a {
     color: #383838;
@@ -105,7 +118,7 @@ const StarContainer = styled.div`
     font-size: 30px;
     font-weight: 500;
     z-index: 10;
-    color: #FFD400;
+    color: #ffd400;
   }
 `;
 
@@ -121,12 +134,11 @@ const DeleteContainer = styled.div`
   align-items: center;
   gap: 10px;
 
-
   svg {
     width: max-content;
     font-size: 20px;
     margin: 0;
   }
-`
+`;
 
 export default FilesList;

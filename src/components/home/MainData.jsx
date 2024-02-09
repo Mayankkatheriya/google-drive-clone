@@ -1,6 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
-import { ArrowDownIcon, MoreOptionsIcon, StarFilledIcon, StarBorderIcon, DownloadIcon, CopyIcon, DeleteIcon, ShareIcon } from "../common/SvgIcons";
+import {
+  ArrowDownIcon,
+  MoreOptionsIcon,
+  StarFilledIcon,
+  StarBorderIcon,
+  DownloadIcon,
+  CopyIcon,
+  DeleteIcon,
+  ShareIcon,
+} from "../common/SvgIcons";
 import { changeBytes } from "../common/common";
 import { convertDates } from "../common/convertDates";
 import FileIcons from "../common/FileIcons";
@@ -15,7 +24,7 @@ import {
   WhatsappIcon,
 } from "react-share";
 import { handleStarred } from "../common/firebaseApi";
-import { toast } from  "react-toastify";
+import { toast } from "react-toastify";
 
 const MainData = ({
   files,
@@ -65,92 +74,107 @@ const MainData = ({
         </div>
       </DataListRow>
 
-      {files.map((file) => (
-        <DataListRow key={file.id}>
-          <div>
-            <p className="starr" onClick={() => handleStarred(file.id)}>
-            {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
-            </p>
-            <a href={file.data.fileURL} target="_blank">
-              <FileIcons type={file.data.contentType} />
-              <span title={file.data.filename}>{file.data.filename}</span>
-            </a>
-          </div>
-          <div className="fileSize">{changeBytes(file.data.size)}</div>
-          <div className="modified">
-            {convertDates(file.data.timestamp?.seconds)}
-          </div>
-          <div>
-            <OptionsContainer
-              title="Options"
-              onClick={() => handleOptionsClick(file.id)}
-            >
-              <MoreOptionsIcon />
-            </OptionsContainer>
-            {optionsVisible === file.id && (
-              <OptionsMenu ref={optionsMenuRef}>
-                <span>
-                  <a
-                    href={file.data.fileURL}
-                    download={file.data.name}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <DownloadIcon />{" Download"}
-                  </a>
-                </span>
-                <span
-                  onClick={() => {navigator.clipboard.writeText(file.data.fileURL); toast.success("Link Copied")}}
-                >
-                  <CopyIcon />{" Copy Link"}
-                </span>
-                <ShareButton onClick={handleShareClick}>
-                  <ShareIcon />{" Share"}
-                  <span className={showShareIcons ? "show" : ""}>
-                    <EmailShareButton
-                      url={file.data.fileURL}
-                      subject={`This is ${file.data.filename} file link`}
+      {files.length > 0 ? (
+        files.map((file) => (
+          <DataListRow key={file.id}>
+            <div>
+              <p className="starr" onClick={() => handleStarred(file.id)}>
+                {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
+              </p>
+              <a href={file.data.fileURL} target="_blank">
+                <FileIcons type={file.data.contentType} />
+                <span title={file.data.filename}>{file.data.filename}</span>
+              </a>
+            </div>
+            <div className="fileSize">{changeBytes(file.data.size)}</div>
+            <div className="modified">
+              {convertDates(file.data.timestamp?.seconds)}
+            </div>
+            <div>
+              <OptionsContainer
+                title="Options"
+                onClick={() => handleOptionsClick(file.id)}
+              >
+                <MoreOptionsIcon />
+              </OptionsContainer>
+              {optionsVisible === file.id && (
+                <OptionsMenu ref={optionsMenuRef}>
+                  <span>
+                    <a
+                      href={file.data.fileURL}
+                      download={file.data.name}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      <EmailIcon size={30} round={true} />
-                    </EmailShareButton>
-
-                    <FacebookShareButton
-                      url={file.data.fileURL}
-                      hashtag={file.data.filename}
-                    >
-                      <FacebookIcon size={30} round={true} />
-                    </FacebookShareButton>
-
-                    <LinkedinShareButton
-                      url={file.data.fileURL}
-                      title={`This is ${file.data.filename} file link`}
-                    >
-                      <LinkedinIcon size={30} round={true} />
-                    </LinkedinShareButton>
-
-                    <WhatsappShareButton
-                      url={file.data.fileURL}
-                      title={`This is ${file.data.filename} file link`}
-                    >
-                      <WhatsappIcon size={30} round={true} />
-                    </WhatsappShareButton>
+                      <DownloadIcon />
+                      {" Download"}
+                    </a>
                   </span>
-                </ShareButton>
-                <span onClick={() => handleDelete(file.id, file.data)}>
-                  <button><DeleteIcon />{" Delete"}</button>
-                </span>
-                <span className="uploaded">
-                  {convertDates(file.data.timestamp?.seconds)}
-                </span>
-                <span className="fileSize">
-                  {"Size: "}
-                  {changeBytes(file.data.size)}
-                </span>
-              </OptionsMenu>
-            )}
-          </div>
-        </DataListRow>
-      ))}
+                  <span
+                    onClick={() => {
+                      navigator.clipboard.writeText(file.data.fileURL);
+                      toast.success("Link Copied");
+                    }}
+                  >
+                    <CopyIcon />
+                    {" Copy Link"}
+                  </span>
+                  <ShareButton onClick={handleShareClick}>
+                    <ShareIcon />
+                    {" Share"}
+                    <span className={showShareIcons ? "show" : ""}>
+                      <EmailShareButton
+                        url={file.data.fileURL}
+                        subject={`This is ${file.data.filename} file link`}
+                      >
+                        <EmailIcon size={30} round={true} />
+                      </EmailShareButton>
+
+                      <FacebookShareButton
+                        url={file.data.fileURL}
+                        hashtag={file.data.filename}
+                      >
+                        <FacebookIcon size={30} round={true} />
+                      </FacebookShareButton>
+
+                      <LinkedinShareButton
+                        url={file.data.fileURL}
+                        title={`This is ${file.data.filename} file link`}
+                      >
+                        <LinkedinIcon size={30} round={true} />
+                      </LinkedinShareButton>
+
+                      <WhatsappShareButton
+                        url={file.data.fileURL}
+                        title={`This is ${file.data.filename} file link`}
+                      >
+                        <WhatsappIcon size={30} round={true} />
+                      </WhatsappShareButton>
+                    </span>
+                  </ShareButton>
+                  <span onClick={() => handleDelete(file.id, file.data)}>
+                    <button>
+                      <DeleteIcon />
+                      {" Delete"}
+                    </button>
+                  </span>
+                  <span className="uploaded">
+                    {convertDates(file.data.timestamp?.seconds)}
+                  </span>
+                  <span className="fileSize">
+                    {"Size: "}
+                    {changeBytes(file.data.size)}
+                  </span>
+                </OptionsMenu>
+              )}
+            </div>
+          </DataListRow>
+        ))
+      ) : (
+        <h3 style={{ textAlign: "center", marginTop: "1rem" }}>
+          No files uploaded yet.
+        </h3>
+      )}
     </div>
   );
 };
@@ -184,7 +208,7 @@ const DataListRow = styled.div`
     }
 
     .starr {
-      color: #FFC700
+      color: #ffc700;
     }
   }
 

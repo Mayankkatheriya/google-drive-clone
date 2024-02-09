@@ -70,6 +70,7 @@ const Header = () => {
     if (e.key === "Enter" && searchQuery.length > 0) {
       navigate(`/search/${searchQuery}`);
       setQuery("");
+      setShowSearch(false);
     }
   };
 
@@ -77,6 +78,7 @@ const Header = () => {
     if (searchQuery.length > 0) {
       navigate(`/search/${searchQuery}`);
       setQuery("");
+      setShowSearch(false);
     }
   };
 

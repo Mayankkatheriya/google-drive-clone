@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import React, { useEffect, useState } from "react";
 import { db, auth } from "../../firebase";
-import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { doc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { getFilesForUser, postTrashCollection } from "../common/firebaseApi";
 import RecentDataGrid from "./RecentDataGrid";
