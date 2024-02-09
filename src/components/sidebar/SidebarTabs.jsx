@@ -53,7 +53,7 @@ const SidebarTabs = () => {
       <Modal open={openHelp} onClose={() => setOpenModal(false)}>
         <ModalPopup>
           <ModalHeading>
-            <h3>Help</h3>
+            <h3>Need Help?</h3>
           </ModalHeading>
           <ModalBody>
             <div className="image">
@@ -158,7 +158,7 @@ const SidebarTabs = () => {
       <hr />
 
       <SidebarOptions>
-        <SidebarOption title="Storage">
+        <SidebarOption title={`${storage} of 5 GB used`}>
           <CloudQueueIcons />
           <span>Storage</span>
         </SidebarOption>
@@ -274,11 +274,6 @@ const SidebarOptions = styled.div`
     color: #333;
     font-size: 13px;
     @media screen and (max-width: 768px) {
-      display: none;
-    }
-  }
-  @media screen and (max-width: 768px) {
-    &:last-child {
       display: none;
     }
   }
