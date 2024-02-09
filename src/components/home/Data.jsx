@@ -7,6 +7,7 @@ import { getFilesForUser, postTrashCollection } from "../common/firebaseApi";
 import RecentDataGrid from "./RecentDataGrid";
 import MainData from "./MainData";
 import PageHeader from "../common/PageHeader";
+import { toast } from  "react-toastify";
 
 const Data = () => {
   const [files, setFiles] = useState([]);
@@ -43,6 +44,7 @@ const Data = () => {
   
         // Delete the document
         await deleteDoc(docRef);
+        toast.warn("File moved to the trash");
       }
     } catch (error) {
       console.error("Error deleting document: ", error);

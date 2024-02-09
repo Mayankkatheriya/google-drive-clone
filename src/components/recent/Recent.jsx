@@ -3,26 +3,26 @@ import styled from "styled-components";
 import PageHeader from "../common/PageHeader";
 import { getFilesForUser } from "../common/firebaseApi";
 import { auth } from "../../firebase";
-import { onAuthStateChanged } from "firebase/auth";
 import FilesList from "../common/FilesList";
 
 const Recent = () => {
   const [files, setFiles] = useState([]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const fetchData = async () => {
+      const user = auth.currentUser;
       if (user) {
-        const unsubscribeFiles = getFilesForUser(user.uid, setFiles);
-
+        const unsubscribeFiles = await getFilesForUser(user.uid, (newFiles) => {
+          setFiles(newFiles);
+        });
         // Cleanup the user subscription when the component unmounts
         return () => {
           unsubscribeFiles();
         };
       }
-    });
+    };
 
-    // Cleanup the user subscription when the component unmounts
-    return () => unsubscribe();
+    fetchData();
   }, []);
 
   return (

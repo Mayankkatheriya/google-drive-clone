@@ -1,4 +1,4 @@
-import { db, auth } from "../../firebase";
+import { db } from "../../firebase";
 import {
   collection,
   onSnapshot,
@@ -10,7 +10,7 @@ import {
   where,
   addDoc,
 } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { toast } from  "react-toastify";
 
 let trashRef = collection(db, "trash");
 
@@ -56,6 +56,7 @@ const handleDeleteFromTrash = async (id) => {
 
       // Delete the document
       await deleteDoc(docRef);
+      toast.error("Permanently Deleted")
     }
   } catch (error) {
     console.error("Error deleting document: ", error);
@@ -90,6 +91,12 @@ const handleStarred = async (id) => {
     const docSnapshot = await getDoc(docRef);
     if (docSnapshot.exists()) {
       const currentStarredStatus = docSnapshot.data().starred || false;
+      if(currentStarredStatus){
+        toast.error("Removed from starred");
+      }
+      else {
+        toast.success("Added to starred");
+      }
       await updateDoc(docRef, { starred: !currentStarredStatus });
     } else {
       console.error("Document does not exist.");

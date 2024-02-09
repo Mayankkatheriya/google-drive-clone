@@ -27,6 +27,7 @@ import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import ReplyOutlinedIcon from '@mui/icons-material/ReplyOutlined';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 export const MobileScreenShareIcon = () => <MobileScreenShareOutlinedIcon />;
 export const DevicesIcons = () => <DevicesIcon />;
@@ -56,3 +57,4 @@ export const DownloadIcon = () => <FileDownloadOutlinedIcon />;
 export const ShareIcon = () => <ReplyOutlinedIcon />;
 export const DeleteIcon = () => <DeleteRoundedIcon />;
 export const CopyIcon = () => <ContentCopyRoundedIcon />;
+export const CloseIcon = () => <CloseRoundedIcon />;

@@ -3,7 +3,6 @@ import styled from "styled-components";
 import PageHeader from "../common/PageHeader";
 import { getFilesForUser } from "../common/firebaseApi";
 import { auth } from "../../firebase";
-import { onAuthStateChanged } from "firebase/auth";
 import FilesList from "../common/FilesList";
 
 const Starred = () => {

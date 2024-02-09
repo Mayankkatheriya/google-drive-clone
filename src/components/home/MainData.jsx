@@ -15,6 +15,7 @@ import {
   WhatsappIcon,
 } from "react-share";
 import { handleStarred } from "../common/firebaseApi";
+import { toast } from  "react-toastify";
 
 const MainData = ({
   files,
@@ -99,9 +100,7 @@ const MainData = ({
                   </a>
                 </span>
                 <span
-                  onClick={() =>
-                    navigator.clipboard.writeText(file.data.fileURL)
-                  }
+                  onClick={() => {navigator.clipboard.writeText(file.data.fileURL); toast.success("Link Copied")}}
                 >
                   <CopyIcon />{" Copy Link"}
                 </span>

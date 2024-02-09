@@ -1,13 +1,39 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { SearchIcons } from "../common/SvgIcons";
+import { useNavigate } from "react-router-dom";
 
 const SearchBar = () => {
+  const [searchQuery, setQuery] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearchByInput = (e) => {
+    if (e.key === "Enter" && searchQuery.length > 0) {
+      navigate(`/search/${searchQuery}`);
+      setQuery("");
+    }
+  };
+
+  const handleSearch = () => {
+    if (searchQuery.length > 0) {
+      navigate(`/search/${searchQuery}`);
+      setQuery("");
+    }
+  };
+
   return (
     <InputContainer>
       <SearchContainer>
-        <input type="text" placeholder="Search in Drive" />
-        <SearchIcons />
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyUp={handleSearchByInput}
+          placeholder="Search in Drive"
+        />
+        <span onClick={handleSearch}>
+          <SearchIcons />
+        </span>
       </SearchContainer>
     </InputContainer>
   );
@@ -52,7 +78,12 @@ const SearchContainer = styled.div`
 
     border: none;
   }
-
+  span {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
   svg:last-child {
     cursor: pointer;
     margin-right: 10px;

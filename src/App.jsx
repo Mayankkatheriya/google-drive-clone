@@ -7,10 +7,13 @@ import { store } from "./store/Store";
 import { Provider } from "react-redux";
 import HomeLayout from "./components/HomeLayout";
 import Recent from "./components/recent/Recent";
-import Starred  from "./components/starred/Starred";
-import Trash from './components/trash/Trash';
-import SearchItems from './components/search/SearchItems';
+import Starred from "./components/starred/Starred";
+import Trash from "./components/trash/Trash";
+import SearchItems from "./components/search/SearchItems";
 import Data from "./components/home/Data";
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const router = createBrowserRouter([
@@ -57,6 +60,18 @@ function App() {
   return (
     <Provider store={store}>
       <RouterProvider router={router} />
+      <ToastContainer
+        position="top-right"
+        autoClose={1000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </Provider>
   );
 }

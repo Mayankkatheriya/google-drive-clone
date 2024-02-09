@@ -1,11 +1,14 @@
 import React from "react";
 import styled from "styled-components";
-import { AppsIcon } from "../common/SvgIcons";
+import { SearchIcons, CloseIcon } from "../common/SvgIcons";
 
-const ProfileSection = ({ userPhoto, userName, handleAuth }) => {
+const ProfileSection = ({ userPhoto, userName, handleAuth, showSearch, setShowSearch }) => {
+
   return (
     <RightSection>
-      <AppsIcon className="app" />
+      <div className="searchIcon" onClick={setShowSearch} >
+        {showSearch ? <CloseIcon /> : <SearchIcons />}
+      </div>
       <SignOut>
         <UserImg src={userPhoto} alt={userName} />
         <DropDown>
@@ -19,6 +22,7 @@ const ProfileSection = ({ userPhoto, userName, handleAuth }) => {
 const RightSection = styled.div`
   display: flex;
   align-items: center;
+  gap: 10px;
 
   svg {
     font-size: 35px;
@@ -32,8 +36,8 @@ const RightSection = styled.div`
     }
   }
 
-  .app {
-    margin-right: 15px;
+  .searchIcon {
+    display: flex;
   }
 `;
 
@@ -70,15 +74,15 @@ const SignOut = styled.div`
 
   ${DropDown} {
     &::before {
-    content: '';
-    width: 15px;
-    height: 15px;
-    position: absolute;
-    left: 50%;
-    top: -5px;
-    background-color: #fff;
-    transform: rotate(45deg);
-  }
+      content: "";
+      width: 15px;
+      height: 15px;
+      position: absolute;
+      left: 50%;
+      top: -5px;
+      background-color: #fff;
+      transform: rotate(45deg);
+    }
   }
 
   ${UserImg} {
@@ -93,7 +97,7 @@ const SignOut = styled.div`
       transition-duration: 1s;
     }
   }
-  
 `;
+
 
 export default ProfileSection;

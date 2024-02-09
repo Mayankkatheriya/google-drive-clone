@@ -5,6 +5,7 @@ import FilesList from "../common/FilesList";
 import { getTrashFiles } from "../common/firebaseApi";
 import { auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { toast } from  "react-toastify";
 
 const Trash = () => {
   const [files, setFiles] = useState([]);

@@ -3,18 +3,18 @@ import styled from "styled-components";
 import { db, storage, auth } from "../../firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { useDispatch, useSelector } from "react-redux";
-import { selectSidebarBool, setSidebarBool } from "../../store/BoolSlice";
+import { useSelector } from "react-redux";
+import { selectSidebarBool } from "../../store/BoolSlice";
 import FileUploadModal from "./FileUploadModal";
 import AddFile from "./AddFile";
 import SidebarTabs from "./SidebarTabs";
+import { toast } from  "react-toastify";
 
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState(null);
   const sidebarBool = useSelector(selectSidebarBool);
-  const dispatch = useDispatch();
 
   const handleFile = (e) => {
     console.log(e.target.files);
@@ -46,6 +46,7 @@ const Sidebar = () => {
         starred: false,
       });
 
+      toast.success("File Uploaded Successfully")
       // Reset state and close modal
       setUploading(false);
       setFile(null);

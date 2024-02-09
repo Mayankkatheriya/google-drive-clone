@@ -8,7 +8,6 @@ import { setUserLoginDetails } from "../../store/UserSlice";
 
 const Login = () => {
   const dispatch = useDispatch();
-
   const handleAuth = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
