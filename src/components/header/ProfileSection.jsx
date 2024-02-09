@@ -61,7 +61,7 @@ const DropDown = styled.div`
   font-size: 14px;
   letter-spacing: 3px;
   width: 100px;
-  opacity: 0;
+  display: none;
 `;
 const SignOut = styled.div`
   position: relative;
@@ -93,7 +93,7 @@ const SignOut = styled.div`
 
   &:hover {
     ${DropDown} {
-      opacity: 1;
+      display: flex;
       transition-duration: 1s;
     }
   }
