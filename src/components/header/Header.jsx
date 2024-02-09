@@ -114,7 +114,7 @@ const Header = () => {
             <div className="searchInput">
               <input
                 type="search"
-                placeholder="Search for a movie or tv show...."
+                placeholder="Search for a File...."
                 value={searchQuery}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyUp={handleSearchByInput}
