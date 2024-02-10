@@ -1,8 +1,17 @@
+// LogoWrapperComponent.js
+
 import React from "react";
 import styled from "styled-components";
 import { MenuIcon } from "../common/SvgIcons";
 import { Link } from "react-router-dom";
 
+/**
+ * LogoWrapperComponent displays the logo and menu icon.
+ * @param {Object} props - Component props.
+ * @param {Function} props.onClick - Click event handler for the menu icon.
+ * @param {string} props.userName - User name to determine whether to show the menu icon.
+ * @returns {JSX.Element} - LogoWrapperComponent.
+ */
 const LogoWrapperComponent = ({ onClick, userName }) => {
   return (
     <LogoWrapper>

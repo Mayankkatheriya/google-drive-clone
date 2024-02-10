@@ -1,12 +1,29 @@
+// ProfileSection.js
+
 import React from "react";
 import styled from "styled-components";
 import { SearchIcons, CloseIcon } from "../common/SvgIcons";
 
-const ProfileSection = ({ userPhoto, userName, handleAuth, showSearch, setShowSearch }) => {
-
+/**
+ * ProfileSection component displays user profile information and options.
+ * @param {Object} props - Component props.
+ * @param {string} props.userPhoto - URL of the user's profile photo.
+ * @param {string} props.userName - User's name.
+ * @param {Function} props.handleAuth - Click event handler for authentication.
+ * @param {boolean} props.showSearch - Boolean indicating whether the search bar is visible.
+ * @param {Function} props.setShowSearch - Function to toggle the visibility of the search bar.
+ * @returns {JSX.Element} - ProfileSection component.
+ */
+const ProfileSection = ({
+  userPhoto,
+  userName,
+  handleAuth,
+  showSearch,
+  setShowSearch,
+}) => {
   return (
     <RightSection>
-      <div className="searchIcon" onClick={setShowSearch} >
+      <div className="searchIcon" onClick={setShowSearch}>
         {showSearch ? <CloseIcon /> : <SearchIcons />}
       </div>
       <SignOut>
@@ -63,6 +80,7 @@ const DropDown = styled.div`
   width: 100px;
   display: none;
 `;
+
 const SignOut = styled.div`
   position: relative;
   height: 48px;
@@ -98,6 +116,5 @@ const SignOut = styled.div`
     }
   }
 `;
-
 
 export default ProfileSection;

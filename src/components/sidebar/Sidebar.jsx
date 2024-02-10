@@ -1,3 +1,5 @@
+// Sidebar.js
+
 import React, { useState } from "react";
 import styled from "styled-components";
 import { db, storage, auth } from "../../firebase";
@@ -8,21 +10,34 @@ import { selectSidebarBool } from "../../store/BoolSlice";
 import FileUploadModal from "./FileUploadModal";
 import AddFile from "./AddFile";
 import SidebarTabs from "./SidebarTabs";
-import { toast } from  "react-toastify";
+import { toast } from "react-toastify";
 
+/**
+ * Sidebar component for managing file uploads and displaying tabs.
+ * @returns {JSX.Element} - Sidebar component.
+ */
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState(null);
   const sidebarBool = useSelector(selectSidebarBool);
 
+  /**
+   * Handles the selection of a file for upload.
+   * @param {Object} e - File input change event.
+   */
   const handleFile = (e) => {
-    console.log(e.target.files);
     if (e.target.files[0]) {
       setFile(e.target.files[0]);
     }
   };
 
+  /**
+   * Handles the file upload process.
+   * Uploads the selected file to Firebase Storage and adds file details to Firestore.
+   * Displays a success toast upon successful upload.
+   * @param {Object} e - Form submit event.
+   */
   const handleUpload = async (e) => {
     e.preventDefault();
     setUploading(true);
@@ -46,7 +61,8 @@ const Sidebar = () => {
         starred: false,
       });
 
-      toast.success("File Uploaded Successfully")
+      toast.success("File Uploaded Successfully");
+
       // Reset state and close modal
       setUploading(false);
       setFile(null);
@@ -54,6 +70,7 @@ const Sidebar = () => {
     } catch (error) {
       console.error("Error uploading file:", error);
       setUploading(false);
+      toast.error("Error uploading file. Please try again.");
     }
   };
 

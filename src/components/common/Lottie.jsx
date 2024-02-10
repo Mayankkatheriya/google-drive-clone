@@ -1,6 +1,15 @@
+// Lottie.js
+
 import React from "react";
 import styled from "styled-components";
 
+/**
+ * Lottie component to display an image with accompanying text
+ * @param {string} imagePath - Path to the image
+ * @param {string} text1 - First line of text
+ * @param {string} text2 - Second line of text
+ * @returns {JSX.Element} - Rendered Lottie component
+ */
 const Lottie = ({ imagePath, text1, text2 }) => {
   return (
     <LottieContainer>
@@ -47,7 +56,7 @@ const LottieContainer = styled.div`
 
   .secondText {
     font-size: 1rem;
-    line-height: 1%.5rem;
+    line-height: 1.5rem;
     letter-spacing: 0.00625em;
     margin-bottom: 1rem;
     color: #444746;

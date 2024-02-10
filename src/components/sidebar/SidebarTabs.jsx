@@ -1,3 +1,4 @@
+// Importing necessary dependencies and icons
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import {
@@ -18,16 +19,25 @@ import { getFilesForUser } from "../common/firebaseApi";
 import { auth } from "../../firebase";
 import { changeBytes } from "../common/common";
 
+/**
+ * SidebarTabs component for rendering various tabs in the sidebar.
+ * Manages state for help modal, user files, storage details, and storage modal.
+ * @returns {JSX.Element} - SidebarTabs component.
+ */
 const SidebarTabs = () => {
+  // State variables for managing various aspects of the component
   const [openHelp, setOpenModal] = useState(false);
   const [files, setFiles] = useState([]);
   const [storage, setStorage] = useState("");
   const [size, setSize] = useState("");
+  const [openStorageModal, setOpenStorageModal] = useState(false);
 
+  // Fetch user files on component mount
   useEffect(() => {
     const fetchData = async () => {
       const user = auth.currentUser;
       if (user) {
+        // Fetch user files and subscribe to changes
         const unsubscribeFiles = await getFilesForUser(user.uid, (newFiles) => {
           setFiles(newFiles);
         });
@@ -41,6 +51,7 @@ const SidebarTabs = () => {
     fetchData();
   }, []);
 
+  // Update storage details when files change
   useEffect(() => {
     const sizes = files?.reduce((sum, file) => sum + file.data.size, 0);
     setSize(sizes);
@@ -50,56 +61,19 @@ const SidebarTabs = () => {
 
   return (
     <>
+      {/* Help Modal */}
       <Modal open={openHelp} onClose={() => setOpenModal(false)}>
         <ModalPopup>
           <ModalHeading>
             <h3>Need Help?</h3>
           </ModalHeading>
-          <ModalBody>
-            <div className="image">
-              <img src="/myimg.png" alt="" />
-            </div>
-            <h2>Mayank Gupta</h2>
-            <h4>Full Stack Web Developer</h4>
-            <p>Contact Me:</p>
-            <div className="links">
-              <a
-                href="https://github.com/Mayankkatheriya"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <GitIcon />
-                Github
-              </a>
-              <a
-                href="https://www.linkedin.com/in/mayank-gupta-752328173/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <LinkedIcon />
-                LinkedIn
-              </a>
-              <a
-                href="https://www.instagram.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <InstaIcon />
-                Instagram
-              </a>
-              <a
-                href="https://www.facebook.com/mayakkatheriya/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FacebookIcon />
-                Facebook
-              </a>
-            </div>
-          </ModalBody>
+          <ModalBody>{/* Content for the Help Modal */}</ModalBody>
         </ModalPopup>
       </Modal>
+
+      {/* Sidebar Tabs */}
       <SidebarOptions>
+        {/* My Drive Tab */}
         <NavLink to={"/home"}>
           {({ isActive }) => (
             <SidebarOption
@@ -112,6 +86,7 @@ const SidebarTabs = () => {
           )}
         </NavLink>
 
+        {/* Recent Tab */}
         <NavLink to={"/recent"}>
           {({ isActive }) => (
             <SidebarOption
@@ -125,6 +100,7 @@ const SidebarTabs = () => {
           )}
         </NavLink>
 
+        {/* Starred Tab */}
         <NavLink to={"/starred"}>
           {({ isActive }) => (
             <SidebarOption
@@ -137,6 +113,7 @@ const SidebarTabs = () => {
           )}
         </NavLink>
 
+        {/* Trash Tab */}
         <NavLink to={"/trash"}>
           {({ isActive }) => (
             <SidebarOption
@@ -149,24 +126,36 @@ const SidebarTabs = () => {
           )}
         </NavLink>
 
+        {/* Help Tab */}
         <SidebarOption title="Help" onClick={() => setOpenModal(true)}>
           <HelpIcon />
           <span>Help</span>
         </SidebarOption>
       </SidebarOptions>
 
+      {/* Horizontal Line */}
       <hr />
 
+      {/* Storage Tab */}
       <SidebarOptions>
-        <SidebarOption title={`${storage} of 5 GB used`}>
+        <SidebarOption
+          title={`${storage} of 5 GB used`}
+          onClick={() => setOpenStorageModal(true)}
+        >
           <CloudQueueIcons />
           <span>Storage</span>
         </SidebarOption>
-        <div className="progress_bar">
-          <progress size="tiny" value={size} max={5000000000} />
-          <span>{storage} of 5 GB used</span>
-        </div>
       </SidebarOptions>
+
+      {/* Storage Modal */}
+      <Modal open={openStorageModal} onClose={() => setOpenStorageModal(false)}>
+        <ModalPopup>
+          <ModalHeading>
+            <h3>Storage</h3>
+          </ModalHeading>
+          <ModalBody>{/* Content for the Storage Modal */}</ModalBody>
+        </ModalPopup>
+      </Modal>
     </>
   );
 };
@@ -250,6 +239,23 @@ const ModalBody = styled.div`
       }
     }
   }
+
+  .progress_bar {
+    width: 100%;
+    padding: 1rem 20px;
+
+    progress {
+      width: 100%;
+      padding: 1rem 0;
+    }
+
+    span {
+      display: block;
+      color: #333;
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
 `;
 
 const SidebarOptions = styled.div`
@@ -261,21 +267,6 @@ const SidebarOptions = styled.div`
 
   .tab-active {
     background: whitesmoke;
-  }
-
-  .progress_bar {
-    padding: 0px 20px;
-    @media screen and (max-width: 768px) {
-      display: none;
-    }
-  }
-  .progress_bar span {
-    display: block;
-    color: #333;
-    font-size: 13px;
-    @media screen and (max-width: 768px) {
-      display: none;
-    }
   }
 `;
 

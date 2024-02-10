@@ -1,3 +1,5 @@
+// Header.js
+
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { auth, provider } from "../../firebase";
@@ -17,6 +19,10 @@ import LeftIcons from "./LeftIcons";
 import ProfileSection from "./ProfileSection";
 import { SearchIcons } from "../common/SvgIcons";
 
+/**
+ * Header component containing the application header with user authentication, search bar, and profile section.
+ * @returns {JSX.Element} - Header component.
+ */
 const Header = () => {
   const dispatch = useDispatch();
   const userName = useSelector(selectUserName);
@@ -129,6 +135,7 @@ const Header = () => {
     </Container>
   );
 };
+
 export default Header;
 
 const SearchWrapper = styled.div`

@@ -1,3 +1,5 @@
+// Login.js
+
 import React from "react";
 import styled from "styled-components";
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -6,8 +8,18 @@ import { signInWithPopup } from "firebase/auth";
 import { useDispatch } from "react-redux";
 import { setUserLoginDetails } from "../../store/UserSlice";
 
+/**
+ * Login component handles user authentication using Google.
+ * @returns {JSX.Element} - Login component.
+ */
 const Login = () => {
   const dispatch = useDispatch();
+
+  /**
+   * Handles user authentication with Google.
+   * On successful authentication, sets user details in Redux state.
+   * @async
+   */
   const handleAuth = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
@@ -17,6 +29,10 @@ const Login = () => {
     }
   };
 
+  /**
+   * Sets user details in Redux state.
+   * @param {Object} user - User object from authentication result.
+   */
   const setUser = (user) => {
     dispatch(
       setUserLoginDetails({
@@ -66,7 +82,7 @@ const Container = styled.div`
   gap: 2rem;
   padding: 1rem;
 
-    @media screen and (max-width: 850px) {
+  @media screen and (max-width: 850px) {
     flex-direction: column;
   }
 `;

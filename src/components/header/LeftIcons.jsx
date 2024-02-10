@@ -1,7 +1,13 @@
+// LeftIcons.js
+
 import React from "react";
 import styled from "styled-components";
 import { SettingsIcon, HelpIcon } from "../common/SvgIcons";
 
+/**
+ * LeftIcons component displaying help and settings icons.
+ * @returns {JSX.Element} - LeftIcons component.
+ */
 const LeftIcons = () => {
   return (
     <LeftSection>

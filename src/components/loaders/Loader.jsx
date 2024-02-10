@@ -1,6 +1,12 @@
+// Loader.js
+
 import React from "react";
 import styled from "styled-components";
 
+/**
+ * Loader component representing a rotating spinner.
+ * @returns {JSX.Element} - Loader component.
+ */
 const Loader = () => {
   return <Container></Container>;
 };

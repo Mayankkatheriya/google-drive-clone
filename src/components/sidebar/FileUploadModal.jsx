@@ -1,23 +1,27 @@
+// FileUploadModal.js
+
 import React from "react";
 import styled from "styled-components";
 import { Modal } from "@mui/material";
 import Loader from "../loaders/Loader";
 
-const FileUploadModal = ({
-  open,
-  setOpen,
-  handleUpload,
-  uploading,
-  handleFile,
-}) => {
+/**
+ * FileUploadModal component for handling file upload.
+ * @param {Object} props - Component properties.
+ * @param {boolean} props.open - Flag to control the modal's open state.
+ * @param {Function} props.setOpen - Function to set the modal's open state.
+ * @param {Function} props.handleUpload - Function to handle file upload.
+ * @param {boolean} props.uploading - Flag indicating whether a file is currently being uploaded.
+ * @param {Function} props.handleFile - Function to handle file selection.
+ * @returns {JSX.Element} - FileUploadModal component.
+ */
+const FileUploadModal = ({ open, setOpen, handleUpload, uploading, handleFile }) => {
   return (
     <Modal open={open} onClose={() => setOpen(false)}>
       <ModalPopup>
         <form onSubmit={handleUpload}>
           <ModalHeading>
-            <h3>
-              {uploading ? "Uploading..." : "Select file you want to upload"}
-            </h3>
+            <h3>{uploading ? "Uploading..." : "Select file you want to upload"}</h3>
           </ModalHeading>
           <ModalBody>
             {uploading ? (
@@ -26,11 +30,7 @@ const FileUploadModal = ({
               </UploadingPara>
             ) : (
               <>
-                <input
-                  type="file"
-                  className="modal__file"
-                  onChange={handleFile}
-                />
+                <input type="file" className="modal__file" onChange={handleFile} />
                 <input type="submit" className="modal__submit" />
               </>
             )}
