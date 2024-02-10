@@ -1,4 +1,4 @@
-// Importing necessary dependencies and icons
+// Importing necessary libraries and components
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import {
@@ -19,13 +19,9 @@ import { getFilesForUser } from "../common/firebaseApi";
 import { auth } from "../../firebase";
 import { changeBytes } from "../common/common";
 
-/**
- * SidebarTabs component for rendering various tabs in the sidebar.
- * Manages state for help modal, user files, storage details, and storage modal.
- * @returns {JSX.Element} - SidebarTabs component.
- */
+// SidebarTabs component
 const SidebarTabs = () => {
-  // State variables for managing various aspects of the component
+  // State variables
   const [openHelp, setOpenModal] = useState(false);
   const [files, setFiles] = useState([]);
   const [storage, setStorage] = useState("");
@@ -37,10 +33,11 @@ const SidebarTabs = () => {
     const fetchData = async () => {
       const user = auth.currentUser;
       if (user) {
-        // Fetch user files and subscribe to changes
+        // Get user files and set them to state
         const unsubscribeFiles = await getFilesForUser(user.uid, (newFiles) => {
           setFiles(newFiles);
         });
+
         // Cleanup the user subscription when the component unmounts
         return () => {
           unsubscribeFiles();
@@ -51,7 +48,7 @@ const SidebarTabs = () => {
     fetchData();
   }, []);
 
-  // Update storage details when files change
+  // Calculate and update storage size whenever files change
   useEffect(() => {
     const sizes = files?.reduce((sum, file) => sum + file.data.size, 0);
     setSize(sizes);
@@ -59,6 +56,7 @@ const SidebarTabs = () => {
     setStorage(storageSize);
   }, [files]);
 
+  // JSX structure
   return (
     <>
       {/* Help Modal */}
@@ -67,13 +65,54 @@ const SidebarTabs = () => {
           <ModalHeading>
             <h3>Need Help?</h3>
           </ModalHeading>
-          <ModalBody>{/* Content for the Help Modal */}</ModalBody>
+          <ModalBody>
+            <div className="image">
+              <img src="/myimg.png" alt="" />
+            </div>
+            <h2>Mayank Gupta</h2>
+            <h4>Full Stack Web Developer</h4>
+            <p>Contact Me:</p>
+            <div className="links">
+              <a
+                href="https://github.com/Mayankkatheriya"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <GitIcon />
+                Github
+              </a>
+              <a
+                href="https://www.linkedin.com/in/mayank-gupta-752328173/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <LinkedIcon />
+                LinkedIn
+              </a>
+              <a
+                href="https://www.instagram.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <InstaIcon />
+                Instagram
+              </a>
+              <a
+                href="https://www.facebook.com/mayakkatheriya/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FacebookIcon />
+                Facebook
+              </a>
+            </div>
+          </ModalBody>
         </ModalPopup>
       </Modal>
 
-      {/* Sidebar Tabs */}
+      {/* Sidebar options */}
       <SidebarOptions>
-        {/* My Drive Tab */}
+        {/* My Drive */}
         <NavLink to={"/home"}>
           {({ isActive }) => (
             <SidebarOption
@@ -86,7 +125,7 @@ const SidebarTabs = () => {
           )}
         </NavLink>
 
-        {/* Recent Tab */}
+        {/* Recent */}
         <NavLink to={"/recent"}>
           {({ isActive }) => (
             <SidebarOption
@@ -100,7 +139,7 @@ const SidebarTabs = () => {
           )}
         </NavLink>
 
-        {/* Starred Tab */}
+        {/* Starred */}
         <NavLink to={"/starred"}>
           {({ isActive }) => (
             <SidebarOption
@@ -113,7 +152,7 @@ const SidebarTabs = () => {
           )}
         </NavLink>
 
-        {/* Trash Tab */}
+        {/* Trash */}
         <NavLink to={"/trash"}>
           {({ isActive }) => (
             <SidebarOption
@@ -126,18 +165,14 @@ const SidebarTabs = () => {
           )}
         </NavLink>
 
-        {/* Help Tab */}
+        {/* Help option */}
+        <hr />
         <SidebarOption title="Help" onClick={() => setOpenModal(true)}>
           <HelpIcon />
           <span>Help</span>
         </SidebarOption>
-      </SidebarOptions>
 
-      {/* Horizontal Line */}
-      <hr />
-
-      {/* Storage Tab */}
-      <SidebarOptions>
+        {/* Storage option */}
         <SidebarOption
           title={`${storage} of 5 GB used`}
           onClick={() => setOpenStorageModal(true)}
@@ -153,13 +188,19 @@ const SidebarTabs = () => {
           <ModalHeading>
             <h3>Storage</h3>
           </ModalHeading>
-          <ModalBody>{/* Content for the Storage Modal */}</ModalBody>
+          <ModalBody>
+            <div className="progress_bar">
+              <progress size="tiny" value={size} max={5000000000} />
+              <span>{storage} of 5 GB used</span>
+            </div>
+          </ModalBody>
         </ModalPopup>
       </Modal>
     </>
   );
 };
 
+// Styled components
 const ModalPopup = styled.div`
   top: 50%;
   background-color: #fff;
