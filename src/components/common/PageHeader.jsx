@@ -2,7 +2,7 @@
 
 import React from "react";
 import styled from "styled-components";
-import { ArrowDDownIcon, ListsIcon, InfoIcon, GridIcon } from "./SvgIcons";
+import { ListsIcon, InfoIcon, GridIcon } from "./SvgIcons";
 
 /**
  * PageHeader component to display the page title with optional icons
@@ -14,7 +14,6 @@ const PageHeader = ({ pageTitle }) => {
     <DataHeader>
       <div className="headerLeft">
         <p>{pageTitle}</p>
-        <ArrowDDownIcon />
       </div>
       <div className="headerRight">
         {pageTitle === "My Drive" ? <ListsIcon /> : <GridIcon />}
