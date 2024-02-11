@@ -38,6 +38,8 @@ const DataHeader = styled.div`
 
   .headerRight svg {
     margin: 0px 10px;
+    font-size: 25px;
+    color: #5f6368;;
   }
 `;
 
