@@ -18,9 +18,7 @@ A full-stack cloud storage application built using React, Firebase, and styled-c
 
 ## Demo
 
-Explore [here](https://google-drive-clone-roan.vercel.app/)
-
-Live [Demo](https://drive.google.com/file/d/1CVcnQ6xbesqEO7E7mWEMK1S6GksKNTMg/view?usp=sharing)
+Explore App [here](https://google-drive-clone-roan.vercel.app/)
 
 ## Features
 
