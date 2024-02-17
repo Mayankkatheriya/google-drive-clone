@@ -46,17 +46,25 @@ const MainData = ({
     const handleOutsideClick = (event) => {
       if (
         optionsMenuRef.current &&
-        !optionsMenuRef.current.contains(event.target)
+        !optionsMenuRef.current.contains(event.target) &&
+        !event.target.closest(".optionsContainer") &&
+        !event.target.closest(".shareButton")
       ) {
         setShowShareIcons(false);
+        handleOptionsClick(null); // Close options menu if open
       }
     };
-    document.addEventListener("click", handleOutsideClick);
-
-    return () => {
-      document.removeEventListener("click", handleOutsideClick);
+  
+    const handleDocumentClick = (event) => {
+      handleOutsideClick(event);
     };
-  }, []);
+  
+    document.addEventListener("mousedown", handleDocumentClick);
+  
+    return () => {
+      document.removeEventListener("mousedown", handleDocumentClick);
+    };
+  }, [handleOptionsClick]);
 
   return (
     <div>
@@ -101,6 +109,7 @@ const MainData = ({
             <div>
               {/* Options menu for each file */}
               <OptionsContainer
+              className="optionsContainer"
                 title="Options"
                 onClick={() => handleOptionsClick(file.id)}
               >
@@ -132,7 +141,7 @@ const MainData = ({
                     {" Copy Link"}
                   </span>
                   {/* Share button with share icons */}
-                  <ShareButton onClick={handleShareClick}>
+                  <ShareButton className="shareButton" onClick={handleShareClick}>
                     <ShareIcon />
                     {" Share"}
                     <span className={showShareIcons ? "show" : ""}>
