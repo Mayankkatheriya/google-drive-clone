@@ -144,7 +144,7 @@ const SidebarTabs = () => {
           </ModalHeading>
           <ModalBody>
             <div className="progress_bar">
-              <progress size="tiny" value={size} max={5000000000} />
+              <progress size="tiny" value={size} max={15000000000} />
               <p>{storage} of 15 GB used</p>
             </div>
           </ModalBody>
