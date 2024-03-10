@@ -33,6 +33,7 @@ import FacebookOutlinedIcon from '@mui/icons-material/FacebookOutlined';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import AppsRoundedIcon from '@mui/icons-material/AppsRounded';
+import DisabledByDefaultOutlinedIcon from '@mui/icons-material/DisabledByDefaultOutlined';
 
 export const MobileScreenShareIcon = () => <MobileScreenShareOutlinedIcon />;
 export const DevicesIcons = () => <DevicesIcon />;
@@ -68,3 +69,4 @@ export const FacebookIcon = () => <FacebookOutlinedIcon />;
 export const LinkedIcon = () => <LinkedInIcon />;
 export const InstaIcon = () => <InstagramIcon />;
 export const GridIcon = () => <AppsRoundedIcon />;
+export const CloseButton = () => <DisabledByDefaultOutlinedIcon />;

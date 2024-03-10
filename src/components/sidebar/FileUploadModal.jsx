@@ -4,6 +4,7 @@ import React from "react";
 import styled from "styled-components";
 import { Modal } from "@mui/material";
 import Loader from "../loaders/Loader";
+import { CloseButton } from "../common/SvgIcons";
 
 /**
  * FileUploadModal component for handling file upload.
@@ -15,13 +16,24 @@ import Loader from "../loaders/Loader";
  * @param {Function} props.handleFile - Function to handle file selection.
  * @returns {JSX.Element} - FileUploadModal component.
  */
-const FileUploadModal = ({ open, setOpen, handleUpload, uploading, handleFile }) => {
+const FileUploadModal = ({
+  open,
+  setOpen,
+  handleUpload,
+  uploading,
+  handleFile,
+}) => {
   return (
     <Modal open={open} onClose={() => setOpen(false)}>
       <ModalPopup>
+        <span onClick={() => setOpen(false)}>
+          <CloseButton />
+        </span>
         <form onSubmit={handleUpload}>
           <ModalHeading>
-            <h3>{uploading ? "Uploading..." : "Select file you want to upload"}</h3>
+            <h3>
+              {uploading ? "Uploading..." : "Select file you want to upload"}
+            </h3>
           </ModalHeading>
           <ModalBody>
             {uploading ? (
@@ -30,7 +42,11 @@ const FileUploadModal = ({ open, setOpen, handleUpload, uploading, handleFile })
               </UploadingPara>
             ) : (
               <>
-                <input type="file" className="modal__file" onChange={handleFile} />
+                <input
+                  type="file"
+                  className="modal__file"
+                  onChange={handleFile}
+                />
                 <input type="submit" className="modal__submit" />
               </>
             )}
@@ -51,6 +67,15 @@ const ModalPopup = styled.div`
   transform: translateY(-50%);
   padding: 10px;
   border-radius: 10px;
+  position: relative;
+
+  span {
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    cursor: pointer;
+    color: #5f6368;
+  }
 `;
 
 const ModalHeading = styled.div`

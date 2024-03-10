@@ -3,15 +3,21 @@
 import React from "react";
 import styled from "styled-components";
 import { SettingsIcon, HelpIcon } from "../common/SvgIcons";
+import { useDispatch, useSelector } from "react-redux";
+import { selectHelpModal, setHelpModal } from "../../store/HelpSlice";
+import HelpModal from "../common/Modal";
 
 /**
  * LeftIcons component displaying help and settings icons.
  * @returns {JSX.Element} - LeftIcons component.
  */
 const LeftIcons = () => {
+  const openHelp = useSelector(selectHelpModal);
+  const dispatch = useDispatch();
   return (
     <LeftSection>
-      <HelpIcon />
+      <HelpModal openHelp={openHelp} closeHelpModal={() => dispatch(setHelpModal(false))} />
+      <span onClick={() => dispatch(setHelpModal(true))}><HelpIcon /></span>
       <SettingsIcon />
     </LeftSection>
   );
@@ -21,6 +27,11 @@ const LeftSection = styled.div`
   margin-right: 40px;
   display: flex;
   align-items: center;
+  span {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 
   svg {
     font-size: 35px;
