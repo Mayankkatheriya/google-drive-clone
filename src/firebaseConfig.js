@@ -1,11 +1,12 @@
 // firebaseConfigTemplate.js
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDjxHSKsk9lYwEvEVHxV_S37g8DiiC7MaY",
-  authDomain: "drive-clone-6f3ee.firebaseapp.com",
-  projectId: "drive-clone-6f3ee",
-  storageBucket: "drive-clone-6f3ee.appspot.com",
-  messagingSenderId: "698212881083",
-  appId: "1:698212881083:web:b469866b3bcc67b54a4f9e",
+  apiKey: import.meta.env.VITE_APIKEY,
+  authDomain: import.meta.env.VITE_AUTHDOMAIN,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID,
 };
 
 export default firebaseConfig;
