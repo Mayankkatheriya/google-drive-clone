@@ -1,12 +1,13 @@
 // Login.js
 
-import React from "react";
+// import React from "react";
 import styled from "styled-components";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import { auth, provider } from "../../firebase";
 import { signInWithPopup } from "firebase/auth";
 import { useDispatch } from "react-redux";
 import { setUserLoginDetails } from "../../store/UserSlice";
+import { motion } from "framer-motion";
 
 /**
  * Login component handles user authentication using Google.
@@ -45,7 +46,11 @@ const Login = () => {
 
   return (
     <Container>
-      <Box>
+      <Box
+        initial={{ x: "-100%" }}
+        animate={{ x: "0" }}
+        transition={{ duration: 0.5 }}
+      >
         <img src="drive.svg" alt="Google Drive Logo" />
         <h3>Google Drive</h3>
         <Button onClick={handleAuth}>Get Started</Button>
@@ -66,7 +71,11 @@ const Login = () => {
           </p>
         </div>
       </Box>
-      <ImageContainer>
+      <ImageContainer
+        initial={{ x: "100%" }}
+        animate={{ x: "0" }}
+        transition={{ duration: 0.5 }}
+      >
         <img src="/login.gif" alt="Login" />
       </ImageContainer>
     </Container>
@@ -87,7 +96,7 @@ const Container = styled.div`
   }
 `;
 
-const Box = styled.div`
+const Box = styled(motion.div)`
   flex: 1;
   width: 100%;
   height: 100%;
@@ -131,7 +140,7 @@ const Box = styled.div`
   }
 `;
 
-const ImageContainer = styled.div`
+const ImageContainer = styled(motion.div)`
   flex: 1;
   min-width: 280px;
   max-width: 800px;

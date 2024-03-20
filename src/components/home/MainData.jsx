@@ -54,13 +54,13 @@ const MainData = ({
         handleOptionsClick(null); // Close options menu if open
       }
     };
-  
+
     const handleDocumentClick = (event) => {
       handleOutsideClick(event);
     };
-  
+
     document.addEventListener("mousedown", handleDocumentClick);
-  
+
     return () => {
       document.removeEventListener("mousedown", handleDocumentClick);
     };
@@ -69,22 +69,24 @@ const MainData = ({
   return (
     <div>
       {/* Header row for the data list */}
-      <DataListRow>
-        <div>
-          <b>
-            <ArrowDownIcon /> Name
-          </b>
-        </div>
-        <div className="fileSize">
-          <b>File Size</b>
-        </div>
-        <div className="modified">
-          <b>Last Modified</b>
-        </div>
-        <div>
-          <b>Options</b>
-        </div>
-      </DataListRow>
+      {files.length > 0 && (
+        <DataListRow>
+          <div>
+            <b>
+              <ArrowDownIcon /> Name
+            </b>
+          </div>
+          <div className="fileSize">
+            <b>File Size</b>
+          </div>
+          <div className="modified">
+            <b>Last Modified</b>
+          </div>
+          <div>
+            <b>Options</b>
+          </div>
+        </DataListRow>
+      )}
 
       {/* Render each file in the data list */}
       {files.length > 0 ? (
@@ -109,7 +111,7 @@ const MainData = ({
             <div>
               {/* Options menu for each file */}
               <OptionsContainer
-              className="optionsContainer"
+                className="optionsContainer"
                 title="Options"
                 onClick={() => handleOptionsClick(file.id)}
               >
@@ -141,7 +143,10 @@ const MainData = ({
                     {" Copy Link"}
                   </span>
                   {/* Share button with share icons */}
-                  <ShareButton className="shareButton" onClick={handleShareClick}>
+                  <ShareButton
+                    className="shareButton"
+                    onClick={handleShareClick}
+                  >
                     <ShareIcon />
                     {" Share"}
                     <span className={showShareIcons ? "show" : ""}>

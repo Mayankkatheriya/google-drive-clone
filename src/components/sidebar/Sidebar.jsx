@@ -101,7 +101,7 @@ const SidebarContainer = styled.div`
   width: 180px;
   padding-top: 10px;
   border-right: 1px solid lightgray;
-  transition: all 0.1s linear;
+  transition: all 0.2s linear;
   position: ${(props) =>
     props.sidebarbool === "true" ? `relative` : "absolute"};
   left: ${(props) => (props.sidebarbool === "true" ? `0` : "-100%")};

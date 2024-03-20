@@ -7,6 +7,7 @@ import { changeBytes, convertDates } from "./common";
 import { handleDeleteFromTrash, handleStarred } from "./firebaseApi";
 import { DeleteIcon, StarBorderIcon, StarFilledIcon } from "./SvgIcons";
 import Lottie from "./Lottie";
+import { motion } from "framer-motion";
 
 /**
  * Component to display a list of files with options based on the page
@@ -23,7 +24,12 @@ const FilesList = ({ data, page = null, imagePath, text1, text2 }) => {
       {data.length > 0 ? (
         data.map((file) => {
           return (
-            <DataFile key={file.id}>
+            <DataFile
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: "0", opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              key={file.id}
+            >
               <a href={file.data.fileURL} target="_blank">
                 <FileIcons type={file.data.contentType} />
                 <DataDetails>
@@ -69,7 +75,7 @@ const FileList = styled.div`
   margin: 2rem 0;
 `;
 
-const DataFile = styled.div`
+const DataFile = styled(motion.div)`
   color: #383838;
   width: 100%;
   max-width: 300px;
@@ -147,6 +153,14 @@ const DeleteContainer = styled.div`
     width: max-content;
     font-size: 20px;
     margin: 0;
+  }
+
+  &:hover {
+    color: red;
+
+    svg {
+      color: red;
+    }
   }
 `;
 

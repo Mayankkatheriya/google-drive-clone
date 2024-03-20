@@ -2,6 +2,7 @@
 
 import React from "react";
 import styled from "styled-components";
+import { motion } from "framer-motion";
 
 /**
  * Lottie component to display an image with accompanying text
@@ -12,7 +13,11 @@ import styled from "styled-components";
  */
 const Lottie = ({ imagePath, text1, text2 }) => {
   return (
-    <LottieContainer>
+    <LottieContainer
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="lottie-image">
         <img src={imagePath} alt="lottie" />
       </div>
@@ -22,7 +27,7 @@ const Lottie = ({ imagePath, text1, text2 }) => {
   );
 };
 
-const LottieContainer = styled.div`
+const LottieContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;
   justify-content: center;

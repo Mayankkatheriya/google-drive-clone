@@ -1,6 +1,6 @@
 // Import styled components and React dependencies
 import styled from "styled-components";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 // Import Firebase utilities
 import { db, auth } from "../../firebase";
