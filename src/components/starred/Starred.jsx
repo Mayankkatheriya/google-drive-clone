@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import styled from "styled-components";
 import PageHeader from "../common/PageHeader";
 import { getFilesForUser } from "../common/firebaseApi";
 import { auth } from "../../firebase";
-import FilesList from "../common/FilesList";
+import LoaderContainer from "../loaders/LoaderContainer";
+import { delayInRender } from "../common/common";
+const FilesList = lazy(() => delayInRender(import("../common/FilesList")));
 
 // Starred component displays files marked as starred for quick access
 const Starred = () => {
@@ -41,13 +43,15 @@ const Starred = () => {
       {/* Page header for the "Starred" section */}
       <PageHeader pageTitle={"Starred"} />
       {/* Display the list of starred files using FilesList component */}
-      <FilesList
-        data={starredFiles}
-        page="starred"
-        imagePath={"/starred.svg"}
-        text1={"No starred files"}
-        text2={"Add stars to things that you want to easily find later"}
-      />
+      <Suspense fallback={ <LoaderContainer /> }>
+        <FilesList
+          data={starredFiles}
+          page="starred"
+          imagePath={"/starred.svg"}
+          text1={"No starred files"}
+          text2={"Add stars to things that you want to easily find later"}
+        />
+      </Suspense>
     </StarredContainer>
   );
 };

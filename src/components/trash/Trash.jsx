@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import styled from "styled-components";
 import PageHeader from "../common/PageHeader";
-import FilesList from "../common/FilesList";
 import { getTrashFiles } from "../common/firebaseApi";
 import { auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { toast } from "react-toastify";
+import LoaderContainer from "../loaders/LoaderContainer";
+import { delayInRender } from "../common/common";
+const FilesList = lazy(() => delayInRender(import("../common/FilesList")));
 
 // Trash component displays files in the user's trash
 const Trash = () => {
@@ -34,15 +35,17 @@ const Trash = () => {
       {/* Page header for the "Trash" section */}
       <PageHeader pageTitle={"Trash"} />
       {/* Display the list of files in the trash using FilesList component */}
-      <FilesList
-        data={files}
-        page={"trash"}
-        imagePath={"/trash.svg"}
-        text1={"Nothing in trash"}
-        text2={
-          "Move items you don't need to trash. Items in trash will be deleted forever after you delete them from here"
-        }
-      />
+      <Suspense fallback={<LoaderContainer />}>
+        <FilesList
+          data={files}
+          page={"trash"}
+          imagePath={"/trash.svg"}
+          text1={"Nothing in trash"}
+          text2={
+            "Move items you don't need to trash. Items in trash will be deleted forever after you delete them from here"
+          }
+        />
+      </Suspense>
     </RecentContainer>
   );
 };

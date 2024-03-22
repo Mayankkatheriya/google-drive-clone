@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import styled from "styled-components";
 import PageHeader from "../common/PageHeader";
 import { getFilesForUser } from "../common/firebaseApi";
 import { auth } from "../../firebase";
-import FilesList from "../common/FilesList";
+import LoaderContainer from "../loaders/LoaderContainer";
+import { delayInRender } from "../common/common";
+const FilesList = lazy(() => delayInRender(import("../common/FilesList")));
 
 // Recent component displays recently edited or added files
 const Recent = () => {
@@ -34,12 +36,14 @@ const Recent = () => {
       {/* Page header for the "Recents" section */}
       <PageHeader pageTitle={"Recents"} />
       {/* Display the list of recent files using FilesList component */}
-      <FilesList
-        data={files?.slice(0, 9)}
-        imagePath={"/recent.svg"}
-        text1={"No recent files"}
-        text2={"See all the files you’ve recently edited or added"}
-      />
+      <Suspense fallback={<LoaderContainer />}>
+        <FilesList
+          data={files?.slice(0, 9)}
+          imagePath={"/recent.svg"}
+          text1={"No recent files"}
+          text2={"See all the files you’ve recently edited or added"}
+        />
+      </Suspense>
     </RecentContainer>
   );
 };
