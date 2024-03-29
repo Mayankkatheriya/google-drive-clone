@@ -1,10 +1,9 @@
 // FileUploadModal.js
-
-import React from "react";
 import styled from "styled-components";
 import { Modal } from "@mui/material";
-import Loader from "../loaders/Loader";
-import { CloseButton } from "../common/SvgIcons";
+import Lottie from "react-lottie-player";
+import uploadJson from "../lottie/uploadLottie.json";
+import closeJson from "../lottie/closeLottie.json";
 
 /**
  * FileUploadModal component for handling file upload.
@@ -27,7 +26,12 @@ const FileUploadModal = ({
     <Modal open={open} onClose={() => setOpen(false)}>
       <ModalPopup>
         <span onClick={() => setOpen(false)}>
-          <CloseButton />
+          <Lottie
+            loop
+            animationData={closeJson}
+            play
+            style={{ width: 40, height: 40 }}
+          />
         </span>
         <form onSubmit={handleUpload}>
           <ModalHeading>
@@ -38,7 +42,12 @@ const FileUploadModal = ({
           <ModalBody>
             {uploading ? (
               <UploadingPara>
-                <Loader />
+                <Lottie
+                  loop
+                  animationData={uploadJson}
+                  play
+                  style={{ width: 120, height: 120 }}
+                />
               </UploadingPara>
             ) : (
               <>

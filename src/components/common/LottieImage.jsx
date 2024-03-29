@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
  * @param {string} text2 - Second line of text
  * @returns {JSX.Element} - Rendered Lottie component
  */
-const Lottie = ({ imagePath, text1, text2 }) => {
+const LottieImage = ({ imagePath, text1, text2 }) => {
   return (
     <LottieContainer
       initial={{ opacity: 0, scale: 0.5 }}
@@ -68,4 +68,4 @@ const LottieContainer = styled(motion.div)`
   }
 `;
 
-export default Lottie;
+export default LottieImage;

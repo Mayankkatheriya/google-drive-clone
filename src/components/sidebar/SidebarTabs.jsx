@@ -18,6 +18,8 @@ import { changeBytes } from "../common/common";
 import HelpModal from "../common/Modal";
 import { useDispatch, useSelector } from "react-redux";
 import { selectHelpModal, setHelpModal } from "../../store/HelpSlice";
+import Lottie from "react-lottie-player";
+import closeJson from "../lottie/closeLottie.json";
 // SidebarTabs component
 const SidebarTabs = () => {
   // State variables
@@ -117,7 +119,10 @@ const SidebarTabs = () => {
         <hr />
 
         {/* Help option */}
-        <SidebarOption title="Help" onClick={() => dispatch(setHelpModal(true))}>
+        <SidebarOption
+          title="Help"
+          onClick={() => dispatch(setHelpModal(true))}
+        >
           <HelpIcon />
           <span>Help</span>
         </SidebarOption>
@@ -133,12 +138,22 @@ const SidebarTabs = () => {
       </SidebarOptions>
 
       {/* Help Modal */}
-      <HelpModal openHelp={openHelp} closeHelpModal={() => dispatch(setHelpModal(false))} />
+      <HelpModal
+        openHelp={openHelp}
+        closeHelpModal={() => dispatch(setHelpModal(false))}
+      />
 
       {/* Storage Modal */}
       <Modal open={openStorageModal} onClose={() => setOpenStorageModal(false)}>
         <ModalPopup>
-        <span onClick={() => setOpenStorageModal(false)}><CloseButton/></span>
+          <span onClick={() => setOpenStorageModal(false)}>
+            <Lottie
+              loop
+              animationData={closeJson}
+              play
+              style={{ width: 40, height: 40 }}
+            />
+          </span>
           <ModalHeading>
             <h3>Storage</h3>
           </ModalHeading>

@@ -24,7 +24,7 @@ import {
 } from "react-share";
 import { handleStarred } from "../common/firebaseApi";
 import { toast } from "react-toastify";
-import Lottie from "../common/Lottie";
+import LottieImage from "../common/LottieImage";
 
 // MainData component renders the main data grid with file information and options
 const MainData = ({
@@ -203,10 +203,10 @@ const MainData = ({
         ))
       ) : (
         // Render a Lottie animation if no files are available
-        <Lottie
+        <LottieImage
           imagePath={"/homePage.svg"}
           text1={"A place for all of your files"}
-          text2={"Upload your files here or use the 'New' button to upload"}
+          text2={"Upload your files here & use the 'New' button to upload"}
         />
       )}
     </div>

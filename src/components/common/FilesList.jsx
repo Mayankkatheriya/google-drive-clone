@@ -6,7 +6,7 @@ import FileIcons from "./FileIcons";
 import { changeBytes, convertDates } from "./common";
 import { handleDeleteFromTrash, handleStarred } from "./firebaseApi";
 import { DeleteIcon, StarBorderIcon, StarFilledIcon } from "./SvgIcons";
-import Lottie from "./Lottie";
+import LottieImage from "./LottieImage";
 import { motion } from "framer-motion";
 
 /**
@@ -59,7 +59,7 @@ const FilesList = ({ data, page = null, imagePath, text1, text2 }) => {
           );
         })
       ) : (
-        <Lottie imagePath={imagePath} text1={text1} text2={text2} />
+        <LottieImage imagePath={imagePath} text1={text1} text2={text2} />
       )}
     </FileList>
   );
@@ -118,6 +118,13 @@ const DataDetails = styled.div`
 
   p {
     font-weight: 600;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-wrap: break-word;
+    width: 100%;
   }
   span {
     font-size: 14px;

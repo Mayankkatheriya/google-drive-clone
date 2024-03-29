@@ -4,6 +4,8 @@ import React from "react";
 import styled from "styled-components";
 import { MenuIcon } from "../common/SvgIcons";
 import { Link } from "react-router-dom";
+// import Lottie from "react-lottie-player";
+// import lottieJson from "../lottie/homePageLottie.json";
 
 /**
  * LogoWrapperComponent displays the logo and menu icon.
@@ -21,6 +23,12 @@ const LogoWrapperComponent = ({ onClick, userName }) => {
       <Link to={"/home"}>
         <Logo>
           <img src="./google-logo.png" alt="" />
+          {/* <Lottie
+            loop
+            animationData={lottieJson}
+            play
+            style={{ width: 120, height: 40 }}
+          /> */}
           <span>Drive</span>
         </Logo>
       </Link>

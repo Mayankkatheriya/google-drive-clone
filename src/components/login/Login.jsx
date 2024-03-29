@@ -8,6 +8,8 @@ import { signInWithPopup } from "firebase/auth";
 import { useDispatch } from "react-redux";
 import { setUserLoginDetails } from "../../store/UserSlice";
 import { motion } from "framer-motion";
+import Lottie from "react-lottie-player";
+import lottieJson from "../lottie/homePageLottie.json";
 
 /**
  * Login component handles user authentication using Google.
@@ -51,8 +53,14 @@ const Login = () => {
         animate={{ x: "0" }}
         transition={{ duration: 0.5 }}
       >
-        <img src="drive.svg" alt="Google Drive Logo" />
-        <h3>Google Drive</h3>
+        {/* <img src="drive.svg" alt="Google Drive Logo" /> */}
+        <Lottie
+          loop
+          animationData={lottieJson}
+          play
+          style={{ width: 120, height: 120 }}
+        />
+        <h3>Safe Drive</h3>
         <Button onClick={handleAuth}>Get Started</Button>
         <div className="text">
           <p>

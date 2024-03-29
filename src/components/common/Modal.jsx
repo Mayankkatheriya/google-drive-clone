@@ -1,20 +1,23 @@
-import React from "react";
 import styled from "styled-components";
-import {
-  GitIcon,
-  FacebookIcon,
-  InstaIcon,
-  LinkedIcon,
-  CloseButton,
-} from "./SvgIcons";
 import { Modal } from "@mui/material";
+import Lottie from "react-lottie-player";
+import linkedInJson from "../lottie/linkedInLottie.json";
+import githubJson from "../lottie/githubLottie.json";
+import instaJson from "../lottie/instaLottie.json";
+import facebookJson from "../lottie/facebookLottie.json";
+import closeJson from "../lottie/closeLottie.json";
 
 const HelpModal = ({ openHelp, closeHelpModal }) => {
   return (
     <Modal open={openHelp} onClose={closeHelpModal}>
       <ModalPopup>
         <span onClick={closeHelpModal}>
-          <CloseButton />
+          <Lottie
+            loop
+            animationData={closeJson}
+            play
+            style={{ width: 40, height: 40 }}
+          />
         </span>
         <ModalHeading>
           <h3>Need Help?</h3>
@@ -32,7 +35,12 @@ const HelpModal = ({ openHelp, closeHelpModal }) => {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <GitIcon />
+              <Lottie
+                loop
+                animationData={githubJson}
+                play
+                style={{ width: 50, height: 50 }}
+              />
               Github
             </a>
             <a
@@ -40,7 +48,12 @@ const HelpModal = ({ openHelp, closeHelpModal }) => {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <LinkedIcon />
+              <Lottie
+                loop
+                animationData={linkedInJson}
+                play
+                style={{ width: 50, height: 50 }}
+              />
               LinkedIn
             </a>
             <a
@@ -48,7 +61,12 @@ const HelpModal = ({ openHelp, closeHelpModal }) => {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <InstaIcon />
+              <Lottie
+                loop
+                animationData={instaJson}
+                play
+                style={{ width: 50, height: 50 }}
+              />
               Instagram
             </a>
             <a
@@ -56,7 +74,12 @@ const HelpModal = ({ openHelp, closeHelpModal }) => {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <FacebookIcon />
+              <Lottie
+                loop
+                animationData={facebookJson}
+                play
+                style={{ width: 50, height: 50 }}
+              />
               Facebook
             </a>
           </div>
@@ -127,12 +150,13 @@ const ModalBody = styled.div`
     width: 100%;
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: space-around;
     align-items: center;
     gap: 1rem;
 
     a {
       display: flex;
+      flex-direction: column;
       align-items: center;
       gap: 5px;
 
