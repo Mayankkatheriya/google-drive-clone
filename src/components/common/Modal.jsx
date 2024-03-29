@@ -24,7 +24,7 @@ const HelpModal = ({ openHelp, closeHelpModal }) => {
         </ModalHeading>
         <ModalBody>
           <div className="image">
-            <img src="/myimg.png" alt="" />
+            <img src="/Mayank.png" alt="" />
           </div>
           <h2>Mayank Gupta</h2>
           <h4>Full Stack Web Developer</h4>
