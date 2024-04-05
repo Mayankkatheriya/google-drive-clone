@@ -4,6 +4,7 @@ import { Modal } from "@mui/material";
 import Lottie from "react-lottie-player";
 import uploadJson from "../lottie/uploadLottie.json";
 import closeJson from "../lottie/closeLottie.json";
+import { UploadFileIcon } from "../common/SvgIcons";
 
 /**
  * FileUploadModal component for handling file upload.
@@ -21,6 +22,7 @@ const FileUploadModal = ({
   handleUpload,
   uploading,
   handleFile,
+  selectedFile
 }) => {
   return (
     <Modal open={open} onClose={() => setOpen(false)}>
@@ -51,11 +53,13 @@ const FileUploadModal = ({
               </UploadingPara>
             ) : (
               <>
-                <input
-                  type="file"
-                  className="modal__file"
-                  onChange={handleFile}
-                />
+                <div className="modal__file">
+                  <p>{selectedFile ? selectedFile : "No file chosen"}</p>
+                  <label htmlFor="file">
+                    <UploadFileIcon /> Choose a file
+                  </label>
+                  <input id="file" type="file" onChange={handleFile} />
+                </div>
                 <input type="submit" className="modal__submit" />
               </>
             )}
@@ -94,9 +98,12 @@ const ModalHeading = styled.div`
 `;
 
 const ModalBody = styled.div`
+  display: flex;
+  flex-direction: column;
+
   input.modal__submit {
     width: 100%;
-    background: darkmagenta;
+    background: #0066da;
     padding: 10px 20px;
     color: #fff;
     text-transform: uppercase;
@@ -107,14 +114,65 @@ const ModalBody = styled.div`
     border-radius: 5px;
     cursor: pointer;
     margin-top: 20px;
+    transition: background 0.3s ease-in-out;
+
+    &:hover {
+      background: #034fa7;
+    }
   }
-  input.modal__file {
+
+  .file-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .modal__file {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
     width: 100%;
-    background: whitesmoke;
     padding: 20px;
     color: #000;
-    display: block;
-    margin-top: 20px;
+    border: 2px dashed #0066da;
+    border-radius: 5px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s ease-in-out;
+
+    p {
+      text-align: center;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-wrap: break-word;
+      width: 100%;
+    }
+
+    label {
+      cursor: pointer;
+      border-radius: 8px;
+      border: 1px dashed #302f2f;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      color: #1a1a1a;
+
+      svg{
+        color: #1a1a1a;
+      }
+    }
+
+    input {
+      display: none;
+    }
   }
 `;
 

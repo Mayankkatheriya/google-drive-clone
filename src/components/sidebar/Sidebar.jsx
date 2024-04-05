@@ -21,13 +21,14 @@ const Sidebar = () => {
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState(null);
   const sidebarBool = useSelector(selectSidebarBool);
-
+  const [selectedFile, setSelectedFile] = useState(null);
   /**
    * Handles the selection of a file for upload.
    * @param {Object} e - File input change event.
    */
   const handleFile = (e) => {
     if (e.target.files[0]) {
+      setSelectedFile(e.target.files[0].name)
       setFile(e.target.files[0]);
     }
   };
@@ -40,6 +41,7 @@ const Sidebar = () => {
    */
   const handleUpload = async (e) => {
     e.preventDefault();
+    setSelectedFile("");
     setUploading(true);
 
     try {
@@ -82,6 +84,7 @@ const Sidebar = () => {
         handleUpload={handleUpload}
         uploading={uploading}
         handleFile={handleFile}
+        selectedFile={selectedFile}
       />
 
       <SidebarContainer sidebarbool={sidebarBool ? "true" : "false"}>
