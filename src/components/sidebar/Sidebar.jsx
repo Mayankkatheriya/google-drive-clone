@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { db, storage, auth } from "../../firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useSelector } from "react-redux";
 import { selectSidebarBool } from "../../store/BoolSlice";
@@ -19,6 +19,7 @@ import { toast } from "react-toastify";
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [file, setFile] = useState(null);
   const sidebarBool = useSelector(selectSidebarBool);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -28,7 +29,7 @@ const Sidebar = () => {
    */
   const handleFile = (e) => {
     if (e.target.files[0]) {
-      setSelectedFile(e.target.files[0].name)
+      setSelectedFile(e.target.files[0].name);
       setFile(e.target.files[0]);
     }
   };
@@ -43,32 +44,47 @@ const Sidebar = () => {
     e.preventDefault();
     setSelectedFile("");
     setUploading(true);
+    setProgress(0); // Reset progress
 
     try {
       const storageRef = ref(storage, `files/${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(snapshot.ref);
+      const uploadTask = uploadBytesResumable(storageRef, file);
 
-      // Check if snapshot.totalBytes is defined, use 0 if not
-      const size = snapshot.metadata.size || 0;
+      // Monitor the upload progress
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+          setProgress(progress);
+        },
+        (error) => {
+          console.error("Error uploading file:", error);
+          setUploading(false);
+          toast.error("Error uploading file. Please try again.");
+        },
+        async () => {
+          const url = await getDownloadURL(uploadTask.snapshot.ref);
 
-      // Associate the file with the authenticated user ID
-      await addDoc(collection(db, "myfiles"), {
-        userId: auth.currentUser.uid,
-        timestamp: serverTimestamp(),
-        filename: file.name,
-        fileURL: url,
-        size: size,
-        contentType: snapshot.metadata.contentType,
-        starred: false,
-      });
+          // Save file details to Firestore
+          await addDoc(collection(db, "myfiles"), {
+            userId: auth.currentUser.uid,
+            timestamp: serverTimestamp(),
+            filename: file.name,
+            fileURL: url,
+            size: uploadTask.snapshot.totalBytes,
+            contentType: uploadTask.snapshot.metadata.contentType,
+            starred: false,
+          });
 
-      toast.success("File Uploaded Successfully");
-
-      // Reset state and close modal
-      setUploading(false);
-      setFile(null);
-      setOpen(false);
+          toast.success("File Uploaded Successfully");
+          setUploading(false);
+          setFile(null);
+          setOpen(false);
+          setProgress(0); // Reset progress after completion
+        }
+      );
     } catch (error) {
       console.error("Error uploading file:", error);
       setUploading(false);
@@ -85,6 +101,7 @@ const Sidebar = () => {
         uploading={uploading}
         handleFile={handleFile}
         selectedFile={selectedFile}
+        progress={progress}
       />
 
       <SidebarContainer sidebarbool={sidebarBool ? "true" : "false"}>

@@ -22,7 +22,8 @@ const FileUploadModal = ({
   handleUpload,
   uploading,
   handleFile,
-  selectedFile
+  selectedFile,
+  progress,
 }) => {
   return (
     <Modal open={open} onClose={() => setOpen(false)}>
@@ -43,14 +44,20 @@ const FileUploadModal = ({
           </ModalHeading>
           <ModalBody>
             {uploading ? (
-              <UploadingPara>
-                <Lottie
-                  loop
-                  animationData={uploadJson}
-                  play
-                  style={{ width: 120, height: 120 }}
-                />
-              </UploadingPara>
+              <>
+                <UploadingPara>
+                  <Lottie
+                    loop
+                    animationData={uploadJson}
+                    play
+                    style={{ width: 120, height: 80 }}
+                  />
+                </UploadingPara>
+                <ModalProgress>
+                  <ProgressBar progress={progress} />
+                  <ProgressText>{progress}%</ProgressText>
+                </ModalProgress>
+              </>
             ) : (
               <>
                 <div className="modal__file">
@@ -165,7 +172,7 @@ const ModalBody = styled.div`
       gap: 4px;
       color: #1a1a1a;
 
-      svg{
+      svg {
         color: #1a1a1a;
       }
     }
@@ -182,6 +189,40 @@ const UploadingPara = styled.div`
   justify-content: center;
   align-items: center;
   padding: 10px;
+`;
+
+const ModalProgress = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 16px;
+
+`;
+
+const ProgressBar = styled.div`
+  width: 100%;
+  height: 10px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+
+  &:after {
+    content: "";
+    display: block;
+    height: 100%;
+    background-color: #0066da;
+    width: ${(props) => props.progress}%;
+    transition: width 0.4s ease-in-out;
+  }
+`;
+
+const ProgressText = styled.p`
+  margin-top: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #0066da;
 `;
 
 export default FileUploadModal;
