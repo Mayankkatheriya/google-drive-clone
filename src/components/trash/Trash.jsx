@@ -8,33 +8,26 @@ import LoaderContainer from "../loaders/LoaderContainer";
 import { delayInRender } from "../common/common";
 const FilesList = lazy(() => delayInRender(import("../common/FilesList")));
 
-// Trash component displays files in the user's trash
 const Trash = () => {
-  const [files, setFiles] = useState([]); // State to store files in the trash
+  const [files, setFiles] = useState([]);
 
   useEffect(() => {
-    // Subscribe to authentication changes and fetch trash files for the user
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        // Subscribe to trash file updates and set them in state
         const unsubscribeFiles = getTrashFiles(user.uid, setFiles);
 
-        // Cleanup the user subscription when the component unmounts
         return () => {
           unsubscribeFiles();
         };
       }
     });
 
-    // Cleanup the user authentication subscription when the component unmounts
     return () => unsubscribe();
   }, []);
 
   return (
     <RecentContainer>
-      {/* Page header for the "Trash" section */}
       <PageHeader pageTitle={"Trash"} />
-      {/* Display the list of files in the trash using FilesList component */}
       <Suspense fallback={<LoaderContainer />}>
         <FilesList
           data={files}
@@ -50,7 +43,6 @@ const Trash = () => {
   );
 };
 
-// Styled component for the Trash container
 const RecentContainer = styled.div`
   flex: 1;
   padding: 10px 10px 0px 20px;

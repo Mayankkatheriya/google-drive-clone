@@ -1,19 +1,8 @@
-// LogoWrapperComponent.js
-
 import React from "react";
 import styled from "styled-components";
 import { MenuIcon } from "../common/SvgIcons";
 import { Link } from "react-router-dom";
-// import Lottie from "react-lottie-player";
-// import lottieJson from "../lottie/homePageLottie.json";
 
-/**
- * LogoWrapperComponent displays the logo and menu icon.
- * @param {Object} props - Component props.
- * @param {Function} props.onClick - Click event handler for the menu icon.
- * @param {string} props.userName - User name to determine whether to show the menu icon.
- * @returns {JSX.Element} - LogoWrapperComponent.
- */
 const LogoWrapperComponent = ({ onClick, userName }) => {
   return (
     <LogoWrapper>
@@ -23,12 +12,6 @@ const LogoWrapperComponent = ({ onClick, userName }) => {
       <Link to={"/home"}>
         <Logo>
           <img src="./google-logo.png" alt="" />
-          {/* <Lottie
-            loop
-            animationData={lottieJson}
-            play
-            style={{ width: 120, height: 40 }}
-          /> */}
           <span>Drive</span>
         </Logo>
       </Link>

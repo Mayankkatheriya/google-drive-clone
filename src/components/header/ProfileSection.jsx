@@ -1,19 +1,6 @@
-// ProfileSection.js
-
 import React from "react";
 import styled from "styled-components";
 import { SearchIcons, CloseIcon } from "../common/SvgIcons";
-
-/**
- * ProfileSection component displays user profile information and options.
- * @param {Object} props - Component props.
- * @param {string} props.userPhoto - URL of the user's profile photo.
- * @param {string} props.userName - User's name.
- * @param {Function} props.handleAuth - Click event handler for authentication.
- * @param {boolean} props.showSearch - Boolean indicating whether the search bar is visible.
- * @param {Function} props.setShowSearch - Function to toggle the visibility of the search bar.
- * @returns {JSX.Element} - ProfileSection component.
- */
 const ProfileSection = ({
   userPhoto,
   userName,
@@ -54,7 +41,10 @@ const RightSection = styled.div`
   }
 
   .searchIcon {
-    display: flex;
+    display: none;
+    @media (max-width: 768px) {
+      display: flex;
+    }
   }
 `;
 

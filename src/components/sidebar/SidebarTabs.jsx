@@ -1,4 +1,3 @@
-// Importing necessary libraries and components
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import {
@@ -8,7 +7,6 @@ import {
   DeleteOutlineIcon,
   CloudQueueIcons,
   HelpIcon,
-  CloseButton,
 } from "../common/SvgIcons";
 import { Modal } from "@mui/material";
 import { NavLink } from "react-router-dom";
@@ -20,9 +18,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectHelpModal, setHelpModal } from "../../store/HelpSlice";
 import Lottie from "react-lottie-player";
 import closeJson from "../lottie/closeLottie.json";
-// SidebarTabs component
+
 const SidebarTabs = () => {
-  // State variables
   const openHelp = useSelector(selectHelpModal);
   const dispatch = useDispatch();
   const [files, setFiles] = useState([]);
@@ -30,17 +27,14 @@ const SidebarTabs = () => {
   const [size, setSize] = useState("");
   const [openStorageModal, setOpenStorageModal] = useState(false);
 
-  // Fetch user files on component mount
   useEffect(() => {
     const fetchData = async () => {
       const user = auth.currentUser;
       if (user) {
-        // Get user files and set them to state
         const unsubscribeFiles = await getFilesForUser(user.uid, (newFiles) => {
           setFiles(newFiles);
         });
 
-        // Cleanup the user subscription when the component unmounts
         return () => {
           unsubscribeFiles();
         };
@@ -50,7 +44,6 @@ const SidebarTabs = () => {
     fetchData();
   }, []);
 
-  // Calculate and update storage size whenever files change
   useEffect(() => {
     const sizes = files?.reduce((sum, file) => sum + file.data.size, 0);
     setSize(sizes);
@@ -58,12 +51,9 @@ const SidebarTabs = () => {
     setStorage(storageSize);
   }, [files]);
 
-  // JSX structure
   return (
     <>
-      {/* Sidebar options */}
       <SidebarOptions>
-        {/* My Drive */}
         <NavLink to={"/home"}>
           {({ isActive }) => (
             <SidebarOption
@@ -90,7 +80,6 @@ const SidebarTabs = () => {
           )}
         </NavLink>
 
-        {/* Starred */}
         <NavLink to={"/starred"}>
           {({ isActive }) => (
             <SidebarOption
@@ -103,7 +92,6 @@ const SidebarTabs = () => {
           )}
         </NavLink>
 
-        {/* Trash */}
         <NavLink to={"/trash"}>
           {({ isActive }) => (
             <SidebarOption
@@ -118,7 +106,6 @@ const SidebarTabs = () => {
 
         <hr />
 
-        {/* Help option */}
         <SidebarOption
           title="Help"
           onClick={() => dispatch(setHelpModal(true))}
@@ -127,7 +114,6 @@ const SidebarTabs = () => {
           <span>Help</span>
         </SidebarOption>
 
-        {/* Storage option */}
         <SidebarOption
           title={`${storage} of 5 GB used`}
           onClick={() => setOpenStorageModal(true)}
@@ -137,13 +123,11 @@ const SidebarTabs = () => {
         </SidebarOption>
       </SidebarOptions>
 
-      {/* Help Modal */}
       <HelpModal
         openHelp={openHelp}
         closeHelpModal={() => dispatch(setHelpModal(false))}
       />
 
-      {/* Storage Modal */}
       <Modal open={openStorageModal} onClose={() => setOpenStorageModal(false)}>
         <ModalPopup>
           <span onClick={() => setOpenStorageModal(false)}>
@@ -169,7 +153,6 @@ const SidebarTabs = () => {
   );
 };
 
-// Styled components
 const ModalPopup = styled.div`
   top: 50%;
   background-color: #fff;

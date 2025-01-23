@@ -1,4 +1,4 @@
-// LeftIcons.js
+
 
 import React from "react";
 import styled from "styled-components";
@@ -7,10 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectHelpModal, setHelpModal } from "../../store/HelpSlice";
 import HelpModal from "../common/Modal";
 
-/**
- * LeftIcons component displaying help and settings icons.
- * @returns {JSX.Element} - LeftIcons component.
- */
+
 const LeftIcons = () => {
   const openHelp = useSelector(selectHelpModal);
   const dispatch = useDispatch();

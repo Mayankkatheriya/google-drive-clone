@@ -1,23 +1,14 @@
-// SearchBar.js
+
 
 import React, { useState } from "react";
 import styled from "styled-components";
 import { SearchIcons } from "../common/SvgIcons";
 import { useNavigate } from "react-router-dom";
 
-/**
- * SearchBar component provides a search input to search files in Drive.
- * @returns {JSX.Element} - SearchBar component.
- */
 const SearchBar = () => {
   const [searchQuery, setQuery] = useState("");
   const navigate = useNavigate();
 
-  /**
-   * Handles key press event in the search input.
-   * If Enter key is pressed and the search query is not empty, it navigates to the search results page.
-   * @param {Object} e - Event object.
-   */
   const handleSearchByInput = (e) => {
     if (e.key === "Enter" && searchQuery.length > 0) {
       navigate(`/search/${searchQuery}`);
@@ -25,10 +16,6 @@ const SearchBar = () => {
     }
   };
 
-  /**
-   * Handles the search button click.
-   * If the search query is not empty, it navigates to the search results page.
-   */
   const handleSearch = () => {
     if (searchQuery.length > 0) {
       navigate(`/search/${searchQuery}`);

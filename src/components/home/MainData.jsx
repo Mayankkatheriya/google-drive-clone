@@ -26,7 +26,6 @@ import { handleStarred } from "../common/firebaseApi";
 import { toast } from "react-toastify";
 import LottieImage from "../common/LottieImage";
 
-// MainData component renders the main data grid with file information and options
 const MainData = ({
   files,
   handleOptionsClick,
@@ -36,12 +35,10 @@ const MainData = ({
   const [showShareIcons, setShowShareIcons] = useState(false);
   const optionsMenuRef = useRef(null);
 
-  // Handle click on the "Share" button to toggle share icons
   const handleShareClick = () => {
     setShowShareIcons(!showShareIcons);
   };
 
-  // Handle click outside of the share icons menu to close it
   useEffect(() => {
     const handleOutsideClick = (event) => {
       if (
@@ -51,7 +48,7 @@ const MainData = ({
         !event.target.closest(".shareButton")
       ) {
         setShowShareIcons(false);
-        handleOptionsClick(null); // Close options menu if open
+        handleOptionsClick(null);
       }
     };
 
@@ -68,7 +65,6 @@ const MainData = ({
 
   return (
     <div>
-      {/* Header row for the data list */}
       {files.length > 0 && (
         <DataListRow>
           <div>
@@ -88,28 +84,27 @@ const MainData = ({
         </DataListRow>
       )}
 
-      {/* Render each file in the data list */}
       {files.length > 0 ? (
         files.map((file) => (
           <DataListRow key={file.id}>
             <div>
-              {/* Star icon for marking as starred */}
               <p className="starr" onClick={() => handleStarred(file.id)}>
                 {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
               </p>
-              {/* File details and icon */}
-              <a href={file.data.fileURL} target="_blank">
+              <a
+                href={file.data.fileURL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <FileIcons type={file.data.contentType} />
                 <span title={file.data.filename}>{file.data.filename}</span>
               </a>
             </div>
             <div className="fileSize">{changeBytes(file.data.size)}</div>
             <div className="modified">
-              {/* Display last modified date */}
               {convertDates(file.data.timestamp?.seconds)}
             </div>
             <div>
-              {/* Options menu for each file */}
               <OptionsContainer
                 className="optionsContainer"
                 title="Options"
@@ -118,9 +113,7 @@ const MainData = ({
                 <MoreOptionsIcon />
               </OptionsContainer>
               {optionsVisible === file.id && (
-                // Display options menu when optionsVisible matches file id
                 <OptionsMenu ref={optionsMenuRef}>
-                  {/* Various options available for each file */}
                   <span>
                     <a
                       href={file.data.fileURL}
@@ -134,7 +127,6 @@ const MainData = ({
                   </span>
                   <span
                     onClick={() => {
-                      // Copy file URL to clipboard
                       navigator.clipboard.writeText(file.data.fileURL);
                       toast.success("Link Copied");
                     }}
@@ -142,7 +134,6 @@ const MainData = ({
                     <CopyIcon />
                     {" Copy Link"}
                   </span>
-                  {/* Share button with share icons */}
                   <ShareButton
                     className="shareButton"
                     onClick={handleShareClick}
@@ -150,7 +141,6 @@ const MainData = ({
                     <ShareIcon />
                     {" Share"}
                     <span className={showShareIcons ? "show" : ""}>
-                      {/* Share icons for various platforms */}
                       <EmailShareButton
                         url={file.data.fileURL}
                         subject={`This is ${file.data.filename} file link`}
@@ -180,18 +170,15 @@ const MainData = ({
                       </WhatsappShareButton>
                     </span>
                   </ShareButton>
-                  {/* Delete button */}
                   <span onClick={() => handleDelete(file.id, file.data)}>
                     <button>
                       <DeleteIcon />
                       {" Delete"}
                     </button>
                   </span>
-                  {/* Uploaded date */}
                   <span className="uploaded">
                     {convertDates(file.data.timestamp?.seconds)}
                   </span>
-                  {/* File size */}
                   <span className="fileSize">
                     {"Size: "}
                     {changeBytes(file.data.size)}
@@ -202,18 +189,16 @@ const MainData = ({
           </DataListRow>
         ))
       ) : (
-        // Render a Lottie animation if no files are available
         <LottieImage
           imagePath={"/homePage.svg"}
           text1={"A place for all of your files"}
-          text2={"Upload your files here & use the 'New' button to upload"}
+          text2={"Use the 'New' button to upload"}
         />
       )}
     </div>
   );
 };
 
-// Styled components for the data list row and options menu
 const DataListRow = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr 1.5fr 1fr;

@@ -1,16 +1,7 @@
-// Lottie.js
-
 import React from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 
-/**
- * Lottie component to display an image with accompanying text
- * @param {string} imagePath - Path to the image
- * @param {string} text1 - First line of text
- * @param {string} text2 - Second line of text
- * @returns {JSX.Element} - Rendered Lottie component
- */
 const LottieImage = ({ imagePath, text1, text2 }) => {
   return (
     <LottieContainer

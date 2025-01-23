@@ -1,14 +1,9 @@
-// PageHeader.js
+
 
 import React from "react";
 import styled from "styled-components";
 import { ListsIcon, InfoIcon, GridIcon } from "./SvgIcons";
 
-/**
- * PageHeader component to display the page title with optional icons
- * @param {string} pageTitle - Title of the page
- * @returns {JSX.Element} - Rendered PageHeader component
- */
 const PageHeader = ({ pageTitle }) => {
   return (
     <DataHeader>

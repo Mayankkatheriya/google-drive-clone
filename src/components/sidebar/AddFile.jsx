@@ -1,14 +1,5 @@
-// AddFile.js
-
 import React from "react";
 import styled from "styled-components";
-
-/**
- * AddFile component for creating a new file.
- * @param {Object} props - Component properties.
- * @param {Function} props.onClick - Click event handler for the button.
- * @returns {JSX.Element} - AddFile component.
- */
 const AddFile = ({ onClick }) => {
   return (
     <SidebarBtn>

@@ -1,5 +1,3 @@
-// firebaseApi.js
-
 import { db } from "../../firebase";
 import {
   collection,
@@ -14,13 +12,8 @@ import {
 } from "firebase/firestore";
 import { toast } from "react-toastify";
 
-// Collection reference for the 'trash' collection
 let trashRef = collection(db, "trash");
 
-/**
- * Adds a document to the 'trash' collection
- * @param {Object} object - File data to be added to the 'trash' collection
- */
 export const postTrashCollection = (object) => {
   addDoc(trashRef, object)
     .then(() => {})
@@ -29,12 +22,6 @@ export const postTrashCollection = (object) => {
     });
 };
 
-/**
- * Retrieves the files from the 'trash' collection for a specific user
- * @param {string} userId - User ID
- * @param {function} setFiles - State setter function for files
- * @returns {function} - Unsubscribe function to clean up the subscription
- */
 const getTrashFiles = (userId, setFiles) => {
   const filesData = collection(db, "trash");
   const unsubscribeFiles = onSnapshot(
@@ -53,14 +40,10 @@ const getTrashFiles = (userId, setFiles) => {
       });
     }
   );
-  // Cleanup the files subscription when the component unmounts
+
   return unsubscribeFiles;
 };
 
-/**
- * Handles the permanent deletion of a file from the 'trash' collection
- * @param {string} id - Document ID of the file
- */
 const handleDeleteFromTrash = async (id) => {
   try {
     const confirmed = window.confirm(
@@ -68,10 +51,8 @@ const handleDeleteFromTrash = async (id) => {
     );
 
     if (confirmed) {
-      // Reference to the document in Firestore
       const docRef = doc(db, "trash", id);
 
-      // Delete the document
       await deleteDoc(docRef);
       toast.error("Permanently Deleted");
     }
@@ -80,12 +61,6 @@ const handleDeleteFromTrash = async (id) => {
   }
 };
 
-/**
- * Retrieves the files from the 'myfiles' collection for a specific user
- * @param {string} userId - User ID
- * @param {function} setFiles - State setter function for files
- * @returns {function} - Unsubscribe function to clean up the subscription
- */
 const getFilesForUser = (userId, setFiles) => {
   const filesData = collection(db, "myfiles");
   const unsubscribeFiles = onSnapshot(
@@ -104,14 +79,10 @@ const getFilesForUser = (userId, setFiles) => {
       });
     }
   );
-  // Cleanup the files subscription when the component unmounts
+
   return unsubscribeFiles;
 };
 
-/**
- * Handles toggling the 'starred' status of a file in the 'myfiles' collection
- * @param {string} id - Document ID of the file
- */
 const handleStarred = async (id) => {
   try {
     const docRef = doc(db, "myfiles", id);

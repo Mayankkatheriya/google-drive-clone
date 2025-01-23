@@ -1,6 +1,4 @@
-// Login.js
-
-// import React from "react";
+import React from "react";
 import styled from "styled-components";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import { auth, provider } from "../../firebase";
@@ -11,18 +9,9 @@ import { motion } from "framer-motion";
 import Lottie from "react-lottie-player";
 import lottieJson from "../lottie/homePageLottie.json";
 
-/**
- * Login component handles user authentication using Google.
- * @returns {JSX.Element} - Login component.
- */
 const Login = () => {
   const dispatch = useDispatch();
 
-  /**
-   * Handles user authentication with Google.
-   * On successful authentication, sets user details in Redux state.
-   * @async
-   */
   const handleAuth = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
@@ -32,10 +21,6 @@ const Login = () => {
     }
   };
 
-  /**
-   * Sets user details in Redux state.
-   * @param {Object} user - User object from authentication result.
-   */
   const setUser = (user) => {
     dispatch(
       setUserLoginDetails({
@@ -53,7 +38,6 @@ const Login = () => {
         animate={{ x: "0" }}
         transition={{ duration: 0.5 }}
       >
-        {/* <img src="drive.svg" alt="Google Drive Logo" /> */}
         <Lottie
           loop
           animationData={lottieJson}

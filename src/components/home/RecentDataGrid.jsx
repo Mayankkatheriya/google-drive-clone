@@ -2,17 +2,12 @@ import React from "react";
 import styled from "styled-components";
 import FileIcons from "../common/FileIcons";
 
-// RecentDataGrid component displays a grid of recent files
 const RecentDataGrid = ({ files }) => {
   return (
     <DataGrid>
-      {/* Map through the first 4 files in the 'files' array */}
       {files.slice(0, 4).map((file) => (
-        // Display each file as a clickable link with file icon and filename
         <DataFile key={file.id} href={file.data.fileURL} target="_blank">
-          {/* Display file icon based on file type */}
           <FileIcons type={file.data.contentType} />
-          {/* Display filename with ellipsis for overflow */}
           <p title={file.data.filename}>{file.data.filename}</p>
         </DataFile>
       ))}
@@ -20,7 +15,6 @@ const RecentDataGrid = ({ files }) => {
   );
 };
 
-// Styled component for the main data grid container
 const DataGrid = styled.div`
   width: 100%;
   overflow: hidden;
@@ -31,7 +25,7 @@ const DataGrid = styled.div`
   margin-bottom: 30px;
 
   @media screen and (max-width: 768px) {
-    display: none; // Hide the grid on small screens
+    display: none;
   }
 
   p {
@@ -43,7 +37,6 @@ const DataGrid = styled.div`
   }
 `;
 
-// Styled component for each file in the grid
 const DataFile = styled.a`
   text-align: center;
   border: 1px solid rgb(204 204 204 / 46%);
@@ -77,5 +70,4 @@ const DataFile = styled.a`
   }
 `;
 
-// Export the RecentDataGrid component as the default export
 export default RecentDataGrid;

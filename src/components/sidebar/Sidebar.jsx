@@ -1,5 +1,3 @@
-// Sidebar.js
-
 import React, { useState } from "react";
 import styled from "styled-components";
 import { db, storage, auth } from "../../firebase";
@@ -11,11 +9,6 @@ import FileUploadModal from "./FileUploadModal";
 import AddFile from "./AddFile";
 import SidebarTabs from "./SidebarTabs";
 import { toast } from "react-toastify";
-
-/**
- * Sidebar component for managing file uploads and displaying tabs.
- * @returns {JSX.Element} - Sidebar component.
- */
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -23,10 +16,7 @@ const Sidebar = () => {
   const [file, setFile] = useState(null);
   const sidebarBool = useSelector(selectSidebarBool);
   const [selectedFile, setSelectedFile] = useState(null);
-  /**
-   * Handles the selection of a file for upload.
-   * @param {Object} e - File input change event.
-   */
+
   const handleFile = (e) => {
     if (e.target.files[0]) {
       setSelectedFile(e.target.files[0].name);
@@ -34,23 +24,16 @@ const Sidebar = () => {
     }
   };
 
-  /**
-   * Handles the file upload process.
-   * Uploads the selected file to Firebase Storage and adds file details to Firestore.
-   * Displays a success toast upon successful upload.
-   * @param {Object} e - Form submit event.
-   */
   const handleUpload = async (e) => {
     e.preventDefault();
     setSelectedFile("");
     setUploading(true);
-    setProgress(0); // Reset progress
+    setProgress(0);
 
     try {
       const storageRef = ref(storage, `files/${file.name}`);
       const uploadTask = uploadBytesResumable(storageRef, file);
 
-      // Monitor the upload progress
       uploadTask.on(
         "state_changed",
         (snapshot) => {
@@ -67,7 +50,6 @@ const Sidebar = () => {
         async () => {
           const url = await getDownloadURL(uploadTask.snapshot.ref);
 
-          // Save file details to Firestore
           await addDoc(collection(db, "myfiles"), {
             userId: auth.currentUser.uid,
             timestamp: serverTimestamp(),
@@ -82,7 +64,7 @@ const Sidebar = () => {
           setUploading(false);
           setFile(null);
           setOpen(false);
-          setProgress(0); // Reset progress after completion
+          setProgress(0);
         }
       );
     } catch (error) {

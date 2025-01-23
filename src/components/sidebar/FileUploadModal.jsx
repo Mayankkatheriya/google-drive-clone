@@ -1,21 +1,10 @@
-// FileUploadModal.js
+
 import styled from "styled-components";
 import { Modal } from "@mui/material";
 import Lottie from "react-lottie-player";
 import uploadJson from "../lottie/uploadLottie.json";
 import closeJson from "../lottie/closeLottie.json";
 import { UploadFileIcon } from "../common/SvgIcons";
-
-/**
- * FileUploadModal component for handling file upload.
- * @param {Object} props - Component properties.
- * @param {boolean} props.open - Flag to control the modal's open state.
- * @param {Function} props.setOpen - Function to set the modal's open state.
- * @param {Function} props.handleUpload - Function to handle file upload.
- * @param {boolean} props.uploading - Flag indicating whether a file is currently being uploaded.
- * @param {Function} props.handleFile - Function to handle file selection.
- * @returns {JSX.Element} - FileUploadModal component.
- */
 const FileUploadModal = ({
   open,
   setOpen,

@@ -16,7 +16,6 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function App() {
-  //----- Create a router instance------------>
   const router = createBrowserRouter([
     {
       path: "/",
@@ -59,11 +58,8 @@ function App() {
   ]);
 
   return (
-    //----- Provide the Redux store to the entire app------------>
     <Provider store={store}>
-      {/* Use the custom router for navigation */}
       <RouterProvider router={router} />
-      {/* Toast notification container for displaying messages */}
       <ToastContainer
         position="top-right"
         autoClose={1000}
