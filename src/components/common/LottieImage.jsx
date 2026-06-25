@@ -1,62 +1,61 @@
+"use client";
+
 import React from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 
 const LottieImage = ({ imagePath, text1, text2 }) => {
   return (
-    <LottieContainer
-      initial={{ opacity: 0, scale: 0.5 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
+    <Wrap
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
     >
-      <div className="lottie-image">
-        <img src={imagePath} alt="lottie" />
-      </div>
-      <p className="firstText">{text1}</p>
-      <p className="secondText">{text2}</p>
-    </LottieContainer>
+      {imagePath && (
+        <IllustrationWrap>
+          <img src={imagePath} alt="" />
+        </IllustrationWrap>
+      )}
+      {text1 && <Heading>{text1}</Heading>}
+      {text2 && <Sub>{text2}</Sub>}
+    </Wrap>
   );
 };
 
-const LottieContainer = styled(motion.div)`
+const Wrap = styled(motion.div)`
+  width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  width: 100%;
-  padding: 1.5rem;
+  justify-content: center;
+  padding: 4rem 2rem;
   text-align: center;
+`;
 
-  .lottie-image {
+const IllustrationWrap = styled.div`
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 1.5rem;
+
+  img {
     width: 100%;
-    max-width: 400px;
-
-    img {
-      width: 100%;
-      height: 250px;
-    }
+    height: auto;
+    opacity: 0.85;
   }
+`;
 
-  p {
-    width: 100%;
-    max-width: 600px;
-  }
+const Heading = styled.p`
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: -0.3px;
+  margin-bottom: 8px;
+`;
 
-  .firstText {
-    font-size: 1.5rem;
-    line-height: 2rem;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-    color: #3c4043;
-  }
-
-  .secondText {
-    font-size: 1rem;
-    line-height: 1.5rem;
-    letter-spacing: 0.00625em;
-    margin-bottom: 1rem;
-    color: #444746;
-  }
+const Sub = styled.p`
+  font-size: 0.9rem;
+  color: var(--text-3);
+  line-height: 1.6;
 `;
 
 export default LottieImage;

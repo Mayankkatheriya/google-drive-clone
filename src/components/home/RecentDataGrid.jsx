@@ -1,73 +1,122 @@
+"use client";
+
 import React from "react";
 import styled from "styled-components";
 import FileIcons from "../common/FileIcons";
+import SecureFileLink from "../common/SecureFileLink";
+import { changeBytes } from "../common/common";
+
+function getTypeStyle(contentType) {
+  if (contentType?.includes("pdf"))   return { bg: "#fef2f2", color: "#dc2626" };
+  if (contentType?.includes("image")) return { bg: "#faf5ff", color: "#7c3aed" };
+  if (contentType?.includes("video")) return { bg: "#eff6ff", color: "#2563eb" };
+  if (contentType?.includes("audio")) return { bg: "#fff7ed", color: "#ea580c" };
+  return { bg: "#f1f5f9", color: "#475569" };
+}
 
 const RecentDataGrid = ({ files }) => {
+  if (!files?.length) return null;
+
   return (
-    <DataGrid>
-      {files.slice(0, 4).map((file) => (
-        <DataFile key={file.id} href={file.data.fileURL} target="_blank">
-          <FileIcons type={file.data.contentType} />
-          <p title={file.data.filename}>{file.data.filename}</p>
-        </DataFile>
-      ))}
-    </DataGrid>
+    <ScrollArea>
+      <Strip>
+        {files.slice(0, 6).map((file) => {
+          const { bg, color } = getTypeStyle(file.data.contentType);
+          return (
+            <SecureFileLink key={file.id} fileData={file.data} files={files} as={QuickCard}>
+              <QuickIcon style={{ background: bg }}>
+                <span style={{ color, display: "flex" }}>
+                  <FileIcons type={file.data.contentType} />
+                </span>
+              </QuickIcon>
+              <QuickMeta>
+                <QuickName title={file.data.filename}>{file.data.filename}</QuickName>
+                <QuickSize>{changeBytes(file.data.size)}</QuickSize>
+              </QuickMeta>
+            </SecureFileLink>
+          );
+        })}
+      </Strip>
+    </ScrollArea>
   );
 };
 
-const DataGrid = styled.div`
-  width: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-top: 30px;
-  margin-bottom: 30px;
+const ScrollArea = styled.div`
+  overflow-x: auto;
+  padding: 0 0 4px;
 
-  @media screen and (max-width: 768px) {
+  /* hide scrollbar on desktop, show on mobile */
+  &::-webkit-scrollbar { height: 4px; }
+  &::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 999px; }
+
+  @media (max-width: 640px) {
     display: none;
-  }
-
-  p {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 `;
 
-const DataFile = styled.a`
-  text-align: center;
-  border: 1px solid rgb(204 204 204 / 46%);
-  margin: 10px;
-  min-width: 200px;
-  padding: 10px 0px 0px 0px;
-  border-radius: 5px;
+const Strip = styled.div`
+  display: flex;
+  gap: 12px;
+  min-width: max-content;
+`;
+
+const QuickCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px 10px 10px;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
   text-decoration: none;
-  max-width: 250px;
-  p {
-    color: #000;
-    font-weight: 600;
+  min-width: 190px;
+  max-width: 230px;
+  flex-shrink: 0;
+  outline: none;
+
+  &:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.1);
   }
-  svg {
-    font-size: 60px;
-    color: gray;
+
+  &:focus-visible {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-subtle);
   }
-  p {
-    border-top: 1px solid #ccc;
-    margin-top: 5px;
-    font-size: 12px;
-    background: whitesmoke;
-    padding: 10px 0px;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    word-wrap: break-word;
-    width: 100%;
-  }
+`;
+
+const QuickIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  svg { font-size: 22px; }
+`;
+
+const QuickMeta = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
+
+const QuickName = styled.p`
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const QuickSize = styled.p`
+  font-size: 0.72rem;
+  color: var(--text-3);
+  margin-top: 2px;
 `;
 
 export default RecentDataGrid;

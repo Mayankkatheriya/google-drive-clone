@@ -1,3 +1,5 @@
+"use client";
+
 import styled from "styled-components";
 import { Modal } from "@mui/material";
 import Lottie from "react-lottie-player";
@@ -10,172 +12,169 @@ import closeJson from "../lottie/closeLottie.json";
 const HelpModal = ({ openHelp, closeHelpModal }) => {
   return (
     <Modal open={openHelp} onClose={closeHelpModal}>
-      <ModalPopup>
-        <span onClick={closeHelpModal}>
-          <Lottie
-            loop
-            animationData={closeJson}
-            play
-            style={{ width: 40, height: 40 }}
-          />
-        </span>
-        <ModalHeading>
-          <h3>Need Help?</h3>
-        </ModalHeading>
-        <ModalBody>
-          <div className="image">
-            <img src="/Mayank.png" alt="" />
-          </div>
-          <h2>Mayank Gupta</h2>
-          <h4>Full Stack Web Developer</h4>
-          <p>Contact Me:</p>
-          <div className="links">
-            <a
+      <ModalBox>
+        <CloseBtn onClick={closeHelpModal}>
+          <Lottie loop animationData={closeJson} play style={{ width: 40, height: 40 }} />
+        </CloseBtn>
+
+        <ModalTitle>About</ModalTitle>
+
+        <Body>
+          <AvatarWrap>
+            <img src="/Mayank.png" alt="Mayank Gupta" />
+          </AvatarWrap>
+          <Name>Mayank Gupta</Name>
+          <Role>Full Stack Web Developer</Role>
+          <ContactLabel>Connect with me</ContactLabel>
+          <Links>
+            <SocialLink
               href="https://github.com/Mayankkatheriya"
               target="_blank"
               rel="noopener noreferrer"
+              $color="#0f172a"
             >
-              <Lottie
-                loop
-                animationData={githubJson}
-                play
-                style={{ width: 50, height: 50 }}
-              />
-              Github
-            </a>
-            <a
+              <Lottie loop animationData={githubJson} play style={{ width: 44, height: 44 }} />
+              <span>Github</span>
+            </SocialLink>
+            <SocialLink
               href="https://www.linkedin.com/in/mayank-gupta-752328173/"
               target="_blank"
               rel="noopener noreferrer"
+              $color="#0077b5"
             >
-              <Lottie
-                loop
-                animationData={linkedInJson}
-                play
-                style={{ width: 50, height: 50 }}
-              />
-              LinkedIn
-            </a>
-            <a
+              <Lottie loop animationData={linkedInJson} play style={{ width: 44, height: 44 }} />
+              <span>LinkedIn</span>
+            </SocialLink>
+            <SocialLink
               href="https://www.instagram.com/"
               target="_blank"
               rel="noopener noreferrer"
+              $color="#cc2e96"
             >
-              <Lottie
-                loop
-                animationData={instaJson}
-                play
-                style={{ width: 50, height: 50 }}
-              />
-              Instagram
-            </a>
-            <a
+              <Lottie loop animationData={instaJson} play style={{ width: 44, height: 44 }} />
+              <span>Instagram</span>
+            </SocialLink>
+            <SocialLink
               href="https://www.facebook.com/mayakkatheriya/"
               target="_blank"
               rel="noopener noreferrer"
+              $color="#1197f5"
             >
-              <Lottie
-                loop
-                animationData={facebookJson}
-                play
-                style={{ width: 50, height: 50 }}
-              />
-              Facebook
-            </a>
-          </div>
-        </ModalBody>
-      </ModalPopup>
+              <Lottie loop animationData={facebookJson} play style={{ width: 44, height: 44 }} />
+              <span>Facebook</span>
+            </SocialLink>
+          </Links>
+        </Body>
+      </ModalBox>
     </Modal>
   );
 };
 
-const ModalPopup = styled.div`
+const ModalBox = styled.div`
+  position: absolute;
   top: 50%;
-  background-color: #fff;
-  width: 100%;
-  max-width: 500px;
-  margin: 0px auto;
-  position: relative;
-  transform: translateY(-50%);
-  padding: 10px;
-  border-radius: 10px;
-
-  span {
-    position: absolute;
-    right: 10px;
-    top: 8px;
-    cursor: pointer;
-    color: #5f6368;
-  }
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface);
+  width: 90%;
+  max-width: 440px;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: var(--shadow-lg);
+  outline: none;
 `;
 
-const ModalHeading = styled.div`
+const CloseBtn = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  line-height: 0;
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-1);
   text-align: center;
-  border-bottom: 1px solid lightgray;
-  height: 40px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 20px;
 `;
 
-const ModalBody = styled.div`
+const Body = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   text-align: center;
+`;
 
-  .image {
+const AvatarWrap = styled.div`
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 12px;
+  border: 3px solid var(--border);
+
+  img {
     width: 100%;
-    max-width: 150px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin-bottom: 1rem;
-
-    img {
-      height: 100%;
-      width: 100%;
-    }
+    height: 100%;
+    object-fit: cover;
   }
-  h4 {
-    margin-bottom: 1rem;
-    color: #6b6b6b;
-    font-size: 0.9rem;
-    letter-spacing: 1px;
-  }
+`;
 
-  p {
-    margin-bottom: 0.5rem;
-    text-decoration: underline;
-  }
+const Name = styled.h2`
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 4px;
+`;
 
-  .links {
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    align-items: center;
-    gap: 1rem;
+const Role = styled.p`
+  font-size: 0.875rem;
+  color: var(--text-2);
+  margin-bottom: 20px;
+`;
 
-    a {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
+const ContactLabel = styled.p`
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 14px;
+`;
 
-      &:nth-child(1) {
-        color: #000;
-      }
+const Links = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+`;
 
-      &:nth-child(2) {
-        color: #0077b5;
-      }
+const SocialLink = styled.a`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: ${(props) => props.$color || "var(--text-1)"};
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  transition: all 0.15s ease;
+  min-width: 80px;
 
-      &:nth-child(3) {
-        color: #cc2e96;
-      }
-
-      &:nth-child(4) {
-        color: #1197f5;
-      }
-    }
+  &:hover {
+    background: var(--surface-2);
+    border-color: var(--border);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
   }
 `;
 
