@@ -2,7 +2,24 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
-import { SearchIcons, CloseIcon } from "../common/SvgIcons";
+import { useDispatch, useSelector } from "react-redux";
+import { SearchIcons, CloseIcon, HelpIcon } from "../common/SvgIcons";
+import StorageOutlinedIcon from "@mui/icons-material/StorageOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import DesktopWindowsOutlinedIcon from "@mui/icons-material/DesktopWindowsOutlined";
+import { selectHelpModal, setHelpModal } from "../../store/HelpSlice";
+import HelpModal from "../common/Modal";
+import StorageModal from "../common/StorageModal";
+import { useStorageInfo } from "@/hooks/useStorageInfo";
+import { useTheme } from "@/context/ThemeContext";
+
+const THEME_OPTIONS = [
+  { id: "light", label: "Light", Icon: LightModeOutlinedIcon },
+  { id: "dark", label: "Dark", Icon: DarkModeOutlinedIcon },
+  { id: "system", label: "Device", Icon: DesktopWindowsOutlinedIcon },
+];
 
 const ProfileSection = ({
   userPhoto,
@@ -12,12 +29,20 @@ const ProfileSection = ({
   setShowSearch,
 }) => {
   const [open, setOpen] = useState(false);
+  const [storageOpen, setStorageOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const ref = useRef(null);
+  const dispatch = useDispatch();
+  const openHelp = useSelector(selectHelpModal);
+  const { preference, setTheme } = useTheme();
+  const { storage, storageLimitLabel, storagePercent } = useStorageInfo();
 
-  /* close on outside click */
   useEffect(() => {
     const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+        setThemeOpen(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     document.addEventListener("touchstart", handler);
@@ -29,9 +54,13 @@ const ProfileSection = ({
 
   const firstName = userName?.split(" ")[0] ?? "";
 
+  const closeMenu = () => {
+    setOpen(false);
+    setThemeOpen(false);
+  };
+
   return (
     <Wrap>
-      {/* Mobile search toggle */}
       <IconBtn
         onClick={setShowSearch}
         aria-label="Toggle search"
@@ -40,7 +69,6 @@ const ProfileSection = ({
         {showSearch ? <CloseIcon /> : <SearchIcons />}
       </IconBtn>
 
-      {/* Avatar + dropdown */}
       <AvatarWrap ref={ref}>
         <AvatarBtn onClick={() => setOpen((p) => !p)} aria-label="Account menu">
           <Avatar src={userPhoto} alt={firstName} />
@@ -56,10 +84,81 @@ const ProfileSection = ({
                 <UserSub>Personal Drive</UserSub>
               </UserMeta>
             </UserRow>
+
+            <MobileMenuItems>
+              <MenuBtn
+                onClick={() => {
+                  closeMenu();
+                  setStorageOpen(true);
+                }}
+              >
+                <MenuIconWrap>
+                  <StorageOutlinedIcon style={{ fontSize: 18 }} />
+                </MenuIconWrap>
+                <MenuBtnBody>
+                  <MenuBtnLabel>Storage</MenuBtnLabel>
+                  <MenuBtnSub>
+                    {storage} of {storageLimitLabel} · {storagePercent.toFixed(0)}%
+                  </MenuBtnSub>
+                  <MiniTrack>
+                    <MiniFill $pct={storagePercent} />
+                  </MiniTrack>
+                </MenuBtnBody>
+              </MenuBtn>
+
+              <MenuBtn
+                onClick={() => {
+                  closeMenu();
+                  dispatch(setHelpModal(true));
+                }}
+              >
+                <MenuIconWrap>
+                  <HelpIcon />
+                </MenuIconWrap>
+                <MenuBtnBody>
+                  <MenuBtnLabel>Help &amp; Support</MenuBtnLabel>
+                </MenuBtnBody>
+              </MenuBtn>
+
+              <MenuBtn
+                onClick={() => setThemeOpen((p) => !p)}
+                aria-expanded={themeOpen}
+              >
+                <MenuIconWrap>
+                  <SettingsOutlinedIcon style={{ fontSize: 18 }} />
+                </MenuIconWrap>
+                <MenuBtnBody>
+                  <MenuBtnLabel>Appearance</MenuBtnLabel>
+                  <MenuBtnSub>
+                    {THEME_OPTIONS.find((o) => o.id === preference)?.label ?? "Device"}
+                  </MenuBtnSub>
+                </MenuBtnBody>
+              </MenuBtn>
+
+              {themeOpen && (
+                <ThemeGroup>
+                  {THEME_OPTIONS.map(({ id, label, Icon }) => (
+                    <ThemeChip
+                      key={id}
+                      type="button"
+                      $active={preference === id}
+                      onClick={() => {
+                        setTheme(id);
+                        setThemeOpen(false);
+                      }}
+                    >
+                      <Icon style={{ fontSize: 16 }} />
+                      {label}
+                    </ThemeChip>
+                  ))}
+                </ThemeGroup>
+              )}
+            </MobileMenuItems>
+
             <Divider />
             <SignOutBtn
               onClick={() => {
-                setOpen(false);
+                closeMenu();
                 handleAuth();
               }}
             >
@@ -68,9 +167,17 @@ const ProfileSection = ({
           </DropMenu>
         )}
       </AvatarWrap>
+
+      <HelpModal
+        openHelp={openHelp}
+        closeHelpModal={() => dispatch(setHelpModal(false))}
+      />
+      <StorageModal open={storageOpen} onClose={() => setStorageOpen(false)} />
     </Wrap>
   );
 };
+
+export default ProfileSection;
 
 const Wrap = styled.div`
   display: flex;
@@ -78,7 +185,9 @@ const Wrap = styled.div`
   gap: 4px;
 
   .mobile-only {
-    @media (min-width: 769px) { display: none; }
+    @media (min-width: 769px) {
+      display: none;
+    }
   }
 `;
 
@@ -95,8 +204,13 @@ const IconBtn = styled.button`
   cursor: pointer;
   transition: background 0.15s ease;
 
-  &:hover { background: var(--surface-3); }
-  svg { font-size: 22px; }
+  &:hover {
+    background: var(--surface-3);
+  }
+
+  svg {
+    font-size: 22px;
+  }
 `;
 
 const AvatarWrap = styled.div`
@@ -123,7 +237,9 @@ const Avatar = styled.img`
   display: block;
   transition: border-color 0.15s ease;
 
-  ${AvatarBtn}:hover & { border-color: var(--primary); }
+  ${AvatarBtn}:hover & {
+    border-color: var(--primary);
+  }
 `;
 
 const DropMenu = styled.div`
@@ -135,13 +251,20 @@ const DropMenu = styled.div`
   border-radius: 16px;
   box-shadow: var(--shadow-lg);
   padding: 12px;
-  min-width: 220px;
-  z-index: 200;
+  min-width: 260px;
+  max-width: min(300px, calc(100vw - 24px));
+  z-index: 950;
   animation: popIn 0.18s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 
   @keyframes popIn {
-    from { opacity: 0; transform: translateY(-6px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 `;
 
@@ -183,6 +306,108 @@ const UserSub = styled.p`
   margin-top: 1px;
 `;
 
+const MobileMenuItems = styled.div`
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0 8px;
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
+`;
+
+const MenuBtn = styled.button`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--surface-2);
+  }
+`;
+
+const MenuIconWrap = styled.div`
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  flex-shrink: 0;
+
+  svg {
+    font-size: 18px;
+  }
+`;
+
+const MenuBtnBody = styled.div`
+  min-width: 0;
+  flex: 1;
+  padding-top: 1px;
+`;
+
+const MenuBtnLabel = styled.p`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-1);
+`;
+
+const MenuBtnSub = styled.p`
+  font-size: 0.72rem;
+  color: var(--text-3);
+  margin-top: 2px;
+`;
+
+const MiniTrack = styled.div`
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 6px;
+`;
+
+const MiniFill = styled.div`
+  height: 100%;
+  width: ${(props) => props.$pct}%;
+  background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%);
+  border-radius: 999px;
+`;
+
+const ThemeGroup = styled.div`
+  display: flex;
+  gap: 6px;
+  padding: 4px 8px 8px 42px;
+`;
+
+const ThemeChip = styled.button`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  border: 1.5px solid ${(p) => (p.$active ? "var(--primary)" : "var(--border)")};
+  background: ${(p) => (p.$active ? "var(--primary-light)" : "var(--surface)")};
+  color: ${(p) => (p.$active ? "var(--primary)" : "var(--text-2)")};
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+`;
+
 const Divider = styled.div`
   height: 1px;
   background: var(--border-light);
@@ -202,7 +427,7 @@ const SignOutBtn = styled.button`
   cursor: pointer;
   transition: background 0.15s ease;
 
-  &:hover { background: #fef2f2; }
+  &:hover {
+    background: #fef2f2;
+  }
 `;
-
-export default ProfileSection;

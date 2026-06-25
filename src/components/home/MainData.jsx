@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import styled from "styled-components";
 import {
   MoreOptionsIcon,
@@ -28,13 +29,90 @@ import { toast } from "react-toastify";
 import LottieImage from "../common/LottieImage";
 import SecureFileLink from "../common/SecureFileLink";
 import { downloadFile, getFileDownloadUrl } from "../../lib/fileAccess";
+import { useMenuPlacement } from "@/hooks/useMenuPlacement";
 
 function getTypeStyle(contentType) {
-  if (contentType?.includes("pdf"))   return { bg: "#fef2f2", color: "#dc2626", ext: "PDF" };
-  if (contentType?.includes("image")) return { bg: "#faf5ff", color: "#7c3aed", ext: "IMG" };
-  if (contentType?.includes("video")) return { bg: "#eff6ff", color: "#2563eb", ext: "VID" };
-  if (contentType?.includes("audio")) return { bg: "#fff7ed", color: "#ea580c", ext: "AUD" };
-  return { bg: "#f1f5f9", color: "#475569", ext: "DOC" };
+  if (contentType?.includes("pdf"))   return { bg: "#fce8e6", color: "#d93025", ext: "PDF" };
+  if (contentType?.includes("image")) return { bg: "#e8eaf6", color: "#5c6bc0", ext: "IMG" };
+  if (contentType?.includes("video")) return { bg: "#e3f2fd", color: "#1e88e5", ext: "VID" };
+  if (contentType?.includes("audio")) return { bg: "#fff3e0", color: "#ef6c00", ext: "AUD" };
+  return { bg: "#f1f3f4", color: "#5f6368", ext: "DOC" };
+}
+
+function FileRowOptionsMenu({
+  file,
+  isOpen,
+  showShareIcons,
+  shareUrl,
+  onToggle,
+  onShareClick,
+  onCopyLink,
+  onDelete,
+  menuRef,
+}) {
+  const triggerRef = useRef(null);
+  const { top, right, flip, ready } = useMenuPlacement(triggerRef, menuRef, isOpen);
+
+  return (
+    <>
+      <OptionsTrigger
+        ref={triggerRef}
+        className="optionsContainer"
+        title="More options"
+        $active={isOpen}
+        onClick={onToggle}
+      >
+        <MoreOptionsIcon />
+      </OptionsTrigger>
+
+      {isOpen &&
+        createPortal(
+          <OptionsMenu
+            ref={menuRef}
+            $fixed
+            $ready={ready}
+            $flip={flip}
+            style={{ top, right }}
+          >
+            <MenuItem onClick={() => downloadFile(file.data)}>
+              <DownloadIcon /> Download
+            </MenuItem>
+            <MenuItem onClick={() => onCopyLink(file.data)}>
+              <CopyIcon /> Copy Link
+            </MenuItem>
+            <MenuItem
+              className="shareButton"
+              onClick={() => onShareClick(file.data)}
+            >
+              <ShareIcon /> Share
+              <ShareExpand className={showShareIcons ? "show" : ""} $flip={flip}>
+                <EmailShareButton url={shareUrl} subject={`${file.data.filename} file link`}>
+                  <EmailIcon size={28} round />
+                </EmailShareButton>
+                <FacebookShareButton url={shareUrl} hashtag={file.data.filename}>
+                  <FacebookIcon size={28} round />
+                </FacebookShareButton>
+                <LinkedinShareButton url={shareUrl} title={`${file.data.filename} file link`}>
+                  <LinkedinIcon size={28} round />
+                </LinkedinShareButton>
+                <WhatsappShareButton url={shareUrl} title={`${file.data.filename} file link`}>
+                  <WhatsappIcon size={28} round />
+                </WhatsappShareButton>
+              </ShareExpand>
+            </MenuItem>
+            <MenuDivider />
+            <MenuItem $danger onClick={() => onDelete(file.id, file.data)}>
+              <DeleteIcon /> Delete
+            </MenuItem>
+            <MenuFooter>
+              <FooterRow>{changeBytes(file.data.size)}</FooterRow>
+              <FooterRow>{convertDates(file.data.timestamp?.seconds)}</FooterRow>
+            </MenuFooter>
+          </OptionsMenu>,
+          document.body
+        )}
+    </>
+  );
 }
 
 const MainData = ({
@@ -61,6 +139,17 @@ const MainData = ({
     }
     setShowShareIcons(false);
     setShareUrl("");
+  };
+
+  const handleQuickShare = async (fileId, fileData) => {
+    handleOptionsClick(fileId);
+    try {
+      const url = await getFileDownloadUrl(fileData);
+      setShareUrl(url);
+      setShowShareIcons(true);
+    } catch (error) {
+      toast.error("Unable to share file");
+    }
   };
 
   const handleCopyLink = async (fileData) => {
@@ -91,7 +180,11 @@ const MainData = ({
       }
     };
     document.addEventListener("mousedown", handleDocumentClick);
-    return () => document.removeEventListener("mousedown", handleDocumentClick);
+    document.addEventListener("touchstart", handleDocumentClick);
+    return () => {
+      document.removeEventListener("mousedown", handleDocumentClick);
+      document.removeEventListener("touchstart", handleDocumentClick);
+    };
   }, [handleOptionsClick]);
 
   if (files.length === 0) {
@@ -144,7 +237,12 @@ const MainData = ({
                     <FileIcons type={file.data.contentType} />
                   </span>
                 </FileIconWrap>
-                <FileName title={file.data.filename}>{file.data.filename}</FileName>
+                <NameBlock>
+                  <FileName title={file.data.filename}>{file.data.filename}</FileName>
+                  <MobileMeta>
+                    {changeBytes(file.data.size)} · {convertDates(file.data.timestamp?.seconds)}
+                  </MobileMeta>
+                </NameBlock>
               </SecureFileLink>
             </NameCol>
 
@@ -157,7 +255,6 @@ const MainData = ({
             </DateCol>
 
             <ActionsCol>
-              {/* Hover quick actions */}
               <QuickActions $visible={isHovered && !isOpen}>
                 <QuickBtn
                   onClick={() => downloadFile(file.data)}
@@ -172,6 +269,12 @@ const MainData = ({
                   <CopyIcon />
                 </QuickBtn>
                 <QuickBtn
+                  onClick={() => handleQuickShare(file.id, file.data)}
+                  title="Share"
+                >
+                  <ShareIcon />
+                </QuickBtn>
+                <QuickBtn
                   $danger
                   onClick={() => handleDelete(file.id, file.data)}
                   title="Delete"
@@ -180,54 +283,28 @@ const MainData = ({
                 </QuickBtn>
               </QuickActions>
 
-              {/* More options trigger */}
               <OptionsWrap $visible={!isHovered || isOpen}>
-                <OptionsTrigger
-                  className="optionsContainer"
-                  title="More options"
-                  $active={isOpen}
-                  onClick={() => handleOptionsClick(file.id)}
-                >
-                  <MoreOptionsIcon />
-                </OptionsTrigger>
-
-                {isOpen && (
-                  <OptionsMenu ref={optionsMenuRef}>
-                    <MenuItem onClick={() => downloadFile(file.data)}>
-                      <DownloadIcon /> Download
-                    </MenuItem>
-                    <MenuItem onClick={() => handleCopyLink(file.data)}>
-                      <CopyIcon /> Copy Link
-                    </MenuItem>
-                    <MenuItem
-                      className="shareButton"
-                      onClick={() => handleShareClick(file.data)}
-                    >
-                      <ShareIcon /> Share
-                      <ShareExpand className={showShareIcons ? "show" : ""}>
-                        <EmailShareButton url={shareUrl} subject={`${file.data.filename} file link`}>
-                          <EmailIcon size={28} round />
-                        </EmailShareButton>
-                        <FacebookShareButton url={shareUrl} hashtag={file.data.filename}>
-                          <FacebookIcon size={28} round />
-                        </FacebookShareButton>
-                        <LinkedinShareButton url={shareUrl} title={`${file.data.filename} file link`}>
-                          <LinkedinIcon size={28} round />
-                        </LinkedinShareButton>
-                        <WhatsappShareButton url={shareUrl} title={`${file.data.filename} file link`}>
-                          <WhatsappIcon size={28} round />
-                        </WhatsappShareButton>
-                      </ShareExpand>
-                    </MenuItem>
-                    <MenuDivider />
-                    <MenuItem $danger onClick={() => handleDelete(file.id, file.data)}>
-                      <DeleteIcon /> Delete
-                    </MenuItem>
-                    <MenuFooter>
-                      <FooterRow>{changeBytes(file.data.size)}</FooterRow>
-                      <FooterRow>{convertDates(file.data.timestamp?.seconds)}</FooterRow>
-                    </MenuFooter>
-                  </OptionsMenu>
+                {isOpen ? (
+                  <FileRowOptionsMenu
+                    file={file}
+                    isOpen={isOpen}
+                    showShareIcons={showShareIcons}
+                    shareUrl={shareUrl}
+                    onToggle={() => handleOptionsClick(file.id)}
+                    onShareClick={handleShareClick}
+                    onCopyLink={handleCopyLink}
+                    onDelete={handleDelete}
+                    menuRef={optionsMenuRef}
+                  />
+                ) : (
+                  <OptionsTrigger
+                    className="optionsContainer"
+                    title="More options"
+                    $active={false}
+                    onClick={() => handleOptionsClick(file.id)}
+                  >
+                    <MoreOptionsIcon />
+                  </OptionsTrigger>
                 )}
               </OptionsWrap>
             </ActionsCol>
@@ -260,11 +337,17 @@ const DateCol = styled.div`
 `;
 
 const ActionsCol = styled.div`
-  flex: 0 0 120px;
+  flex: 0 0 148px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 2px;
+
+  @media (max-width: 768px) {
+    flex: 0 0 auto;
+    align-self: center;
+    margin-left: 4px;
+  }
 `;
 
 /* ─────── table ─────── */
@@ -274,15 +357,20 @@ const TableWrap = styled.div`
 
   .hide-sm { @media (max-width: 640px) { display: none !important; } }
   .hide-md { @media (max-width: 900px) { display: none !important; } }
+
+  @media (max-width: 768px) {
+    padding-bottom: var(--mobile-scroll-inset);
+    scroll-padding-bottom: var(--mobile-scroll-inset);
+  }
 `;
 
 const TableHead = styled.div`
   display: flex;
   align-items: center;
-  padding: 0 12px 0 8px;
+  padding: 0 0 0 4px;
   height: 34px;
   border-bottom: 1px solid var(--border-light);
-  margin: 0 8px;
+  margin: 0;
 
   ${NameCol}, ${SizeCol}, ${DateCol} {
     font-size: 0.72rem;
@@ -291,20 +379,42 @@ const TableHead = styled.div`
     text-transform: uppercase;
     letter-spacing: 0.6px;
   }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const Row = styled.div`
   display: flex;
   align-items: center;
-  padding: 0 12px 0 8px;
+  padding: 0 0 0 4px;
   height: 52px;
   border-radius: 10px;
-  margin: 1px 8px;
+  margin: 1px 0;
   background: ${(props) => (props.$active ? "var(--primary-light)" : "transparent")};
   transition: background 0.15s ease;
 
   &:hover {
     background: var(--surface-2);
+  }
+
+  @media (max-width: 768px) {
+    align-items: flex-start;
+    height: auto;
+    min-height: 64px;
+    padding: 12px 12px 12px 8px;
+    margin: 0;
+    border-radius: 0;
+    border-bottom: 1px solid var(--border-light);
+
+    &:hover {
+      background: transparent;
+    }
+
+    &:active {
+      background: var(--surface-2);
+    }
   }
 `;
 
@@ -325,6 +435,14 @@ const StarBtn = styled.button`
 
   &:hover { background: #fef9c3; color: #f59e0b; }
   svg { font-size: 17px; }
+
+  @media (max-width: 768px) {
+    width: 36px;
+    height: 36px;
+    margin-top: 2px;
+
+    svg { font-size: 18px; }
+  }
 `;
 
 const FileIconWrap = styled.div`
@@ -336,6 +454,21 @@ const FileIconWrap = styled.div`
   justify-content: center;
   flex-shrink: 0;
   svg { font-size: 19px; }
+
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    svg { font-size: 22px; }
+  }
+`;
+
+const NameBlock = styled.div`
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 `;
 
 const FileName = styled.span`
@@ -346,6 +479,28 @@ const FileName = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.35;
+  }
+`;
+
+const MobileMeta = styled.span`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-3);
+    line-height: 1.3;
+  }
 `;
 
 const MetaText = styled.span`
@@ -358,6 +513,10 @@ const QuickActions = styled.div`
   display: ${(props) => (props.$visible ? "flex" : "none")};
   align-items: center;
   gap: 2px;
+
+  @media (max-width: 768px) {
+    display: none !important;
+  }
 `;
 
 const QuickBtn = styled.button`
@@ -386,6 +545,10 @@ const OptionsWrap = styled.div`
   position: relative;
   display: ${(props) => (props.$visible ? "flex" : "none")};
   align-items: center;
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
 `;
 
 const OptionsTrigger = styled.button`
@@ -403,6 +566,12 @@ const OptionsTrigger = styled.button`
 
   &:hover { background: var(--surface-3); color: var(--text-2); }
   svg { font-size: 20px; }
+
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
 `;
 
 const OptionsMenu = styled.div`
@@ -416,6 +585,17 @@ const OptionsMenu = styled.div`
   min-width: 186px;
   z-index: 50;
   padding: 6px;
+
+  ${(props) =>
+    props.$fixed &&
+    `
+    position: fixed;
+    top: auto;
+    right: auto;
+    z-index: 950;
+    opacity: ${props.$ready ? 1 : 0};
+    pointer-events: ${props.$ready ? "auto" : "none"};
+  `}
 `;
 
 const MenuItem = styled.div`
@@ -462,7 +642,8 @@ const ShareExpand = styled.div`
   gap: 6px;
   position: absolute;
   left: 0;
-  top: -52px;
+  top: ${(props) => (props.$flip ? "auto" : "-52px")};
+  bottom: ${(props) => (props.$flip ? "-52px" : "auto")};
   background: var(--surface);
   padding: 8px;
   border-radius: 10px;

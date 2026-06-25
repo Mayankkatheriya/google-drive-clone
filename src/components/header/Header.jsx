@@ -124,7 +124,7 @@ const Container = styled.header`
 const Wrapper = styled.div`
   display: flex;
   align-items: center;
-  height: 64px;
+  height: var(--header-height);
   padding: 0 12px;
   gap: 8px;
 `;

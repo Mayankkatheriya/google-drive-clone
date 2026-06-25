@@ -11,6 +11,7 @@ import {
   searchFiles,
 } from "@/lib/searchFiles";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+import { Page } from "../common/PageShell";
 
 const FILTERS = [
   { id: "all", label: "All" },
@@ -53,8 +54,7 @@ const SearchItems = () => {
 
   return (
     <Page>
-      <ContentCard>
-        <SearchHeader>
+      <SearchHeader>
           <SearchIconWrap>
             <SearchOutlinedIcon />
           </SearchIconWrap>
@@ -96,37 +96,19 @@ const SearchItems = () => {
               : `No ${activeFilter} files match this search`
           }
         />
-      </ContentCard>
     </Page>
   );
 };
-
-const Page = styled.div`
-  flex: 1;
-  min-width: 0;
-  overflow-y: auto;
-  padding: 16px 16px 16px 0;
-
-  @media (max-width: 768px) {
-    padding: 12px 8px 12px 0;
-  }
-`;
-
-const ContentCard = styled.div`
-  background: var(--surface);
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  min-height: 100%;
-  overflow: hidden;
-  box-shadow: var(--shadow-xs);
-`;
 
 const SearchHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--border-light);
+
+  @media (max-width: 768px) {
+    padding: 16px 16px 12px;
+  }
 `;
 
 const SearchIconWrap = styled.div`
@@ -167,9 +149,17 @@ const ResultCount = styled.p`
 
 const FilterRow = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   padding: 14px 24px 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar { display: none; }
+
+  @media (max-width: 768px) {
+    padding: 8px 16px 4px;
+  }
 `;
 
 const FilterChip = styled.button`

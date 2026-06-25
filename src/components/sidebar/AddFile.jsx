@@ -29,8 +29,8 @@ const NewBtn = styled.button`
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--surface);
-  border: none;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: 999px;
   padding: 11px 22px 11px 14px;
   cursor: pointer;
@@ -54,7 +54,6 @@ const NewBtn = styled.button`
     }
   }
 
-  /* On mobile: circular icon-only button */
   @media (max-width: 768px) {
     padding: 12px;
     border-radius: 50%;
@@ -64,13 +63,15 @@ const NewBtn = styled.button`
   }
 
   &:hover {
-    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.18);
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: var(--shadow-md);
     transform: translateY(-1px);
   }
 
   &:active {
     transform: translateY(0);
-    box-shadow: 0 1px 6px rgba(15, 23, 42, 0.12);
+    box-shadow: var(--shadow-sm);
   }
 `;
 

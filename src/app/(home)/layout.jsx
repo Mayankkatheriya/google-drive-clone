@@ -7,6 +7,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { FilesProvider } from "@/context/FilesContext";
 import { FilePreviewProvider } from "@/context/FilePreviewContext";
 import FilePreviewModal from "@/components/common/FilePreviewModal";
+import MobileBottomNav from "@/components/mobile/MobileBottomNav";
 
 export default function HomeLayout({ children }) {
   return (
@@ -16,8 +17,9 @@ export default function HomeLayout({ children }) {
         <ProtectedRoute>
           <HomeContainer>
             <Sidebar />
-            {children}
+            <MainContent>{children}</MainContent>
           </HomeContainer>
+          <MobileBottomNav />
         </ProtectedRoute>
         <FilePreviewModal />
       </FilePreviewProvider>
@@ -30,6 +32,17 @@ const HomeContainer = styled.div`
   display: flex;
   align-items: stretch;
   flex: 1;
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - var(--header-height));
   background: var(--surface-3);
+
+  @media (max-width: 768px) {
+    min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
+  }
+`;
+
+const MainContent = styled.div`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 `;

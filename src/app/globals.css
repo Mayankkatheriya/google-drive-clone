@@ -1,27 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-light: #eff6ff;
-  --primary-subtle: #dbeafe;
+  --primary: #1a73e8;
+  --primary-hover: #1557b0;
+  --primary-light: #e8f0fe;
+  --primary-subtle: #c2d7fa;
 
   --surface: #ffffff;
-  --surface-2: #f8faff;
-  --surface-3: #f1f5f9;
+  --surface-2: #f8f9fb;
+  --surface-3: #eef1f6;
 
-  --border: #e2e8f0;
-  --border-light: #f1f5f9;
+  --border: #d0d5dd;
+  --border-light: #e4e7ec;
 
-  --text-1: #0f172a;
-  --text-2: #475569;
-  --text-3: #94a3b8;
+  --text-1: #1a1d21;
+  --text-2: #4a5568;
+  --text-3: #7a8494;
 
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow: 0 4px 6px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 10px 15px rgba(15, 23, 42, 0.08), 0 4px 6px rgba(15, 23, 42, 0.03);
-  --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.12), 0 8px 16px rgba(15, 23, 42, 0.06);
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-sm: 0 2px 4px rgba(16, 24, 40, 0.08);
+  --shadow: 0 4px 8px rgba(16, 24, 40, 0.08);
+  --shadow-md: 0 6px 16px rgba(16, 24, 40, 0.1);
+  --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.12);
 
   --radius-sm: 8px;
   --radius: 12px;
@@ -31,32 +31,38 @@
 
   --header-height: 64px;
   --sidebar-width: 240px;
+  --bottom-nav-height: 60px;
+  --mobile-fab-size: 56px;
+  --mobile-fab-gap: 16px;
+  --mobile-scroll-inset: calc(
+    var(--bottom-nav-height) + var(--mobile-fab-size) + var(--mobile-fab-gap) + 24px + env(safe-area-inset-bottom, 0px)
+  );
 
   --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 [data-theme="dark"] {
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --primary-light: rgba(59, 130, 246, 0.12);
-  --primary-subtle: rgba(59, 130, 246, 0.22);
+  --primary: #60a5fa;
+  --primary-hover: #3b82f6;
+  --primary-light: rgba(96, 165, 250, 0.14);
+  --primary-subtle: rgba(96, 165, 250, 0.28);
 
-  --surface: #1c2230;
-  --surface-2: #232d40;
-  --surface-3: #131820;
+  --surface: #1a2233;
+  --surface-2: #242f42;
+  --surface-3: #111827;
 
-  --border: #2a3347;
-  --border-light: #1c2230;
+  --border: #3d5068;
+  --border-light: #2d3a4f;
 
-  --text-1: #e9eef5;
-  --text-2: #8fa3bf;
-  --text-3: #4e6380;
+  --text-1: #eef2f7;
+  --text-2: #9db0c9;
+  --text-3: #6b8299;
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.55), 0 4px 6px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.65), 0 8px 16px rgba(0, 0, 0, 0.4);
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.5);
+  --shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
 }
 
 [data-theme="dark"] *::-webkit-scrollbar-thumb {
@@ -83,12 +89,12 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #bdc1c6;
   border-radius: 999px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #9aa0a6;
 }
 
 html, body {

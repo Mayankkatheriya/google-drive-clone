@@ -51,7 +51,7 @@ const MenuBtn = styled.button`
     font-size: 22px;
   }
 
-  /* Sidebar is always visible on mobile — toggle not needed */
+  /* Sidebar hidden on mobile — bottom nav handles navigation */
   @media (max-width: 768px) {
     display: none;
   }

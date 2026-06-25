@@ -3,36 +3,46 @@
 import React from "react";
 import styled from "styled-components";
 import FileIcons from "./FileIcons";
-import { changeBytes, convertDates } from "./common";
+import { changeBytes } from "./common";
 import SecureFileLink from "./SecureFileLink";
 import { handleDeleteFromTrash, handleStarred } from "./firebaseApi";
-import { DeleteIcon, StarBorderIcon, StarFilledIcon, DownloadIcon } from "./SvgIcons";
+import {
+  DeleteIcon,
+  StarBorderIcon,
+  StarFilledIcon,
+  DownloadIcon,
+} from "./SvgIcons";
 import LottieImage from "./LottieImage";
 import { motion } from "framer-motion";
 import { downloadFile } from "../../lib/fileAccess";
 
 function getTypeStyle(contentType, filename) {
   const ext = filename?.split(".").pop()?.toUpperCase().slice(0, 4) || "";
-  if (contentType?.includes("pdf"))   return { bg: "#fef2f2", color: "#dc2626", label: "PDF" };
-  if (contentType?.includes("png"))   return { bg: "#faf5ff", color: "#7c3aed", label: "PNG" };
-  if (contentType?.includes("gif"))   return { bg: "#fdf4ff", color: "#a855f7", label: "GIF" };
-  if (contentType?.includes("webp"))  return { bg: "#faf5ff", color: "#7c3aed", label: "WEBP" };
-  if (contentType?.includes("image")) return { bg: "#faf5ff", color: "#7c3aed", label: ext || "IMG" };
-  if (contentType?.includes("mp4"))   return { bg: "#eff6ff", color: "#2563eb", label: "MP4" };
-  if (contentType?.includes("video")) return { bg: "#eff6ff", color: "#2563eb", label: ext || "VID" };
-  if (contentType?.includes("mp3"))   return { bg: "#fff7ed", color: "#ea580c", label: "MP3" };
-  if (contentType?.includes("audio")) return { bg: "#fff7ed", color: "#ea580c", label: ext || "AUD" };
-  return { bg: "#f1f5f9", color: "#475569", label: ext || "FILE" };
+  if (contentType?.includes("pdf"))
+    return { tile: "#fce8e6", icon: "#d93025", label: "PDF" };
+  if (contentType?.includes("png"))
+    return { tile: "#e8eaf6", icon: "#5c6bc0", label: "PNG" };
+  if (contentType?.includes("gif"))
+    return { tile: "#f3e5f5", icon: "#8e24aa", label: "GIF" };
+  if (contentType?.includes("webp"))
+    return { tile: "#e8eaf6", icon: "#5c6bc0", label: "WEBP" };
+  if (contentType?.includes("image"))
+    return { tile: "#e8eaf6", icon: "#5c6bc0", label: ext || "IMG" };
+  if (contentType?.includes("mp4") || contentType?.includes("video"))
+    return { tile: "#e3f2fd", icon: "#1e88e5", label: ext || "VID" };
+  if (contentType?.includes("mp3") || contentType?.includes("audio"))
+    return { tile: "#fff3e0", icon: "#ef6c00", label: ext || "AUD" };
+  return { tile: "#f1f3f4", icon: "#5f6368", label: ext || "FILE" };
 }
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.05 } },
+  show: { transition: { staggerChildren: 0.03 } },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.22 } },
 };
 
 const FilesList = ({ data, page = null, imagePath, text1, text2 }) => {
@@ -41,11 +51,28 @@ const FilesList = ({ data, page = null, imagePath, text1, text2 }) => {
   }
 
   return (
-    <Grid variants={container} initial="hidden" animate="show">
+    <List variants={container} initial="hidden" animate="show">
       {data.map((file) => {
-        const { bg, color, label } = getTypeStyle(file.data.contentType, file.data.filename);
+        const { tile, icon, label } = getTypeStyle(
+          file.data.contentType,
+          file.data.filename
+        );
+
         return (
           <Card key={file.id} variants={item}>
+            <FileLink fileData={file.data} files={data}>
+              <IconTile style={{ background: tile, color: icon }}>
+                <FileIcons type={file.data.contentType} />
+              </IconTile>
+              <CardBody>
+                <CardName title={file.data.filename}>{file.data.filename}</CardName>
+                <CardMeta>
+                  <TypeTag>{label}</TypeTag>
+                  <span>{changeBytes(file.data.size)}</span>
+                </CardMeta>
+              </CardBody>
+            </FileLink>
+
             {page === "starred" && (
               <StarBtn
                 onClick={() => handleStarred(file.id)}
@@ -56,211 +83,316 @@ const FilesList = ({ data, page = null, imagePath, text1, text2 }) => {
               </StarBtn>
             )}
 
-            <SecureFileLink
-              fileData={file.data}
-              files={data}
-              style={{ display: "flex", flexDirection: "column", flex: 1 }}
-            >
-              <CardIcon style={{ background: bg }}>
-                <span style={{ color, display: "flex" }}>
-                  <FileIcons type={file.data.contentType} />
-                </span>
-                <ExtBadge style={{ background: color + "22", color }}>
-                  {label}
-                </ExtBadge>
-              </CardIcon>
-
-              <CardBody>
-                <CardName title={file.data.filename}>{file.data.filename}</CardName>
-                <CardMeta>{changeBytes(file.data.size)}</CardMeta>
-              </CardBody>
-            </SecureFileLink>
-
-            {page === "trash" ? (
-              <DeleteBtn onClick={() => handleDeleteFromTrash(file.id, file.data)}>
-                <DeleteIcon />
-                Delete permanently
-              </DeleteBtn>
-            ) : page !== "starred" && (
-              <HoverActions className="hover-actions">
+            {page !== "trash" && page !== "starred" && (
+              <CardActions className="card-actions">
                 <ActionBtn
-                  onClick={(e) => { e.stopPropagation(); downloadFile(file.data); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    downloadFile(file.data);
+                  }}
                   title="Download"
                 >
                   <DownloadIcon />
                 </ActionBtn>
                 <ActionBtn
                   $danger
-                  onClick={(e) => { e.stopPropagation(); handleDeleteFromTrash(file.id, file.data); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteFromTrash(file.id, file.data);
+                  }}
                   title="Delete"
                 >
                   <DeleteIcon />
                 </ActionBtn>
-              </HoverActions>
+              </CardActions>
+            )}
+
+            {page === "trash" && (
+              <TrashAction
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteFromTrash(file.id, file.data);
+                }}
+                title="Delete forever"
+              >
+                <DeleteIcon />
+              </TrashAction>
             )}
           </Card>
         );
       })}
-    </Grid>
+    </List>
   );
 };
 
-const Grid = styled(motion.div)`
+/* ── mobile: vertical list, 1 row per file ── */
+const List = styled(motion.div)`
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 14px;
-  padding: 20px 16px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 16px var(--mobile-scroll-inset);
+  scroll-padding-bottom: var(--mobile-scroll-inset);
 
-  @media (max-width: 480px) {
-    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-    gap: 10px;
-    padding: 14px 12px 20px;
+  @media (min-width: 769px) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    gap: 16px;
+    padding: 20px 24px 28px;
   }
 `;
 
 const Card = styled(motion.div)`
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  overflow: hidden;
   position: relative;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
   cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: var(--shadow-sm);
 
   &:hover {
-    border-color: var(--primary);
-    box-shadow:
-      0 8px 24px rgba(37, 99, 235, 0.1),
-      0 2px 8px rgba(15, 23, 42, 0.06);
-    transform: translateY(-3px);
+    border-color: var(--primary-subtle);
+    box-shadow: var(--shadow-md);
   }
 
-  &:hover .hover-actions {
-    opacity: 1;
+  @media (min-width: 769px) {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px 14px 14px;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    &:hover .card-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
 `;
 
-const CardIcon = styled.div`
-  height: 110px;
+const FileLink = styled(SecureFileLink)`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+
+  @media (min-width: 769px) {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+`;
+
+const IconTile = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  flex-shrink: 0;
 
   svg {
-    font-size: 52px;
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.08));
+    font-size: 24px;
   }
-`;
 
-const ExtBadge = styled.span`
-  position: absolute;
-  bottom: 8px;
-  right: 10px;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  padding: 2px 6px;
-  border-radius: 5px;
+  @media (min-width: 769px) {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+
+    svg {
+      font-size: 26px;
+    }
+  }
 `;
 
 const CardBody = styled.div`
-  padding: 10px 12px 12px;
-  border-top: 1px solid var(--border-light);
-  background: var(--surface-2);
+  min-width: 0;
+  flex: 1;
+  width: 100%;
+  overflow: hidden;
+
+  @media (min-width: 769px) {
+    padding-right: 28px;
+  }
 `;
 
 const CardName = styled.p`
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--text-1);
-  white-space: nowrap;
+  line-height: 1.35;
+  margin-bottom: 4px;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
-  margin-bottom: 3px;
+
+  @media (min-width: 769px) {
+    font-size: 0.84rem;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    padding-right: 4px;
+  }
 `;
 
-const CardMeta = styled.span`
-  font-size: 0.72rem;
-  color: var(--text-3);
-`;
-
-const HoverActions = styled.div`
+const CardMeta = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
-  padding: 8px;
-  border-top: 1px solid var(--border-light);
-  background: var(--surface-2);
-  opacity: 0;
-  transition: opacity 0.15s ease;
+  font-size: 0.72rem;
+  color: var(--text-3);
+  min-width: 0;
+
+  span:last-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+
+const TypeTag = styled.span`
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface-3);
+  color: var(--text-2);
+  flex-shrink: 0;
+`;
+
+const CardActions = styled.div`
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+
+  @media (min-width: 769px) {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
 `;
 
 const ActionBtn = styled.button`
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
-  border: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
-  color: ${(props) => (props.$danger ? "#ef4444" : "var(--text-2)")};
+  color: ${(props) => (props.$danger ? "#f87171" : "var(--text-2)")};
   transition: all 0.15s ease;
 
   &:hover {
-    background: ${(props) => (props.$danger ? "#fef2f2" : "var(--surface-3)")};
-    color: ${(props) => (props.$danger ? "#dc2626" : "var(--primary)")};
+    background: ${(props) => (props.$danger ? "rgba(248, 113, 113, 0.12)" : "var(--primary-light)")};
+    color: ${(props) => (props.$danger ? "#fca5a5" : "var(--primary)")};
+    border-color: ${(props) => (props.$danger ? "rgba(248, 113, 113, 0.35)" : "var(--primary-subtle)")};
   }
 
-  svg { font-size: 17px; }
+  svg {
+    font-size: 16px;
+  }
+
+  @media (min-width: 769px) {
+    width: 30px;
+    height: 30px;
+  }
 `;
 
 const StarBtn = styled.button`
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 10;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.88);
-  border: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 50%;
   cursor: pointer;
-  color: ${(props) => (props.$starred ? "#f59e0b" : "#cbd5e1")};
+  flex-shrink: 0;
+  color: ${(props) => (props.$starred ? "#f59e0b" : "var(--text-3)")};
   transition: all 0.15s ease;
-  backdrop-filter: blur(4px);
 
-  &:hover { background: #fef9c3; color: #f59e0b; }
-  svg { font-size: 14px; }
+  &:hover {
+    background: #fef9c3;
+    color: #f59e0b;
+  }
+
+  svg {
+    font-size: 15px;
+  }
+
+  @media (min-width: 769px) {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+
+    svg {
+      font-size: 14px;
+    }
+  }
 `;
 
-const DeleteBtn = styled.button`
-  width: 100%;
+const TrashAction = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 9px;
   background: var(--surface);
-  border: none;
-  border-top: 1px solid #fee2e2;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #ef4444;
+  border: 1px solid rgba(217, 48, 37, 0.25);
+  border-radius: 8px;
   cursor: pointer;
+  color: #d93025;
+  flex-shrink: 0;
   transition: background 0.15s ease;
+  z-index: 1;
 
-  svg { font-size: 15px; }
-  &:hover { background: #fef2f2; }
+  svg {
+    font-size: 16px;
+  }
+
+  &:hover {
+    background: rgba(217, 48, 37, 0.08);
+  }
+
+  @media (min-width: 769px) {
+    width: 30px;
+    height: 30px;
+
+    svg {
+      font-size: 15px;
+    }
+  }
 `;
 
 export default FilesList;

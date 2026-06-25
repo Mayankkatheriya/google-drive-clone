@@ -9,6 +9,7 @@ import { useMyFiles } from "@/context/FilesContext";
 import RecentDataGrid from "./RecentDataGrid";
 import MainData from "./MainData";
 import PageHeader from "../common/PageHeader";
+import { Page } from "../common/PageShell";
 import { toast } from "react-toastify";
 
 const Data = () => {
@@ -39,62 +40,54 @@ const Data = () => {
 
   return (
     <Page>
-      <ContentCard>
-        <PageHeader pageTitle="My Drive" />
+      <PageHeader pageTitle="My Drive" />
 
-        {files.length > 0 && (
-          <QuickSection>
-            <SectionLabel>Quick Access</SectionLabel>
-            <RecentDataGrid files={files} />
-          </QuickSection>
-        )}
+      {files.length > 0 && (
+        <QuickSection>
+          <SectionLabel>Quick Access</SectionLabel>
+          <RecentDataGrid files={files} />
+        </QuickSection>
+      )}
 
-        <Section>
-          {files.length > 0 && <SectionLabel>All Files</SectionLabel>}
-          <MainData
-            files={files}
-            handleOptionsClick={handleOptionsClick}
-            optionsVisible={optionsVisible}
-            handleDelete={handleDelete}
-          />
-        </Section>
-      </ContentCard>
+      <Section>
+        {files.length > 0 && <SectionLabel>All Files</SectionLabel>}
+        <MainData
+          files={files}
+          handleOptionsClick={handleOptionsClick}
+          optionsVisible={optionsVisible}
+          handleDelete={handleDelete}
+        />
+      </Section>
     </Page>
   );
 };
 
-const Page = styled.div`
-  flex: 1;
-  min-width: 0;
-  overflow-y: auto;
-  padding: 16px 16px 16px 0;
-
-  @media (max-width: 768px) {
-    padding: 8px 8px 12px 0;
-  }
-`;
-
-const ContentCard = styled.div`
-  background: var(--surface);
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  min-height: 100%;
-  overflow: hidden;
-  box-shadow: var(--shadow-xs);
-`;
-
 const Section = styled.div`
-  padding: 16px 20px 0;
+  padding: 0 24px;
 
   &:last-child {
-    padding-bottom: 20px;
+    padding-bottom: 24px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0;
+
+    &:last-child {
+      padding-bottom: 0;
+    }
   }
 `;
 
-/* Quick Access section hides entirely on mobile (the grid cards are also hidden) */
 const QuickSection = styled(Section)`
-  @media (max-width: 640px) {
-    display: none;
+  padding-top: 4px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 4px;
+
+  @media (max-width: 768px) {
+    padding: 8px 16px 12px;
+    margin-bottom: 0;
+    border-bottom: none;
   }
 `;
 
@@ -104,7 +97,11 @@ const SectionLabel = styled.p`
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: var(--text-3);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 8px;
+  }
 `;
 
 export default Data;
