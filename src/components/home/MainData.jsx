@@ -1,7 +1,8 @@
+"use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import {
-  ArrowDownIcon,
   MoreOptionsIcon,
   StarFilledIcon,
   StarBorderIcon,
@@ -25,6 +26,16 @@ import {
 import { handleStarred } from "../common/firebaseApi";
 import { toast } from "react-toastify";
 import LottieImage from "../common/LottieImage";
+import SecureFileLink from "../common/SecureFileLink";
+import { downloadFile, getFileDownloadUrl } from "../../lib/fileAccess";
+
+function getTypeStyle(contentType) {
+  if (contentType?.includes("pdf"))   return { bg: "#fef2f2", color: "#dc2626", ext: "PDF" };
+  if (contentType?.includes("image")) return { bg: "#faf5ff", color: "#7c3aed", ext: "IMG" };
+  if (contentType?.includes("video")) return { bg: "#eff6ff", color: "#2563eb", ext: "VID" };
+  if (contentType?.includes("audio")) return { bg: "#fff7ed", color: "#ea580c", ext: "AUD" };
+  return { bg: "#f1f5f9", color: "#475569", ext: "DOC" };
+}
 
 const MainData = ({
   files,
@@ -33,14 +44,42 @@ const MainData = ({
   handleDelete,
 }) => {
   const [showShareIcons, setShowShareIcons] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [hoveredRow, setHoveredRow] = useState(null);
   const optionsMenuRef = useRef(null);
 
-  const handleShareClick = () => {
-    setShowShareIcons(!showShareIcons);
+  const handleShareClick = async (fileData) => {
+    if (!showShareIcons) {
+      try {
+        const url = await getFileDownloadUrl(fileData);
+        setShareUrl(url);
+        setShowShareIcons(true);
+      } catch (error) {
+        toast.error("Unable to share file");
+      }
+      return;
+    }
+    setShowShareIcons(false);
+    setShareUrl("");
+  };
+
+  const handleCopyLink = async (fileData) => {
+    try {
+      const url = await getFileDownloadUrl(fileData);
+      await navigator.clipboard.writeText(url);
+      toast.success("Link Copied");
+    } catch (error) {
+      toast.error("Unable to copy link");
+    }
   };
 
   useEffect(() => {
-    const handleOutsideClick = (event) => {
+    setShowShareIcons(false);
+    setShareUrl("");
+  }, [optionsVisible]);
+
+  useEffect(() => {
+    const handleDocumentClick = (event) => {
       if (
         optionsMenuRef.current &&
         !optionsMenuRef.current.contains(event.target) &&
@@ -51,335 +90,390 @@ const MainData = ({
         handleOptionsClick(null);
       }
     };
-
-    const handleDocumentClick = (event) => {
-      handleOutsideClick(event);
-    };
-
     document.addEventListener("mousedown", handleDocumentClick);
-
-    return () => {
-      document.removeEventListener("mousedown", handleDocumentClick);
-    };
+    return () => document.removeEventListener("mousedown", handleDocumentClick);
   }, [handleOptionsClick]);
 
+  if (files.length === 0) {
+    return (
+      <LottieImage
+        imagePath="/homePage.svg"
+        text1="A place for all of your files"
+        text2="Use the 'New' button to upload"
+      />
+    );
+  }
+
   return (
-    <div>
-      {files.length > 0 && (
-        <DataListRow>
-          <div>
-            <b>
-              <ArrowDownIcon /> Name
-            </b>
-          </div>
-          <div className="fileSize">
-            <b>File Size</b>
-          </div>
-          <div className="modified">
-            <b>Last Modified</b>
-          </div>
-          <div>
-            <b>Options</b>
-          </div>
-        </DataListRow>
-      )}
+    <TableWrap>
+      <TableHead>
+        <NameCol>Name</NameCol>
+        <SizeCol className="hide-sm">Size</SizeCol>
+        <DateCol className="hide-md">Modified</DateCol>
+        <ActionsCol />
+      </TableHead>
 
-      {files.length > 0 ? (
-        files.map((file) => (
-          <DataListRow key={file.id}>
-            <div>
-              <p className="starr" onClick={() => handleStarred(file.id)}>
+      {files.map((file) => {
+        const { bg, color } = getTypeStyle(file.data.contentType);
+        const isHovered = hoveredRow === file.id;
+        const isOpen = optionsVisible === file.id;
+
+        return (
+          <Row
+            key={file.id}
+            $active={isOpen}
+            onMouseEnter={() => setHoveredRow(file.id)}
+            onMouseLeave={() => setHoveredRow(null)}
+          >
+            <NameCol>
+              <StarBtn
+                onClick={() => handleStarred(file.id)}
+                $starred={file.data.starred}
+                title={file.data.starred ? "Unstar" : "Star"}
+              >
                 {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
-              </p>
-              <a
-                href={file.data.fileURL}
-                target="_blank"
-                rel="noopener noreferrer"
+              </StarBtn>
+
+              <SecureFileLink
+                fileData={file.data}
+                files={files}
+                style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}
               >
-                <FileIcons type={file.data.contentType} />
-                <span title={file.data.filename}>{file.data.filename}</span>
-              </a>
-            </div>
-            <div className="fileSize">{changeBytes(file.data.size)}</div>
-            <div className="modified">
-              {convertDates(file.data.timestamp?.seconds)}
-            </div>
-            <div>
-              <OptionsContainer
-                className="optionsContainer"
-                title="Options"
-                onClick={() => handleOptionsClick(file.id)}
-              >
-                <MoreOptionsIcon />
-              </OptionsContainer>
-              {optionsVisible === file.id && (
-                <OptionsMenu ref={optionsMenuRef}>
-                  <span>
-                    <a
-                      href={file.data.fileURL}
-                      download={file.data.name}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                <FileIconWrap style={{ background: bg }}>
+                  <span style={{ color, display: "flex" }}>
+                    <FileIcons type={file.data.contentType} />
+                  </span>
+                </FileIconWrap>
+                <FileName title={file.data.filename}>{file.data.filename}</FileName>
+              </SecureFileLink>
+            </NameCol>
+
+            <SizeCol className="hide-sm">
+              <MetaText>{changeBytes(file.data.size)}</MetaText>
+            </SizeCol>
+
+            <DateCol className="hide-md">
+              <MetaText>{convertDates(file.data.timestamp?.seconds)}</MetaText>
+            </DateCol>
+
+            <ActionsCol>
+              {/* Hover quick actions */}
+              <QuickActions $visible={isHovered && !isOpen}>
+                <QuickBtn
+                  onClick={() => downloadFile(file.data)}
+                  title="Download"
+                >
+                  <DownloadIcon />
+                </QuickBtn>
+                <QuickBtn
+                  onClick={() => handleCopyLink(file.data)}
+                  title="Copy Link"
+                >
+                  <CopyIcon />
+                </QuickBtn>
+                <QuickBtn
+                  $danger
+                  onClick={() => handleDelete(file.id, file.data)}
+                  title="Delete"
+                >
+                  <DeleteIcon />
+                </QuickBtn>
+              </QuickActions>
+
+              {/* More options trigger */}
+              <OptionsWrap $visible={!isHovered || isOpen}>
+                <OptionsTrigger
+                  className="optionsContainer"
+                  title="More options"
+                  $active={isOpen}
+                  onClick={() => handleOptionsClick(file.id)}
+                >
+                  <MoreOptionsIcon />
+                </OptionsTrigger>
+
+                {isOpen && (
+                  <OptionsMenu ref={optionsMenuRef}>
+                    <MenuItem onClick={() => downloadFile(file.data)}>
+                      <DownloadIcon /> Download
+                    </MenuItem>
+                    <MenuItem onClick={() => handleCopyLink(file.data)}>
+                      <CopyIcon /> Copy Link
+                    </MenuItem>
+                    <MenuItem
+                      className="shareButton"
+                      onClick={() => handleShareClick(file.data)}
                     >
-                      <DownloadIcon />
-                      {" Download"}
-                    </a>
-                  </span>
-                  <span
-                    onClick={() => {
-                      navigator.clipboard.writeText(file.data.fileURL);
-                      toast.success("Link Copied");
-                    }}
-                  >
-                    <CopyIcon />
-                    {" Copy Link"}
-                  </span>
-                  <ShareButton
-                    className="shareButton"
-                    onClick={handleShareClick}
-                  >
-                    <ShareIcon />
-                    {" Share"}
-                    <span className={showShareIcons ? "show" : ""}>
-                      <EmailShareButton
-                        url={file.data.fileURL}
-                        subject={`This is ${file.data.filename} file link`}
-                      >
-                        <EmailIcon size={30} round={true} />
-                      </EmailShareButton>
-
-                      <FacebookShareButton
-                        url={file.data.fileURL}
-                        hashtag={file.data.filename}
-                      >
-                        <FacebookIcon size={30} round={true} />
-                      </FacebookShareButton>
-
-                      <LinkedinShareButton
-                        url={file.data.fileURL}
-                        title={`This is ${file.data.filename} file link`}
-                      >
-                        <LinkedinIcon size={30} round={true} />
-                      </LinkedinShareButton>
-
-                      <WhatsappShareButton
-                        url={file.data.fileURL}
-                        title={`This is ${file.data.filename} file link`}
-                      >
-                        <WhatsappIcon size={30} round={true} />
-                      </WhatsappShareButton>
-                    </span>
-                  </ShareButton>
-                  <span onClick={() => handleDelete(file.id, file.data)}>
-                    <button>
-                      <DeleteIcon />
-                      {" Delete"}
-                    </button>
-                  </span>
-                  <span className="uploaded">
-                    {convertDates(file.data.timestamp?.seconds)}
-                  </span>
-                  <span className="fileSize">
-                    {"Size: "}
-                    {changeBytes(file.data.size)}
-                  </span>
-                </OptionsMenu>
-              )}
-            </div>
-          </DataListRow>
-        ))
-      ) : (
-        <LottieImage
-          imagePath={"/homePage.svg"}
-          text1={"A place for all of your files"}
-          text2={"Use the 'New' button to upload"}
-        />
-      )}
-    </div>
+                      <ShareIcon /> Share
+                      <ShareExpand className={showShareIcons ? "show" : ""}>
+                        <EmailShareButton url={shareUrl} subject={`${file.data.filename} file link`}>
+                          <EmailIcon size={28} round />
+                        </EmailShareButton>
+                        <FacebookShareButton url={shareUrl} hashtag={file.data.filename}>
+                          <FacebookIcon size={28} round />
+                        </FacebookShareButton>
+                        <LinkedinShareButton url={shareUrl} title={`${file.data.filename} file link`}>
+                          <LinkedinIcon size={28} round />
+                        </LinkedinShareButton>
+                        <WhatsappShareButton url={shareUrl} title={`${file.data.filename} file link`}>
+                          <WhatsappIcon size={28} round />
+                        </WhatsappShareButton>
+                      </ShareExpand>
+                    </MenuItem>
+                    <MenuDivider />
+                    <MenuItem $danger onClick={() => handleDelete(file.id, file.data)}>
+                      <DeleteIcon /> Delete
+                    </MenuItem>
+                    <MenuFooter>
+                      <FooterRow>{changeBytes(file.data.size)}</FooterRow>
+                      <FooterRow>{convertDates(file.data.timestamp?.seconds)}</FooterRow>
+                    </MenuFooter>
+                  </OptionsMenu>
+                )}
+              </OptionsWrap>
+            </ActionsCol>
+          </Row>
+        );
+      })}
+    </TableWrap>
   );
 };
 
-const DataListRow = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr 1.5fr 1fr;
-  border-bottom: 1px solid #ccc;
-  padding: 10px;
-
-  div:last-child {
-    justify-self: flex-end;
-    padding-right: 10px;
-    font-size: 13px;
-    position: relative;
-  }
-
-  div,
-  a {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    font-size: 13px;
-    b {
-      display: flex;
-      align-items: center;
-    }
-    svg {
-      font-size: 22px;
-      margin: 10px;
-    }
-
-    .starr {
-      color: #ffc700;
-    }
-  }
-
-  div {
-    text-decoration: none;
-
-    a {
-      color: gray;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      span {
-        color: #000;
-        font-weight: 600;
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        word-wrap: break-word;
-        width: 20ch;
-
-        @media screen and (max-width: 768px) {
-          width: 10ch;
-        }
-      }
-    }
-  }
-
-  @media screen and (max-width: 768px) {
-    grid-template-columns: 2fr 1fr 1fr;
-    .modified {
-      display: none;
-    }
-  }
-
-  @media screen and (max-width: 319px) {
-    grid-template-columns: 2fr 1fr;
-    .fileSize {
-      display: none;
-    }
-  }
-`;
-
-const OptionsContainer = styled.span`
-  cursor: pointer;
-`;
-
-const OptionsMenu = styled.span`
+/* ─────── layout columns ─────── */
+const NameCol = styled.div`
+  flex: 3;
   display: flex;
   align-items: center;
-  flex-direction: column;
-  position: absolute;
-  background-color: #fff;
-  border: 2px solid #ccc;
-  top: -200%;
-  right: 100%;
-  cursor: pointer;
-  z-index: 10;
-  width: max-content;
-  min-width: 120px;
-  border-radius: 10px;
+  gap: 4px;
+  min-width: 0;
+`;
 
-  &::before {
-    content: "";
-    position: absolute;
-    width: 15px;
-    height: 15px;
-    background-color: #fff;
-    top: 100px;
-    right: -8px;
-    transform: rotate(45deg);
-    border-right: 1px solid #ccc;
-    border-top: 1px solid #ccc;
-  }
+const SizeCol = styled.div`
+  flex: 0 0 88px;
+  display: flex;
+  align-items: center;
+`;
 
-  span {
-    width: 100%;
-    border-bottom: 2px solid #ccc;
-    padding: 10px;
-    display: flex;
-    align-items: center;
+const DateCol = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+`;
 
-    a {
-      color: #000;
-    }
+const ActionsCol = styled.div`
+  flex: 0 0 120px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+`;
 
-    &:last-child {
-      border-bottom: none;
-    }
+/* ─────── table ─────── */
+const TableWrap = styled.div`
+  width: 100%;
+  padding-bottom: 24px;
 
-    &:hover {
-      background-color: #ccc;
-      z-index: 11;
-    }
-  }
+  .hide-sm { @media (max-width: 640px) { display: none !important; } }
+  .hide-md { @media (max-width: 900px) { display: none !important; } }
+`;
 
-  button {
-    background-color: transparent;
-    border: none;
-    color: red;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+const TableHead = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 8px;
+  height: 34px;
+  border-bottom: 1px solid var(--border-light);
+  margin: 0 8px;
 
-  a {
-    color: #000;
-    background-color: transparent;
-  }
-
-  .fileSize,
-  .uploaded {
-    background-color: #f0f0f0;
-    cursor: default;
+  ${NameCol}, ${SizeCol}, ${DateCol} {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
   }
 `;
 
-const ShareButton = styled.span`
-  position: relative;
-  cursor: pointer;
-
-  span {
-    width: max-content;
-    height: max-content;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 0;
-    position: absolute;
-    top: -80px;
-    left: -60px;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease-in-out;
-  }
-
-  .show {
-    opacity: 1;
-    visibility: visible;
-  }
+const Row = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 8px;
+  height: 52px;
+  border-radius: 10px;
+  margin: 1px 8px;
+  background: ${(props) => (props.$active ? "var(--primary-light)" : "transparent")};
+  transition: background 0.15s ease;
 
   &:hover {
-    span {
-      background-color: transparent;
-    }
+    background: var(--surface-2);
   }
+`;
+
+/* ─────── name column ─────── */
+const StarBtn = styled.button`
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: ${(props) => (props.$starred ? "#f59e0b" : "#cbd5e1")};
+  transition: all 0.15s ease;
+
+  &:hover { background: #fef9c3; color: #f59e0b; }
+  svg { font-size: 17px; }
+`;
+
+const FileIconWrap = styled.div`
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  svg { font-size: 19px; }
+`;
+
+const FileName = styled.span`
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+`;
+
+const MetaText = styled.span`
+  font-size: 0.82rem;
+  color: var(--text-3);
+`;
+
+/* ─────── quick actions (appear on hover) ─────── */
+const QuickActions = styled.div`
+  display: ${(props) => (props.$visible ? "flex" : "none")};
+  align-items: center;
+  gap: 2px;
+`;
+
+const QuickBtn = styled.button`
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: ${(props) => (props.$danger ? "#ef4444" : "var(--text-2)")};
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: ${(props) => (props.$danger ? "#fef2f2" : "var(--surface-3)")};
+    color: ${(props) => (props.$danger ? "#dc2626" : "var(--primary)")};
+  }
+
+  svg { font-size: 17px; }
+`;
+
+/* ─────── options menu ─────── */
+const OptionsWrap = styled.div`
+  position: relative;
+  display: ${(props) => (props.$visible ? "flex" : "none")};
+  align-items: center;
+`;
+
+const OptionsTrigger = styled.button`
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${(props) => (props.$active ? "var(--primary-light)" : "none")};
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: ${(props) => (props.$active ? "var(--primary)" : "var(--text-3)")};
+  transition: all 0.15s ease;
+
+  &:hover { background: var(--surface-3); color: var(--text-2); }
+  svg { font-size: 20px; }
+`;
+
+const OptionsMenu = styled.div`
+  position: absolute;
+  right: 0;
+  top: 34px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-md);
+  min-width: 186px;
+  z-index: 50;
+  padding: 6px;
+`;
+
+const MenuItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: ${(props) => (props.$danger ? "#ef4444" : "var(--text-1)")};
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: ${(props) => (props.$danger ? "#fef2f2" : "var(--surface-2)")};
+  }
+
+  svg { font-size: 17px; flex-shrink: 0; }
+`;
+
+const MenuDivider = styled.div`
+  height: 1px;
+  background: var(--border-light);
+  margin: 4px 0;
+`;
+
+const MenuFooter = styled.div`
+  padding: 6px 12px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const FooterRow = styled.span`
+  font-size: 0.72rem;
+  color: var(--text-3);
+`;
+
+const ShareExpand = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: absolute;
+  left: 0;
+  top: -52px;
+  background: var(--surface);
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 60;
+
+  &.show { opacity: 1; visibility: visible; }
 `;
 
 export default MainData;

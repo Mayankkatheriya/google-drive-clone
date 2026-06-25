@@ -1,13 +1,22 @@
-import React from "react";
+"use client";
+
+import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
-import { Navigate, useLocation } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { selectUserName } from "../store/UserSlice";
+
 const ProtectedRoute = ({ children }) => {
   const userName = useSelector(selectUserName);
-  const location = useLocation();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!userName) {
+      router.replace("/");
+    }
+  }, [userName, router]);
 
   if (!userName) {
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return null;
   }
 
   return children;

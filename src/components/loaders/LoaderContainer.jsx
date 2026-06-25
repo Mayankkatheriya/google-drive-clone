@@ -1,18 +1,19 @@
-import React from "react";
+"use client";
+
 import styled from "styled-components";
 import Loader from "./Loader";
 
 const LoaderContainer = () => {
   return (
-    <Container>
+    <Wrap>
       <Loader />
-    </Container>
+    </Wrap>
   );
 };
 
-const Container = styled.div`
+const Wrap = styled.div`
   width: 100%;
-  min-height: 200px;
+  padding: 64px 0;
   display: flex;
   justify-content: center;
   align-items: center;

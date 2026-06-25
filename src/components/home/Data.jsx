@@ -1,94 +1,110 @@
+"use client";
+
 import styled from "styled-components";
-import { useEffect, useState } from "react";
-
-import { db, auth } from "../../firebase";
+import { useState } from "react";
 import { doc, deleteDoc } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
-
-import { getFilesForUser, postTrashCollection } from "../common/firebaseApi";
+import { db } from "../../firebase";
+import { postTrashCollection } from "../common/firebaseApi";
+import { useMyFiles } from "@/context/FilesContext";
 import RecentDataGrid from "./RecentDataGrid";
 import MainData from "./MainData";
 import PageHeader from "../common/PageHeader";
 import { toast } from "react-toastify";
 
 const Data = () => {
-  const [files, setFiles] = useState([]);
+  const files = useMyFiles();
   const [optionsVisible, setOptionsVisible] = useState(null);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const unsubscribeFiles = await getFilesForUser(user.uid, setFiles);
-
-        return () => {
-          unsubscribeFiles();
-        };
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   const handleDelete = async (id, data) => {
     try {
       const confirmed = window.confirm(
-        "Are you sure you want to delete this file?"
+        "Are you sure you want to move this file to trash?"
       );
-
       if (confirmed) {
         const docRef = doc(db, "myfiles", id);
-
         await postTrashCollection(data);
-
         await deleteDoc(docRef);
-        toast.warn("File moved to the trash");
+        toast.warn("File moved to trash");
       }
     } catch (error) {
       console.error("Error deleting document: ", error);
     } finally {
-      setOptionsVisible(id);
+      setOptionsVisible(null);
     }
   };
 
   const handleOptionsClick = (id) => {
-    setOptionsVisible((prevVisible) => (prevVisible === id ? null : id));
+    setOptionsVisible((prev) => (prev === id ? null : id));
   };
 
   return (
-    <DataContainer>
-      {/* Display page header */}
-      <PageHeader pageTitle={"My Drive"} />
-      {files.length > 0 && <h4>Recents</h4>}
-      <div>
-        {/* Display recent files in a grid */}
-        <RecentDataGrid files={files} />
-        <div>
-          {/* Display main user data with options for each file */}
+    <Page>
+      <ContentCard>
+        <PageHeader pageTitle="My Drive" />
+
+        {files.length > 0 && (
+          <QuickSection>
+            <SectionLabel>Quick Access</SectionLabel>
+            <RecentDataGrid files={files} />
+          </QuickSection>
+        )}
+
+        <Section>
+          {files.length > 0 && <SectionLabel>All Files</SectionLabel>}
           <MainData
             files={files}
             handleOptionsClick={handleOptionsClick}
             optionsVisible={optionsVisible}
             handleDelete={handleDelete}
           />
-        </div>
-      </div>
-    </DataContainer>
+        </Section>
+      </ContentCard>
+    </Page>
   );
 };
 
-const DataContainer = styled.div`
+const Page = styled.div`
   flex: 1;
-  padding: 10px 0px 0px 20px;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 16px 16px 16px 0;
 
-  h4 {
-    font-size: 14px;
-    margin-top: 30px;
-    margin-bottom: -20px;
-
-    @media screen and (max-width: 768px) {
-      display: none;
-    }
+  @media (max-width: 768px) {
+    padding: 8px 8px 12px 0;
   }
+`;
+
+const ContentCard = styled.div`
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  min-height: 100%;
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+`;
+
+const Section = styled.div`
+  padding: 16px 20px 0;
+
+  &:last-child {
+    padding-bottom: 20px;
+  }
+`;
+
+/* Quick Access section hides entirely on mobile (the grid cards are also hidden) */
+const QuickSection = styled(Section)`
+  @media (max-width: 640px) {
+    display: none;
+  }
+`;
+
+const SectionLabel = styled.p`
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-3);
+  margin-bottom: 12px;
 `;
 
 export default Data;

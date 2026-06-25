@@ -11,6 +11,7 @@ import {
   addDoc,
 } from "firebase/firestore";
 import { toast } from "react-toastify";
+import { deleteFileFromS3 } from "../../lib/fileAccess";
 
 let trashRef = collection(db, "trash");
 
@@ -44,13 +45,17 @@ const getTrashFiles = (userId, setFiles) => {
   return unsubscribeFiles;
 };
 
-const handleDeleteFromTrash = async (id) => {
+const handleDeleteFromTrash = async (id, fileData) => {
   try {
     const confirmed = window.confirm(
       "Are you sure you want to delete this file?"
     );
 
     if (confirmed) {
+      if (fileData?.s3Key) {
+        await deleteFileFromS3(fileData.s3Key);
+      }
+
       const docRef = doc(db, "trash", id);
 
       await deleteDoc(docRef);
@@ -58,6 +63,7 @@ const handleDeleteFromTrash = async (id) => {
     }
   } catch (error) {
     console.error("Error deleting document: ", error);
+    toast.error("Failed to delete file");
   }
 };
 

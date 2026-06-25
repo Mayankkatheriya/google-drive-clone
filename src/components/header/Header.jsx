@@ -1,4 +1,4 @@
-
+"use client";
 
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
@@ -12,32 +12,29 @@ import {
   setUserLoginDetails,
 } from "../../store/UserSlice";
 import { selectSidebarBool, setSidebarBool } from "../../store/BoolSlice";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import LogoWrapperComponent from "./LogoWrapper";
 import SearchBar from "./SearchBar";
 import LeftIcons from "./LeftIcons";
 import ProfileSection from "./ProfileSection";
-import { SearchIcons } from "../common/SvgIcons";
+
 const Header = () => {
   const dispatch = useDispatch();
   const userName = useSelector(selectUserName);
   const userPhoto = useSelector(selectUserPhoto);
   const sidebarBool = useSelector(selectSidebarBool);
   const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setQuery] = useState("");
-  const navigate = useNavigate();
+  const router = useRouter();
 
-  
   useEffect(() => {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user);
-        navigate("/home");
+        router.push("/home");
       }
     });
   }, [userName]);
 
-  
   const handleAuth = async () => {
     if (!userName) {
       try {
@@ -46,18 +43,17 @@ const Header = () => {
       } catch (error) {
         console.error(error.message);
       }
-    } else if (userName) {
+    } else {
       try {
         await signOut(auth);
         dispatch(setSignOutState());
-        navigate("/");
+        router.push("/");
       } catch (error) {
         console.log("Error signing out: ", error.message);
       }
     }
   };
 
-  
   const setUser = (user) => {
     dispatch(
       setUserLoginDetails({
@@ -67,171 +63,125 @@ const Header = () => {
     );
   };
 
-  const handleSearchByInput = (e) => {
-    if (e.key === "Enter" && searchQuery.length > 0) {
-      navigate(`/search/${searchQuery}`);
-      setQuery("");
-      setShowSearch(false);
-    }
-  };
-
-  const handleSearch = () => {
-    if (searchQuery.length > 0) {
-      navigate(`/search/${searchQuery}`);
-      setQuery("");
-      setShowSearch(false);
-    }
-  };
-
   return (
     <Container>
       <Wrapper>
-        <LogoWrapperComponent
-          onClick={() => dispatch(setSidebarBool(!sidebarBool))}
-          userName={userName}
-        />
-        {!userName ? (
-          <Login onClick={handleAuth}>Login</Login>
-        ) : (
-          <>
-            <SearchBar />
+        {/* Left */}
+        <Left>
+          <LogoWrapperComponent
+            onClick={() => dispatch(setSidebarBool(!sidebarBool))}
+            userName={userName}
+          />
+        </Left>
 
-            <RightContainer>
+        {/* Center — hidden on mobile */}
+        {userName && (
+          <Center>
+            <SearchBar />
+          </Center>
+        )}
+
+        {/* Right */}
+        <Right>
+          {!userName ? (
+            <LoginBtn onClick={handleAuth}>Sign in</LoginBtn>
+          ) : (
+            <>
               <LeftIcons />
               <ProfileSection
                 userPhoto={userPhoto}
                 userName={userName}
                 handleAuth={handleAuth}
                 showSearch={showSearch}
-                setShowSearch={() => setShowSearch((prev) => !prev)}
+                setShowSearch={() => setShowSearch((p) => !p)}
               />
-            </RightContainer>
-          </>
-        )}
+            </>
+          )}
+        </Right>
       </Wrapper>
-      <SearchWrapper>
-        {showSearch && (
-          <div className="searchBar">
-            <div className="searchInput">
-              <input
-                type="search"
-                placeholder="Search for a File...."
-                value={searchQuery}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyUp={handleSearchByInput}
-              />
-              <div className="searchButton" onClick={handleSearch}>
-                <SearchIcons />
-              </div>
-            </div>
-          </div>
-        )}
-      </SearchWrapper>
+
+      {/* Mobile search drawer */}
+      {showSearch && (
+        <MobileSearch>
+          <SearchBar variant="mobile" onClose={() => setShowSearch(false)} />
+        </MobileSearch>
+      )}
     </Container>
   );
 };
 
 export default Header;
 
-const SearchWrapper = styled.div`
-  border-radius: 30px;
-
-  .searchBar {
-    width: 100%;
-    max-width: 400px;
-    height: 30px;
-    position: absolute;
-    top: 80px;
-    right: 10px;
-    animation: mobileMenu 0.3s ease forwards;
-    .searchInput {
-      display: flex;
-      align-items: center;
-      height: 40px;
-      margin-top: 10px;
-      width: 100%;
-      .searchButton {
-        height: 50px;
-        background-color: whitesmoke;
-        flex-shrink: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 0 30px 30px 0;
-        border: 1px dashed #000;
-        border-left: none;
-        cursor: pointer;
-        svg {
-          font-size: 30px;
-          color: #5f6368;
-          margin-right: 10px;
-        }
-      }
-
-      input {
-        width: 100%;
-        height: 50px;
-        background-color: whitesmoke;
-        outline: 0;
-        border: 0;
-        border-radius: 30px 0 0 30px;
-        border: 1px dashed #000;
-        border-right: none;
-        padding: 0 15px;
-        font-size: 14px;
-      }
-    }
-    @keyframes mobileMenu {
-      0% {
-        transform: translateY(-130%);
-      }
-      100% {
-        transform: translateY(0);
-      }
-    }
-
-    @media screen and (max-width: 430px) {
-      right: 0px;
-    }
-  }
-`;
-
-const Container = styled.div`
+const Container = styled.header`
   position: sticky;
-  width: 100%;
   top: 0;
   z-index: 999;
-  background-color: #ffffff;
-  padding: 2px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 2px 2px 2px #cecece;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
 `;
 
 const Wrapper = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin: 10px 20px;
-  position: relative;
+  height: 64px;
+  padding: 0 12px;
+  gap: 8px;
 `;
 
-const Login = styled.a`
-  background-color: #fff;
-  padding: 8px 16px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  border: 1px solid #353535;
-  border-radius: 4px;
-  transition: all 0.2s ease 0s;
+const Left = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+`;
 
-  &:hover {
-    background-color: #353535;
-    color: #fff;
-    border-color: transparent;
+const Center = styled.div`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    display: none;
   }
 `;
 
-const RightContainer = styled.div`
+const Right = styled.div`
   display: flex;
   align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+`;
+
+const LoginBtn = styled.button`
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  }
+`;
+
+const MobileSearch = styled.div`
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--border-light);
+  animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (min-width: 769px) {
+    display: none;
+  }
 `;

@@ -1,3 +1,4 @@
+"use client";
 
 import styled from "styled-components";
 import { Modal } from "@mui/material";
@@ -5,6 +6,7 @@ import Lottie from "react-lottie-player";
 import uploadJson from "../lottie/uploadLottie.json";
 import closeJson from "../lottie/closeLottie.json";
 import { UploadFileIcon } from "../common/SvgIcons";
+
 const FileUploadModal = ({
   open,
   setOpen,
@@ -12,206 +14,316 @@ const FileUploadModal = ({
   uploading,
   handleFile,
   selectedFile,
+  fileName,
+  onFileNameChange,
   progress,
 }) => {
   return (
-    <Modal open={open} onClose={() => setOpen(false)}>
-      <ModalPopup>
-        <span onClick={() => setOpen(false)}>
-          <Lottie
-            loop
-            animationData={closeJson}
-            play
-            style={{ width: 40, height: 40 }}
-          />
-        </span>
+    <Modal open={open} onClose={() => !uploading && setOpen(false)}>
+      <ModalBox>
+        {!uploading && (
+          <CloseBtn onClick={() => setOpen(false)} aria-label="Close">
+            <Lottie loop animationData={closeJson} play style={{ width: 40, height: 40 }} />
+          </CloseBtn>
+        )}
+
         <form onSubmit={handleUpload}>
-          <ModalHeading>
-            <h3>
-              {uploading ? "Uploading..." : "Select file you want to upload"}
-            </h3>
-          </ModalHeading>
+          <ModalHead>
+            <ModalTitle>
+              {uploading ? "Uploading your file…" : "Upload a file"}
+            </ModalTitle>
+            {!uploading && (
+              <ModalHint>Maximum file size: 5 MB</ModalHint>
+            )}
+          </ModalHead>
+
           <ModalBody>
             {uploading ? (
-              <>
-                <UploadingPara>
-                  <Lottie
-                    loop
-                    animationData={uploadJson}
-                    play
-                    style={{ width: 120, height: 80 }}
-                  />
-                </UploadingPara>
-                <ModalProgress>
-                  <ProgressBar progress={progress} />
-                  <ProgressText>{progress}%</ProgressText>
-                </ModalProgress>
-              </>
+              <UploadingState>
+                <Lottie
+                  loop
+                  animationData={uploadJson}
+                  play
+                  style={{ width: 120, height: 80 }}
+                />
+                <ProgressWrap>
+                  <ProgressTrack>
+                    <ProgressFill $pct={progress} />
+                  </ProgressTrack>
+                  <ProgressLabel>{progress}%</ProgressLabel>
+                </ProgressWrap>
+              </UploadingState>
             ) : (
               <>
-                <div className="modal__file">
-                  <p>{selectedFile ? selectedFile : "No file chosen"}</p>
-                  <label htmlFor="file">
-                    <UploadFileIcon /> Choose a file
-                  </label>
-                  <input id="file" type="file" onChange={handleFile} />
-                </div>
-                <input type="submit" className="modal__submit" />
+                <DropArea>
+                  <DropIcon>
+                    <UploadFileIcon />
+                  </DropIcon>
+                  <DropText>
+                    {selectedFile ? (
+                      <FileName title={selectedFile}>{selectedFile}</FileName>
+                    ) : (
+                      <NoFile>No file chosen</NoFile>
+                    )}
+                  </DropText>
+                  <ChooseLabel htmlFor="drive-file-input">
+                    <UploadFileIcon />
+                    Choose file
+                  </ChooseLabel>
+                  <input
+                    id="drive-file-input"
+                    type="file"
+                    onChange={handleFile}
+                    style={{ display: "none" }}
+                  />
+                </DropArea>
+
+                {selectedFile && (
+                  <RenameField>
+                    <RenameLabel htmlFor="drive-file-name">File name</RenameLabel>
+                    <RenameInput
+                      id="drive-file-name"
+                      type="text"
+                      value={fileName}
+                      onChange={(e) => onFileNameChange(e.target.value)}
+                      placeholder="Enter file name"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    <RenameHint>
+                      Extension is kept if you omit it (e.g. &quot;report&quot; → report.pdf)
+                    </RenameHint>
+                  </RenameField>
+                )}
+
+                <SubmitBtn type="submit" disabled={!selectedFile || !fileName?.trim()}>
+                  Upload
+                </SubmitBtn>
               </>
             )}
           </ModalBody>
         </form>
-      </ModalPopup>
+      </ModalBox>
     </Modal>
   );
 };
 
-const ModalPopup = styled.div`
+const ModalBox = styled.div`
+  position: absolute;
   top: 50%;
-  background-color: #fff;
-  width: 100%;
-  max-width: 500px;
-  margin: 0px auto;
-  position: relative;
-  transform: translateY(-50%);
-  padding: 10px;
-  border-radius: 10px;
-  position: relative;
-
-  span {
-    position: absolute;
-    right: 10px;
-    top: 8px;
-    cursor: pointer;
-    color: #5f6368;
-  }
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface);
+  width: 90%;
+  max-width: 460px;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: var(--shadow-lg);
+  outline: none;
 `;
 
-const ModalHeading = styled.div`
+const CloseBtn = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  line-height: 0;
+`;
+
+const ModalHead = styled.div`
   text-align: center;
-  border-bottom: 1px solid lightgray;
-  height: 40px;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light);
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 4px;
+`;
+
+const ModalHint = styled.p`
+  font-size: 0.8rem;
+  color: var(--text-3);
 `;
 
 const ModalBody = styled.div`
   display: flex;
   flex-direction: column;
-
-  input.modal__submit {
-    width: 100%;
-    background: #0066da;
-    padding: 10px 20px;
-    color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 5px;
-    font-size: 16px;
-    border: 0;
-    outline: 0;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 20px;
-    transition: background 0.3s ease-in-out;
-
-    &:hover {
-      background: #034fa7;
-    }
-  }
-
-  .file-input-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 20px;
-  }
-
-  .modal__file {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 20px;
-    color: #000;
-    border: 2px dashed #0066da;
-    border-radius: 5px;
-    font-size: 16px;
-    outline: none;
-    transition: border-color 0.3s ease-in-out;
-
-    p {
-      text-align: center;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      word-wrap: break-word;
-      width: 100%;
-    }
-
-    label {
-      cursor: pointer;
-      border-radius: 8px;
-      border: 1px dashed #302f2f;
-      padding: 8px 12px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 4px;
-      color: #1a1a1a;
-
-      svg {
-        color: #1a1a1a;
-      }
-    }
-
-    input {
-      display: none;
-    }
-  }
+  gap: 16px;
 `;
 
-const UploadingPara = styled.div`
-  width: 100%;
+const DropArea = styled.div`
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  padding: 10px;
+  gap: 12px;
+  padding: 28px 20px;
+  border: 2px dashed var(--primary);
+  border-radius: 14px;
+  background: var(--primary-light);
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--primary-hover);
+    background: var(--primary-subtle);
+  }
 `;
 
-const ModalProgress = styled.div`
+const DropIcon = styled.div`
+  svg {
+    font-size: 44px;
+    color: #60a5fa;
+  }
+`;
+
+const DropText = styled.div`
+  text-align: center;
+`;
+
+const FileName = styled.p`
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-1);
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const NoFile = styled.p`
+  font-size: 0.875rem;
+  color: var(--text-3);
+`;
+
+const ChooseLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-1);
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  svg {
+    font-size: 18px;
+    color: var(--primary);
+  }
+
+  &:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary-hover);
+  }
+`;
+
+const RenameField = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const RenameLabel = styled.label`
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-2);
+`;
+
+const RenameInput = styled.input`
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-1);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-subtle);
+  }
+
+  &::placeholder {
+    color: var(--text-3);
+  }
+`;
+
+const RenameHint = styled.p`
+  font-size: 0.72rem;
+  color: var(--text-3);
+  line-height: 1.4;
+`;
+
+const SubmitBtn = styled.button`
+  width: 100%;
+  padding: 13px;
+  background: ${(props) => (props.disabled ? "var(--border)" : "var(--primary)")};
+  color: ${(props) => (props.disabled ? "var(--text-3)" : "#fff")};
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+`;
+
+const UploadingState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+`;
+
+const ProgressWrap = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 16px;
-
+  gap: 8px;
 `;
 
-const ProgressBar = styled.div`
+const ProgressTrack = styled.div`
   width: 100%;
-  height: 10px;
-  background-color: #e0e0e0;
-  border-radius: 5px;
+  height: 8px;
+  background: var(--surface-3);
+  border-radius: 999px;
   overflow: hidden;
-  position: relative;
-
-  &:after {
-    content: "";
-    display: block;
-    height: 100%;
-    background-color: #0066da;
-    width: ${(props) => props.progress}%;
-    transition: width 0.4s ease-in-out;
-  }
 `;
 
-const ProgressText = styled.p`
-  margin-top: 5px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #0066da;
+const ProgressFill = styled.div`
+  height: 100%;
+  width: ${(props) => props.$pct}%;
+  background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+`;
+
+const ProgressLabel = styled.p`
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
 `;
 
 export default FileUploadModal;
