@@ -6,6 +6,7 @@ import { Page } from "../common/PageShell";
 import { useTrashFiles } from "@/context/FilesContext";
 import LoaderContainer from "../loaders/LoaderContainer";
 import { delayInRender } from "../common/common";
+import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
 const FilesList = lazy(() => delayInRender(import("../common/FilesList")));
 
 const Trash = () => {
@@ -13,7 +14,10 @@ const Trash = () => {
 
   return (
     <Page>
-      <PageHeader pageTitle={"Trash"} />
+      <PageHeader
+        pageTitle="Trash"
+        subtitle={PAGE_SUBTITLES.trash.subtitle}
+      />
       <Suspense fallback={<LoaderContainer />}>
         <FilesList
           data={files}

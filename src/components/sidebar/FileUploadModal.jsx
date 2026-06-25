@@ -1,11 +1,13 @@
 "use client";
 
 import styled from "styled-components";
+import { useState } from "react";
 import { Modal } from "@mui/material";
 import Lottie from "react-lottie-player";
 import uploadJson from "../lottie/uploadLottie.json";
 import closeJson from "../lottie/closeLottie.json";
 import { UploadFileIcon } from "../common/SvgIcons";
+import { getUploadModalHint } from "@/lib/uploadLimits";
 
 const FileUploadModal = ({
   open,
@@ -13,11 +15,21 @@ const FileUploadModal = ({
   handleUpload,
   uploading,
   handleFile,
+  stageFile,
   selectedFile,
   fileName,
   onFileNameChange,
   progress,
 }) => {
+  const [dragging, setDragging] = useState(false);
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    setDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) stageFile?.(file);
+  };
+
   return (
     <Modal open={open} onClose={() => !uploading && setOpen(false)}>
       <ModalBox>
@@ -33,7 +45,7 @@ const FileUploadModal = ({
               {uploading ? "Uploading your file…" : "Upload a file"}
             </ModalTitle>
             {!uploading && (
-              <ModalHint>Maximum file size: 5 MB</ModalHint>
+              <ModalHint>{getUploadModalHint()}</ModalHint>
             )}
           </ModalHead>
 
@@ -55,7 +67,15 @@ const FileUploadModal = ({
               </UploadingState>
             ) : (
               <>
-                <DropArea>
+                <DropArea
+                  $dragging={dragging}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    setDragging(true);
+                  }}
+                  onDragLeave={() => setDragging(false)}
+                  onDrop={handleDrop}
+                >
                   <DropIcon>
                     <UploadFileIcon />
                   </DropIcon>
@@ -63,7 +83,10 @@ const FileUploadModal = ({
                     {selectedFile ? (
                       <FileName title={selectedFile}>{selectedFile}</FileName>
                     ) : (
-                      <NoFile>No file chosen</NoFile>
+                      <>
+                        <DropLead>Drag & drop your file here</DropLead>
+                        <NoFile>or choose a file below</NoFile>
+                      </>
                     )}
                   </DropText>
                   <ChooseLabel htmlFor="drive-file-input">
@@ -163,9 +186,9 @@ const DropArea = styled.div`
   align-items: center;
   gap: 12px;
   padding: 28px 20px;
-  border: 2px dashed var(--primary);
+  border: 2px dashed ${(props) => (props.$dragging ? "var(--primary-hover)" : "var(--primary)")};
   border-radius: 14px;
-  background: var(--primary-light);
+  background: ${(props) => (props.$dragging ? "var(--primary-subtle)" : "var(--primary-light)")};
   transition: all 0.2s ease;
 
   &:hover {
@@ -193,6 +216,13 @@ const FileName = styled.p`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+`;
+
+const DropLead = styled.p`
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 4px;
 `;
 
 const NoFile = styled.p`

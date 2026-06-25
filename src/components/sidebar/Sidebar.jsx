@@ -4,46 +4,31 @@ import React from "react";
 import styled from "styled-components";
 import { useSelector } from "react-redux";
 import { selectSidebarBool } from "../../store/BoolSlice";
-import { useFileUpload } from "@/hooks/useFileUpload";
-import FileUploadModal from "./FileUploadModal";
+import { useFileUploadContext } from "@/context/FileUploadContext";
 import AddFile from "./AddFile";
 import SidebarTabs from "./SidebarTabs";
 
 const Sidebar = () => {
   const sidebarBool = useSelector(selectSidebarBool);
-  const upload = useFileUpload();
+  const upload = useFileUploadContext();
 
   return (
-    <>
-      <FileUploadModal
-        open={upload.open}
-        setOpen={upload.setOpen}
-        handleUpload={upload.handleUpload}
-        uploading={upload.uploading}
-        handleFile={upload.handleFile}
-        selectedFile={upload.selectedFile}
-        fileName={upload.fileName}
-        onFileNameChange={upload.setFileName}
-        progress={upload.progress}
-      />
-
-      <SidebarContainer $open={sidebarBool}>
-        <AddFile onClick={() => upload.setOpen(true)} />
-        <SidebarTabs />
-      </SidebarContainer>
-    </>
+    <SidebarContainer $open={sidebarBool}>
+      <AddFile onClick={() => upload.setOpen(true)} />
+      <SidebarTabs />
+    </SidebarContainer>
   );
 };
 
 const SidebarContainer = styled.div`
   width: 256px;
+  height: 100%;
   background: var(--surface);
   border-right: 1px solid var(--border);
   box-shadow: 2px 0 8px rgba(15, 23, 42, 0.04);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  align-self: stretch;
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
               left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: ${(props) => (props.$open ? "relative" : "absolute")};

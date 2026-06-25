@@ -113,8 +113,7 @@ const Header = () => {
 export default Header;
 
 const Container = styled.header`
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 999;
   background: var(--surface);
   border-bottom: 1px solid var(--border);

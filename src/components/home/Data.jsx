@@ -1,62 +1,72 @@
 "use client";
 
 import styled from "styled-components";
-import { useState } from "react";
-import { doc, deleteDoc } from "firebase/firestore";
-import { db } from "../../firebase";
-import { postTrashCollection } from "../common/firebaseApi";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { useMyFiles } from "@/context/FilesContext";
+import { getQuickAccessFiles } from "@/lib/quickAccess";
 import RecentDataGrid from "./RecentDataGrid";
 import MainData from "./MainData";
 import PageHeader from "../common/PageHeader";
 import { Page } from "../common/PageShell";
-import { toast } from "react-toastify";
+import LoaderContainer from "../loaders/LoaderContainer";
+import { delayInRender } from "../common/common";
+import { getUploadHelpText } from "@/lib/uploadLimits";
+import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
+
+const FilesList = lazy(() => delayInRender(import("../common/FilesList")));
+
+const VIEW_STORAGE_KEY = "driveViewMode";
 
 const Data = () => {
   const files = useMyFiles();
-  const [optionsVisible, setOptionsVisible] = useState(null);
+  const [viewMode, setViewMode] = useState("list");
+  const quickAccessFiles = getQuickAccessFiles(files);
 
-  const handleDelete = async (id, data) => {
-    try {
-      const confirmed = window.confirm(
-        "Are you sure you want to move this file to trash?"
-      );
-      if (confirmed) {
-        const docRef = doc(db, "myfiles", id);
-        await postTrashCollection(data);
-        await deleteDoc(docRef);
-        toast.warn("File moved to trash");
-      }
-    } catch (error) {
-      console.error("Error deleting document: ", error);
-    } finally {
-      setOptionsVisible(null);
+  useEffect(() => {
+    const saved = localStorage.getItem(VIEW_STORAGE_KEY);
+    if (saved === "grid" || saved === "list") {
+      setViewMode(saved);
     }
-  };
+  }, []);
 
-  const handleOptionsClick = (id) => {
-    setOptionsVisible((prev) => (prev === id ? null : id));
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem(VIEW_STORAGE_KEY, mode);
   };
 
   return (
     <Page>
-      <PageHeader pageTitle="My Drive" />
+      <PageHeader
+        pageTitle="My Drive"
+        subtitle={PAGE_SUBTITLES.myDrive.subtitle}
+        subtitleMobile={PAGE_SUBTITLES.myDrive.subtitleMobile}
+        viewMode={viewMode}
+        onViewModeChange={handleViewModeChange}
+      />
 
-      {files.length > 0 && (
+      {quickAccessFiles.length > 0 && (
         <QuickSection>
           <SectionLabel>Quick Access</SectionLabel>
-          <RecentDataGrid files={files} />
+          <RecentDataGrid files={quickAccessFiles} allFiles={files} />
         </QuickSection>
       )}
 
       <Section>
         {files.length > 0 && <SectionLabel>All Files</SectionLabel>}
-        <MainData
-          files={files}
-          handleOptionsClick={handleOptionsClick}
-          optionsVisible={optionsVisible}
-          handleDelete={handleDelete}
-        />
+        {viewMode === "grid" ? (
+          <Suspense fallback={<LoaderContainer />}>
+            <FilesList
+              data={files}
+              page="drive"
+              imagePath="/homePage.svg"
+              text1="A place for all of your files"
+              text2={getUploadHelpText()}
+              compact
+            />
+          </Suspense>
+        ) : (
+          <MainData files={files} />
+        )}
       </Section>
     </Page>
   );
@@ -80,14 +90,12 @@ const Section = styled.div`
 
 const QuickSection = styled(Section)`
   padding-top: 4px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border-light);
-  margin-bottom: 4px;
+  padding-bottom: 20px;
+  margin-bottom: 8px;
 
   @media (max-width: 768px) {
-    padding: 8px 16px 12px;
-    margin-bottom: 0;
-    border-bottom: none;
+    padding: 8px 0 16px;
+    margin-bottom: 4px;
   }
 `;
 
@@ -101,6 +109,7 @@ const SectionLabel = styled.p`
 
   @media (max-width: 768px) {
     margin-bottom: 8px;
+    padding-left: 16px;
   }
 `;
 

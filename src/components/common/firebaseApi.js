@@ -9,9 +9,11 @@ import {
   query,
   where,
   addDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { deleteFileFromS3 } from "../../lib/fileAccess";
+import { resolveDisplayFilename } from "../../lib/fileNames";
 
 let trashRef = collection(db, "trash");
 
@@ -67,6 +69,63 @@ const handleDeleteFromTrash = async (id, fileData) => {
   }
 };
 
+const handleRestoreFromTrash = async (id, fileData) => {
+  try {
+    await addDoc(collection(db, "myfiles"), { ...fileData });
+    await deleteDoc(doc(db, "trash", id));
+    toast.success("File restored to My Drive");
+  } catch (error) {
+    console.error("Error restoring file: ", error);
+    toast.error("Failed to restore file");
+  }
+};
+
+const handleMoveToTrash = async (id, fileData) => {
+  try {
+    const confirmed = window.confirm(
+      "Are you sure you want to move this file to trash?"
+    );
+
+    if (!confirmed) return;
+
+    await postTrashCollection(fileData);
+    await deleteDoc(doc(db, "myfiles", id));
+    toast.warn("File moved to trash");
+  } catch (error) {
+    console.error("Error moving file to trash: ", error);
+    toast.error("Failed to move file to trash");
+  }
+};
+
+const handleRenameFile = async (id, currentFilename, newName) => {
+  const finalName = resolveDisplayFilename(newName, currentFilename);
+
+  if (!finalName) {
+    toast.error("Please enter a valid file name.");
+    return false;
+  }
+
+  if (finalName === currentFilename) {
+    return true;
+  }
+
+  try {
+    await updateDoc(doc(db, "myfiles", id), { filename: finalName });
+    toast.success("File renamed");
+    return true;
+  } catch (error) {
+    console.error("Error renaming file: ", error);
+    toast.error("Failed to rename file");
+    return false;
+  }
+};
+
+const markFileOpened = (id) => {
+  updateDoc(doc(db, "myfiles", id), {
+    lastOpenedAt: serverTimestamp(),
+  }).catch(() => {});
+};
+
 const getFilesForUser = (userId, setFiles) => {
   const filesData = collection(db, "myfiles");
   const unsubscribeFiles = onSnapshot(
@@ -109,4 +168,13 @@ const handleStarred = async (id) => {
   }
 };
 
-export { getFilesForUser, handleStarred, getTrashFiles, handleDeleteFromTrash };
+export {
+  getFilesForUser,
+  handleStarred,
+  getTrashFiles,
+  handleDeleteFromTrash,
+  handleRestoreFromTrash,
+  handleMoveToTrash,
+  handleRenameFile,
+  markFileOpened,
+};

@@ -1,9 +1,11 @@
 "use client";
 
 import { useFilePreview } from "@/context/FilePreviewContext";
+import { markFileOpened } from "./firebaseApi";
 
 export default function SecureFileLink({
   fileData,
+  fileId,
   files,
   children,
   className,
@@ -15,6 +17,9 @@ export default function SecureFileLink({
   const handleClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
+    if (fileId) {
+      markFileOpened(fileId);
+    }
     const siblings = files?.map((item) => item.data ?? item) ?? null;
     open(fileData, siblings);
   };

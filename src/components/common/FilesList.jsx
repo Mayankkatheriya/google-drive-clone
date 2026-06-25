@@ -5,16 +5,23 @@ import styled from "styled-components";
 import FileIcons from "./FileIcons";
 import { changeBytes } from "./common";
 import SecureFileLink from "./SecureFileLink";
-import { handleDeleteFromTrash, handleStarred } from "./firebaseApi";
+import {
+  handleDeleteFromTrash,
+  handleRestoreFromTrash,
+  handleMoveToTrash,
+  handleStarred,
+} from "./firebaseApi";
 import {
   DeleteIcon,
   StarBorderIcon,
   StarFilledIcon,
   DownloadIcon,
+  RestoreIcon,
 } from "./SvgIcons";
 import LottieImage from "./LottieImage";
 import { motion } from "framer-motion";
 import { downloadFile } from "../../lib/fileAccess";
+import { DriveGridMenu, useDriveGridMenuState } from "./DriveGridMenu";
 
 function getTypeStyle(contentType, filename) {
   const ext = filename?.split(".").pop()?.toUpperCase().slice(0, 4) || "";
@@ -45,27 +52,63 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.22 } },
 };
 
-const FilesList = ({ data, page = null, imagePath, text1, text2 }) => {
+const FilesList = ({ data, page = null, imagePath, text1, text2, compact = false }) => {
+  const driveMenu = useDriveGridMenuState();
+  const isDrivePage = page === "drive";
+
   if (data.length === 0) {
     return <LottieImage imagePath={imagePath} text1={text1} text2={text2} />;
   }
 
+  const handleDelete = (id, fileData) => {
+    if (page === "trash") {
+      handleDeleteFromTrash(id, fileData);
+      return;
+    }
+    handleMoveToTrash(id, fileData);
+  };
+
   return (
-    <List variants={container} initial="hidden" animate="show">
+    <List $compact={compact} variants={container} initial="hidden" animate="show">
       {data.map((file) => {
         const { tile, icon, label } = getTypeStyle(
           file.data.contentType,
           file.data.filename
         );
+        const isMenuOpen = driveMenu.openMenuId === file.id;
 
         return (
-          <Card key={file.id} variants={item}>
-            <FileLink fileData={file.data} files={data}>
+          <Card key={file.id} variants={item} $menuOpen={isMenuOpen}>
+            <FileLink
+              fileData={file.data}
+              fileId={page === "trash" ? undefined : file.id}
+              files={data}
+            >
               <IconTile style={{ background: tile, color: icon }}>
                 <FileIcons type={file.data.contentType} />
               </IconTile>
               <CardBody>
-                <CardName title={file.data.filename}>{file.data.filename}</CardName>
+                {isDrivePage && driveMenu.renamingId === file.id ? (
+                  <RenameInput
+                    ref={driveMenu.renameInputRef}
+                    value={driveMenu.renameValue}
+                    onChange={(event) => driveMenu.setRenameValue(event.target.value)}
+                    onBlur={() => driveMenu.submitRename(file.id, file.data.filename)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        driveMenu.submitRename(file.id, file.data.filename);
+                      }
+                      if (event.key === "Escape") {
+                        event.preventDefault();
+                        driveMenu.cancelRename();
+                      }
+                    }}
+                    onClick={(event) => event.stopPropagation()}
+                  />
+                ) : (
+                  <CardName title={file.data.filename}>{file.data.filename}</CardName>
+                )}
                 <CardMeta>
                   <TypeTag>{label}</TypeTag>
                   <span>{changeBytes(file.data.size)}</span>
@@ -83,7 +126,20 @@ const FilesList = ({ data, page = null, imagePath, text1, text2 }) => {
               </StarBtn>
             )}
 
-            {page !== "trash" && page !== "starred" && (
+            {isDrivePage && (
+              <DriveGridMenu
+                file={file}
+                isOpen={isMenuOpen}
+                onToggle={driveMenu.setOpenMenuId}
+                onRename={driveMenu.startRename}
+                shareOpen={driveMenu.shareMenuId === file.id}
+                shareUrl={driveMenu.shareUrl}
+                onShareClick={(fileData) => driveMenu.handleShareClick(fileData, file.id)}
+                menuRef={driveMenu.menuRef}
+              />
+            )}
+
+            {page !== "trash" && page !== "starred" && !isDrivePage && (
               <CardActions className="card-actions">
                 <ActionBtn
                   onClick={(e) => {
@@ -98,7 +154,7 @@ const FilesList = ({ data, page = null, imagePath, text1, text2 }) => {
                   $danger
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDeleteFromTrash(file.id, file.data);
+                    handleDelete(file.id, file.data);
                   }}
                   title="Delete"
                 >
@@ -108,15 +164,27 @@ const FilesList = ({ data, page = null, imagePath, text1, text2 }) => {
             )}
 
             {page === "trash" && (
-              <TrashAction
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteFromTrash(file.id, file.data);
-                }}
-                title="Delete forever"
-              >
-                <DeleteIcon />
-              </TrashAction>
+              <TrashActions className="trash-actions">
+                <ActionBtn
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRestoreFromTrash(file.id, file.data);
+                  }}
+                  title="Restore"
+                >
+                  <RestoreIcon />
+                </ActionBtn>
+                <ActionBtn
+                  $danger
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteFromTrash(file.id, file.data);
+                  }}
+                  title="Delete forever"
+                >
+                  <DeleteIcon />
+                </ActionBtn>
+              </TrashActions>
             )}
           </Card>
         );
@@ -131,14 +199,15 @@ const List = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 8px 16px var(--mobile-scroll-inset);
+  padding: ${(props) =>
+    props.$compact ? "0 0 var(--mobile-scroll-inset)" : "8px 16px var(--mobile-scroll-inset)"};
   scroll-padding-bottom: var(--mobile-scroll-inset);
 
   @media (min-width: 769px) {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
     gap: 16px;
-    padding: 20px 24px 28px;
+    padding: ${(props) => (props.$compact ? "0 0 8px" : "20px 24px 28px")};
   }
 `;
 
@@ -176,6 +245,15 @@ const Card = styled(motion.div)`
       opacity: 1;
       pointer-events: auto;
     }
+
+    ${(props) =>
+      props.$menuOpen &&
+      `
+      .card-actions {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    `}
   }
 `;
 
@@ -253,6 +331,21 @@ const CardName = styled.p`
   }
 `;
 
+const RenameInput = styled.input`
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 4px;
+  padding: 6px 8px;
+  border: 1.5px solid var(--primary);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-1);
+  font-size: 0.84rem;
+  font-weight: 600;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-subtle);
+`;
+
 const CardMeta = styled.div`
   display: flex;
   align-items: center;
@@ -291,6 +384,13 @@ const CardActions = styled.div`
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s ease;
+  }
+`;
+
+const TrashActions = styled(CardActions)`
+  @media (min-width: 769px) {
+    opacity: 1;
+    pointer-events: auto;
   }
 `;
 
@@ -355,42 +455,6 @@ const StarBtn = styled.button`
 
     svg {
       font-size: 14px;
-    }
-  }
-`;
-
-const TrashAction = styled.button`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface);
-  border: 1px solid rgba(217, 48, 37, 0.25);
-  border-radius: 8px;
-  cursor: pointer;
-  color: #d93025;
-  flex-shrink: 0;
-  transition: background 0.15s ease;
-  z-index: 1;
-
-  svg {
-    font-size: 16px;
-  }
-
-  &:hover {
-    background: rgba(217, 48, 37, 0.08);
-  }
-
-  @media (min-width: 769px) {
-    width: 30px;
-    height: 30px;
-
-    svg {
-      font-size: 15px;
     }
   }
 `;

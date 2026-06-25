@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import styled, { keyframes } from "styled-components";
 import { SearchIcons, CloseIcon } from "../common/SvgIcons";
-import { useRouter } from "next/navigation";
 import { useMyFiles } from "@/context/FilesContext";
 import { useFilePreview } from "@/context/FilePreviewContext";
 import { searchFiles } from "@/lib/searchFiles";
@@ -37,10 +36,10 @@ function getTypeStyle(contentType) {
 const SearchBar = ({ variant = "desktop", onClose }) => {
   const files = useMyFiles();
   const { open: openPreview } = useFilePreview();
-  const router = useRouter();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
@@ -55,31 +54,24 @@ const SearchBar = ({ variant = "desktop", onClose }) => {
     [files, debouncedQuery]
   );
 
-  const dropdownResults = results.slice(0, DROPDOWN_LIMIT);
-  const hasMore = results.length > DROPDOWN_LIMIT;
+  const dropdownResults = showAll ? results : results.slice(0, DROPDOWN_LIMIT);
+  const hasMore = !showAll && results.length > DROPDOWN_LIMIT;
 
-  const goToSearchPage = useCallback(
-    (q) => {
-      const trimmed = q.trim();
-      if (!trimmed) return;
-      router.push(`/search/${encodeURIComponent(trimmed)}`);
-      setOpen(false);
-      setQuery("");
-      setActiveIndex(-1);
-      onClose?.();
-    },
-    [router, onClose]
-  );
+  const resetSearch = () => {
+    setOpen(false);
+    setShowAll(false);
+    setQuery("");
+    setDebouncedQuery("");
+    setActiveIndex(-1);
+    onClose?.();
+  };
 
   const handleSelect = (file) => {
     openPreview(
       file.data,
       results.map((item) => item.data)
     );
-    setOpen(false);
-    setQuery("");
-    setActiveIndex(-1);
-    onClose?.();
+    resetSearch();
   };
 
   useEffect(() => {
@@ -115,8 +107,8 @@ const SearchBar = ({ variant = "desktop", onClose }) => {
       e.preventDefault();
       if (activeIndex >= 0 && dropdownResults[activeIndex]) {
         handleSelect(dropdownResults[activeIndex]);
-      } else if (query.trim()) {
-        goToSearchPage(query);
+      } else if (dropdownResults[0]) {
+        handleSelect(dropdownResults[0]);
       }
       return;
     }
@@ -145,6 +137,7 @@ const SearchBar = ({ variant = "desktop", onClose }) => {
           onChange={(e) => {
             setQuery(e.target.value);
             setOpen(true);
+            setShowAll(false);
             setActiveIndex(-1);
           }}
           onFocus={() => query.trim() && setOpen(true)}
@@ -161,6 +154,7 @@ const SearchBar = ({ variant = "desktop", onClose }) => {
               setQuery("");
               setDebouncedQuery("");
               setOpen(false);
+              setShowAll(false);
               setActiveIndex(-1);
               inputRef.current?.focus();
             }}
@@ -171,8 +165,12 @@ const SearchBar = ({ variant = "desktop", onClose }) => {
         )}
         <SearchBtn
           type="button"
-          onClick={() => goToSearchPage(query)}
-          aria-label="Search"
+          onClick={() => {
+            if (!query.trim()) return;
+            setOpen(true);
+            setShowAll(true);
+          }}
+          aria-label="Show all search results"
           disabled={!query.trim()}
         >
           <SearchIcons />
@@ -222,7 +220,7 @@ const SearchBar = ({ variant = "desktop", onClose }) => {
                 );
               })}
               {hasMore && (
-                <SeeAllBtn type="button" onClick={() => goToSearchPage(query)}>
+                <SeeAllBtn type="button" onClick={() => setShowAll(true)}>
                   See all {results.length} results
                 </SeeAllBtn>
               )}

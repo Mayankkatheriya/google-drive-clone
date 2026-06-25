@@ -35,6 +35,8 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import AppsRoundedIcon from '@mui/icons-material/AppsRounded';
 import DisabledByDefaultOutlinedIcon from '@mui/icons-material/DisabledByDefaultOutlined';
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
+import SettingsBackupRestoreOutlinedIcon from "@mui/icons-material/SettingsBackupRestoreOutlined";
+import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 
 export const MobileScreenShareIcon = () => <MobileScreenShareOutlinedIcon />;
 export const DevicesIcons = () => <DevicesIcon />;
@@ -72,3 +74,5 @@ export const InstaIcon = () => <InstagramIcon />;
 export const GridIcon = () => <AppsRoundedIcon />;
 export const CloseButton = () => <DisabledByDefaultOutlinedIcon />;
 export const UploadFileIcon = () => <UploadFileRoundedIcon />;
+export const RestoreIcon = () => <SettingsBackupRestoreOutlinedIcon />;
+export const RenameIcon = () => <DriveFileRenameOutlineIcon />;

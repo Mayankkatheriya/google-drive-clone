@@ -13,6 +13,7 @@ import {
   getUploadLimitLabel,
   isFileWithinUploadLimit,
 } from "../lib/uploadLimits";
+import { resolveDisplayFilename } from "../lib/fileNames";
 
 export function useFileUpload() {
   const [open, setOpen] = useState(false);
@@ -40,41 +41,32 @@ export function useFileUpload() {
     return false;
   };
 
-  const resolveUploadFilename = (customName, originalFile) => {
-    const trimmed = customName.trim();
-    if (!trimmed) return null;
-    if (/[/\\]/.test(trimmed)) return null;
+  const stageFile = (selected) => {
+    if (!selected) return false;
 
-    const originalExt = originalFile.name.includes(".")
-      ? originalFile.name.slice(originalFile.name.lastIndexOf("."))
-      : "";
+    if (!isFileWithinUploadLimit(selected.size)) {
+      toast.error(`File is too large. Maximum size is ${getUploadLimitLabel()}.`);
+      return false;
+    }
 
-    const hasExtension =
-      trimmed.includes(".") && trimmed.lastIndexOf(".") > 0;
+    if (rejectIfStorageFull(selected.size)) {
+      return false;
+    }
 
-    return hasExtension ? trimmed : `${trimmed}${originalExt}`;
+    setSelectedFile(selected.name);
+    setFile(selected);
+    setFileName(selected.name);
+    return true;
   };
 
   const handleFile = (e) => {
     const selected = e.target.files[0];
     if (!selected) return;
 
-    if (!isFileWithinUploadLimit(selected.size)) {
-      toast.error(`File is too large. Maximum size is ${getUploadLimitLabel()}.`);
+    if (!stageFile(selected)) {
       e.target.value = "";
       resetFileSelection();
-      return;
     }
-
-    if (rejectIfStorageFull(selected.size)) {
-      e.target.value = "";
-      resetFileSelection();
-      return;
-    }
-
-    setSelectedFile(selected.name);
-    setFile(selected);
-    setFileName(selected.name);
   };
 
   const handleUpload = async (e) => {
@@ -85,7 +77,7 @@ export function useFileUpload() {
       return;
     }
 
-    const finalName = resolveUploadFilename(fileName, file);
+    const finalName = resolveDisplayFilename(fileName, file.name);
     if (!finalName) {
       toast.error("Please enter a valid file name.");
       return;
@@ -142,6 +134,7 @@ export function useFileUpload() {
     fileName,
     setFileName,
     handleFile,
+    stageFile,
     handleUpload,
   };
 }

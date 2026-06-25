@@ -7,7 +7,7 @@ import AddIcon from "@mui/icons-material/Add";
 const AddFile = ({ onClick }) => {
   return (
     <Wrap>
-      <NewBtn title="Upload new file" onClick={onClick}>
+      <NewBtn title="Upload a file — or drag and drop anywhere" onClick={onClick}>
         <AddIcon />
         <span>New</span>
       </NewBtn>

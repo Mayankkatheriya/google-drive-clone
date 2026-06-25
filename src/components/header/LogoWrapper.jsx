@@ -80,8 +80,8 @@ const Logo = styled.div`
     color: var(--text-1);
     letter-spacing: -0.3px;
 
-    @media (max-width: 640px) {
-      display: none;
+    @media (max-width: 768px) {
+      font-size: 1rem;
     }
   }
 `;

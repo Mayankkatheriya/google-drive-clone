@@ -6,6 +6,7 @@ import { Page } from "../common/PageShell";
 import { useMyFiles } from "@/context/FilesContext";
 import LoaderContainer from "../loaders/LoaderContainer";
 import { delayInRender } from "../common/common";
+import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
 const FilesList = lazy(() => delayInRender(import("../common/FilesList")));
 
 const Starred = () => {
@@ -17,7 +18,10 @@ const Starred = () => {
 
   return (
     <Page>
-      <PageHeader pageTitle={"Starred"} />
+      <PageHeader
+        pageTitle="Starred"
+        subtitle={PAGE_SUBTITLES.starred.subtitle}
+      />
       <Suspense fallback={<LoaderContainer />}>
         <FilesList
           data={starredFiles}

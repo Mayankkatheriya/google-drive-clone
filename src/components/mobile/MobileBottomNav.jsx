@@ -11,8 +11,7 @@ import {
   StarBorderIcon,
   DeleteOutlineIcon,
 } from "../common/SvgIcons";
-import { useFileUpload } from "@/hooks/useFileUpload";
-import FileUploadModal from "../sidebar/FileUploadModal";
+import { useFileUploadContext } from "@/context/FileUploadContext";
 
 const navItems = [
   { href: "/home", label: "Drive", icon: MobileScreenShareIcon },
@@ -23,22 +22,10 @@ const navItems = [
 
 const MobileBottomNav = () => {
   const pathname = usePathname();
-  const upload = useFileUpload();
+  const upload = useFileUploadContext();
 
   return (
     <>
-      <FileUploadModal
-        open={upload.open}
-        setOpen={upload.setOpen}
-        handleUpload={upload.handleUpload}
-        uploading={upload.uploading}
-        handleFile={upload.handleFile}
-        selectedFile={upload.selectedFile}
-        fileName={upload.fileName}
-        onFileNameChange={upload.setFileName}
-        progress={upload.progress}
-      />
-
       <NavBar aria-label="Main navigation">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
@@ -56,7 +43,7 @@ const MobileBottomNav = () => {
       <Fab
         onClick={() => upload.setOpen(true)}
         aria-label="Upload new file"
-        title="New"
+        title="Upload — or drag and drop files anywhere"
       >
         <AddIcon />
       </Fab>

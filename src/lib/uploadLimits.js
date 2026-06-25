@@ -27,3 +27,15 @@ export function canAddToUserStorage(currentUsageBytes, newFileBytes) {
 export function getStorageQuotaError() {
   return "Storage full. You have reached the 1 GB limit. Delete files to free space.";
 }
+
+export function getUploadHelpText() {
+  return `Drag and drop files anywhere, or click New to upload. Max ${getUploadLimitLabel()} per file.`;
+}
+
+export function getUploadHelpTextMobile() {
+  return `Tap New to upload files. Max ${getUploadLimitLabel()} per file.`;
+}
+
+export function getUploadModalHint() {
+  return `Drag and drop a file here, or choose one below. Max ${getUploadLimitLabel()}.`;
+}

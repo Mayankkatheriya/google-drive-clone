@@ -11,6 +11,7 @@ import {
   CopyIcon,
   DeleteIcon,
   ShareIcon,
+  RenameIcon,
 } from "../common/SvgIcons";
 import { changeBytes, convertDates } from "../common/common";
 import FileIcons from "../common/FileIcons";
@@ -24,12 +25,19 @@ import {
   LinkedinIcon,
   WhatsappIcon,
 } from "react-share";
-import { handleStarred } from "../common/firebaseApi";
+import {
+  handleStarred,
+  handleMoveToTrash,
+  handleRenameFile,
+  markFileOpened,
+} from "../common/firebaseApi";
 import { toast } from "react-toastify";
 import LottieImage from "../common/LottieImage";
 import SecureFileLink from "../common/SecureFileLink";
 import { downloadFile, getFileDownloadUrl } from "../../lib/fileAccess";
 import { useMenuPlacement } from "@/hooks/useMenuPlacement";
+import { useFilePreview } from "@/context/FilePreviewContext";
+import { getUploadHelpText } from "@/lib/uploadLimits";
 
 function getTypeStyle(contentType) {
   if (contentType?.includes("pdf"))   return { bg: "#fce8e6", color: "#d93025", ext: "PDF" };
@@ -47,6 +55,7 @@ function FileRowOptionsMenu({
   onToggle,
   onShareClick,
   onCopyLink,
+  onRename,
   onDelete,
   menuRef,
 }) {
@@ -101,6 +110,10 @@ function FileRowOptionsMenu({
               </ShareExpand>
             </MenuItem>
             <MenuDivider />
+            <MenuItem onClick={() => onRename(file.id, file.data.filename)}>
+              <RenameIcon /> Rename
+            </MenuItem>
+            <MenuDivider />
             <MenuItem $danger onClick={() => onDelete(file.id, file.data)}>
               <DeleteIcon /> Delete
             </MenuItem>
@@ -115,16 +128,93 @@ function FileRowOptionsMenu({
   );
 }
 
-const MainData = ({
-  files,
-  handleOptionsClick,
-  optionsVisible,
-  handleDelete,
-}) => {
+const MainData = ({ files }) => {
   const [showShareIcons, setShowShareIcons] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
+  const [shareFileId, setShareFileId] = useState(null);
+  const [optionsVisible, setOptionsVisible] = useState(null);
   const [hoveredRow, setHoveredRow] = useState(null);
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
   const optionsMenuRef = useRef(null);
+  const renameInputRef = useRef(null);
+  const nameClickTimerRef = useRef(null);
+  const { open: openPreview } = useFilePreview();
+
+  useEffect(() => {
+    return () => {
+      if (nameClickTimerRef.current) {
+        clearTimeout(nameClickTimerRef.current);
+      }
+    };
+  }, []);
+
+  const openFilePreview = (file) => {
+    markFileOpened(file.id);
+    openPreview(
+      file.data,
+      files.map((item) => item.data)
+    );
+  };
+
+  const handleNameClick = (file, event) => {
+    event.stopPropagation();
+    if (nameClickTimerRef.current) {
+      clearTimeout(nameClickTimerRef.current);
+    }
+    nameClickTimerRef.current = setTimeout(() => {
+      openFilePreview(file);
+      nameClickTimerRef.current = null;
+    }, 250);
+  };
+
+  const handleNameDoubleClick = (file, event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (nameClickTimerRef.current) {
+      clearTimeout(nameClickTimerRef.current);
+      nameClickTimerRef.current = null;
+    }
+    startRename(file.id, file.data.filename);
+  };
+
+  const handleDelete = async (id, data) => {
+    await handleMoveToTrash(id, data);
+    setOptionsVisible(null);
+  };
+
+  const handleOptionsClick = (id) => {
+    setOptionsVisible((prev) => (prev === id ? null : id));
+    setShareFileId(null);
+    setShowShareIcons(false);
+    setShareUrl("");
+  };
+
+  const startRename = (id, filename) => {
+    setOptionsVisible(null);
+    setShareFileId(null);
+    setRenamingId(id);
+    setRenameValue(filename);
+  };
+
+  const cancelRename = () => {
+    setRenamingId(null);
+    setRenameValue("");
+  };
+
+  const submitRename = async (id, currentFilename) => {
+    const success = await handleRenameFile(id, currentFilename, renameValue);
+    if (success) {
+      cancelRename();
+    }
+  };
+
+  useEffect(() => {
+    if (renamingId && renameInputRef.current) {
+      renameInputRef.current.focus();
+      renameInputRef.current.select();
+    }
+  }, [renamingId]);
 
   const handleShareClick = async (fileData) => {
     if (!showShareIcons) {
@@ -141,12 +231,17 @@ const MainData = ({
     setShareUrl("");
   };
 
-  const handleQuickShare = async (fileId, fileData) => {
-    handleOptionsClick(fileId);
+  const handleQuickShare = async (file) => {
+    if (shareFileId === file.id) {
+      setShareFileId(null);
+      setShareUrl("");
+      return;
+    }
+
     try {
-      const url = await getFileDownloadUrl(fileData);
+      const url = await getFileDownloadUrl(file.data);
       setShareUrl(url);
-      setShowShareIcons(true);
+      setShareFileId(file.id);
     } catch (error) {
       toast.error("Unable to share file");
     }
@@ -165,6 +260,7 @@ const MainData = ({
   useEffect(() => {
     setShowShareIcons(false);
     setShareUrl("");
+    setShareFileId(null);
   }, [optionsVisible]);
 
   useEffect(() => {
@@ -173,10 +269,14 @@ const MainData = ({
         optionsMenuRef.current &&
         !optionsMenuRef.current.contains(event.target) &&
         !event.target.closest(".optionsContainer") &&
-        !event.target.closest(".shareButton")
+        !event.target.closest(".shareButton") &&
+        !event.target.closest(".share-popover") &&
+        !event.target.closest(".share-trigger")
       ) {
         setShowShareIcons(false);
-        handleOptionsClick(null);
+        setShareFileId(null);
+        setShareUrl("");
+        setOptionsVisible(null);
       }
     };
     document.addEventListener("mousedown", handleDocumentClick);
@@ -185,14 +285,14 @@ const MainData = ({
       document.removeEventListener("mousedown", handleDocumentClick);
       document.removeEventListener("touchstart", handleDocumentClick);
     };
-  }, [handleOptionsClick]);
+  }, []);
 
   if (files.length === 0) {
     return (
       <LottieImage
         imagePath="/homePage.svg"
         text1="A place for all of your files"
-        text2="Use the 'New' button to upload"
+        text2={getUploadHelpText()}
       />
     );
   }
@@ -216,7 +316,11 @@ const MainData = ({
             key={file.id}
             $active={isOpen}
             onMouseEnter={() => setHoveredRow(file.id)}
-            onMouseLeave={() => setHoveredRow(null)}
+            onMouseLeave={() => {
+              setHoveredRow(null);
+              setShareFileId(null);
+              setShareUrl("");
+            }}
           >
             <NameCol>
               <StarBtn
@@ -227,23 +331,52 @@ const MainData = ({
                 {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
               </StarBtn>
 
-              <SecureFileLink
-                fileData={file.data}
-                files={files}
-                style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}
-              >
-                <FileIconWrap style={{ background: bg }}>
-                  <span style={{ color, display: "flex" }}>
-                    <FileIcons type={file.data.contentType} />
-                  </span>
-                </FileIconWrap>
+              <FileInfo>
+                <SecureFileLink
+                  fileData={file.data}
+                  fileId={file.id}
+                  files={files}
+                >
+                  <FileIconWrap style={{ background: bg }}>
+                    <span style={{ color, display: "flex" }}>
+                      <FileIcons type={file.data.contentType} />
+                    </span>
+                  </FileIconWrap>
+                </SecureFileLink>
+
                 <NameBlock>
-                  <FileName title={file.data.filename}>{file.data.filename}</FileName>
+                  {renamingId === file.id ? (
+                    <RenameInput
+                      ref={renameInputRef}
+                      value={renameValue}
+                      onChange={(event) => setRenameValue(event.target.value)}
+                      onBlur={() => submitRename(file.id, file.data.filename)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          submitRename(file.id, file.data.filename);
+                        }
+                        if (event.key === "Escape") {
+                          event.preventDefault();
+                          cancelRename();
+                        }
+                      }}
+                      onClick={(event) => event.stopPropagation()}
+                    />
+                  ) : (
+                    <FileName
+                      title={`${file.data.filename} — double-click to rename`}
+                      onClick={(event) => handleNameClick(file, event)}
+                      onDoubleClick={(event) => handleNameDoubleClick(file, event)}
+                    >
+                      {file.data.filename}
+                    </FileName>
+                  )}
                   <MobileMeta>
                     {changeBytes(file.data.size)} · {convertDates(file.data.timestamp?.seconds)}
                   </MobileMeta>
                 </NameBlock>
-              </SecureFileLink>
+              </FileInfo>
             </NameCol>
 
             <SizeCol className="hide-sm">
@@ -255,7 +388,7 @@ const MainData = ({
             </DateCol>
 
             <ActionsCol>
-              <QuickActions $visible={isHovered && !isOpen}>
+              <HoverActions $visible={isHovered}>
                 <QuickBtn
                   onClick={() => downloadFile(file.data)}
                   title="Download"
@@ -264,15 +397,41 @@ const MainData = ({
                 </QuickBtn>
                 <QuickBtn
                   onClick={() => handleCopyLink(file.data)}
-                  title="Copy Link"
+                  title="Copy link"
                 >
                   <CopyIcon />
                 </QuickBtn>
+                <ShareWrap>
+                  <QuickBtn
+                    className="share-trigger"
+                    onClick={() => handleQuickShare(file)}
+                    title="Share"
+                    $active={shareFileId === file.id}
+                  >
+                    <ShareIcon />
+                  </QuickBtn>
+                  {shareFileId === file.id && shareUrl && (
+                    <ShareBar className="share-popover">
+                      <EmailShareButton url={shareUrl} subject={`${file.data.filename} file link`}>
+                        <EmailIcon size={28} round />
+                      </EmailShareButton>
+                      <FacebookShareButton url={shareUrl} hashtag={file.data.filename}>
+                        <FacebookIcon size={28} round />
+                      </FacebookShareButton>
+                      <LinkedinShareButton url={shareUrl} title={`${file.data.filename} file link`}>
+                        <LinkedinIcon size={28} round />
+                      </LinkedinShareButton>
+                      <WhatsappShareButton url={shareUrl} title={`${file.data.filename} file link`}>
+                        <WhatsappIcon size={28} round />
+                      </WhatsappShareButton>
+                    </ShareBar>
+                  )}
+                </ShareWrap>
                 <QuickBtn
-                  onClick={() => handleQuickShare(file.id, file.data)}
-                  title="Share"
+                  onClick={() => startRename(file.id, file.data.filename)}
+                  title="Rename"
                 >
-                  <ShareIcon />
+                  <RenameIcon />
                 </QuickBtn>
                 <QuickBtn
                   $danger
@@ -281,9 +440,9 @@ const MainData = ({
                 >
                   <DeleteIcon />
                 </QuickBtn>
-              </QuickActions>
+              </HoverActions>
 
-              <OptionsWrap $visible={!isHovered || isOpen}>
+              <MobileMenu>
                 {isOpen ? (
                   <FileRowOptionsMenu
                     file={file}
@@ -293,6 +452,7 @@ const MainData = ({
                     onToggle={() => handleOptionsClick(file.id)}
                     onShareClick={handleShareClick}
                     onCopyLink={handleCopyLink}
+                    onRename={startRename}
                     onDelete={handleDelete}
                     menuRef={optionsMenuRef}
                   />
@@ -306,7 +466,7 @@ const MainData = ({
                     <MoreOptionsIcon />
                   </OptionsTrigger>
                 )}
-              </OptionsWrap>
+              </MobileMenu>
             </ActionsCol>
           </Row>
         );
@@ -337,11 +497,12 @@ const DateCol = styled.div`
 `;
 
 const ActionsCol = styled.div`
-  flex: 0 0 148px;
+  flex: 0 0 188px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 2px;
+  position: relative;
 
   @media (max-width: 768px) {
     flex: 0 0 auto;
@@ -419,6 +580,14 @@ const Row = styled.div`
 `;
 
 /* ─────── name column ─────── */
+const FileInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+`;
+
 const StarBtn = styled.button`
   width: 30px;
   height: 30px;
@@ -479,6 +648,7 @@ const FileName = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+  cursor: text;
 
   @media (max-width: 768px) {
     font-size: 0.9rem;
@@ -490,6 +660,20 @@ const FileName = styled.span`
     overflow: hidden;
     line-height: 1.35;
   }
+`;
+
+const RenameInput = styled.input`
+  width: 100%;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1.5px solid var(--primary);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-1);
+  font-size: 0.88rem;
+  font-weight: 500;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-subtle);
 `;
 
 const MobileMeta = styled.span`
@@ -508,8 +692,8 @@ const MetaText = styled.span`
   color: var(--text-3);
 `;
 
-/* ─────── quick actions (appear on hover) ─────── */
-const QuickActions = styled.div`
+/* ─────── hover actions (desktop only) ─────── */
+const HoverActions = styled.div`
   display: ${(props) => (props.$visible ? "flex" : "none")};
   align-items: center;
   gap: 2px;
@@ -519,17 +703,42 @@ const QuickActions = styled.div`
   }
 `;
 
+const ShareWrap = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const ShareBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  background: var(--surface);
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  z-index: 60;
+`;
+
 const QuickBtn = styled.button`
   width: 30px;
   height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
+  background: ${(props) => (props.$active ? "var(--primary-light)" : "none")};
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  color: ${(props) => (props.$danger ? "#ef4444" : "var(--text-2)")};
+  color: ${(props) => {
+    if (props.$danger) return "#ef4444";
+    if (props.$active) return "var(--primary)";
+    return "var(--text-2)";
+  }};
   transition: all 0.15s ease;
 
   &:hover {
@@ -540,10 +749,10 @@ const QuickBtn = styled.button`
   svg { font-size: 17px; }
 `;
 
-/* ─────── options menu ─────── */
-const OptionsWrap = styled.div`
+/* ─────── mobile options menu ─────── */
+const MobileMenu = styled.div`
+  display: none;
   position: relative;
-  display: ${(props) => (props.$visible ? "flex" : "none")};
   align-items: center;
 
   @media (max-width: 768px) {
