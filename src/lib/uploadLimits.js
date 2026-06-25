@@ -1,5 +1,5 @@
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5 MB per file
-export const MAX_USER_STORAGE_BYTES = 1024 * 1024 * 1024; // 1 GB per user
+export const MAX_USER_STORAGE_BYTES = 100 * 1024 * 1024; // 100 MB per user
 
 export function isFileWithinUploadLimit(size) {
   return size <= MAX_UPLOAD_BYTES;
@@ -10,7 +10,7 @@ export function getUploadLimitLabel() {
 }
 
 export function getUserStorageLimitLabel() {
-  return "1 GB";
+  return "100 MB";
 }
 
 export function getTotalStorageBytes(myFiles = [], trashFiles = []) {
@@ -25,7 +25,7 @@ export function canAddToUserStorage(currentUsageBytes, newFileBytes) {
 }
 
 export function getStorageQuotaError() {
-  return "Storage full. You have reached the 1 GB limit. Delete files to free space.";
+  return "Storage full. You have reached the 100 MB limit. Delete files to free space.";
 }
 
 export function getUploadHelpText() {

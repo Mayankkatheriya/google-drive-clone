@@ -32,7 +32,7 @@ const StorageModal = ({ open, onClose }) => {
             </TipItem>
             <TipItem>
               <span>💾</span>
-              <span>Total storage: 1 GB per account</span>
+              <span>Total storage: 100 MB per account</span>
             </TipItem>
           </StorageTips>
         </ModalBody>
