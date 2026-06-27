@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import LottieImage from "../common/LottieImage";
 import { getFileDownloadUrl } from "../../lib/fileAccess";
 import { useFilePreview } from "@/context/FilePreviewContext";
+import { useCompare } from "@/context/CompareContext";
 import { getUploadHelpText } from "@/lib/uploadLimits";
 import MainDataRow, {
   NameCol,
@@ -31,6 +32,7 @@ const MainData = ({ files }) => {
   const renameInputRef = useRef(null);
   const nameClickTimerRef = useRef(null);
   const { open: openPreview } = useFilePreview();
+  const { active: compareMode, toggleFile, isSelected } = useCompare();
   const { confirmMoveToTrash } = useFileTrashActions();
 
   useEffect(() => {
@@ -211,7 +213,14 @@ const MainData = ({ files }) => {
             showShareIcons={isMenuOpen && showShareIcons}
             optionsMenuRef={isMenuOpen ? optionsMenuRef : undefined}
             onStar={() => handleStarred(file.id)}
+            compareMode={compareMode}
+            compareSelected={isSelected(file.id)}
+            onCompareToggle={() => toggleFile(file)}
             onNameClick={(event) => {
+              if (compareMode) {
+                event.preventDefault();
+                return;
+              }
               event.stopPropagation();
               if (nameClickTimerRef.current) {
                 clearTimeout(nameClickTimerRef.current);
@@ -222,6 +231,7 @@ const MainData = ({ files }) => {
               }, 250);
             }}
             onNameDoubleClick={(event) => {
+              if (compareMode) return;
               event.preventDefault();
               event.stopPropagation();
               if (nameClickTimerRef.current) {

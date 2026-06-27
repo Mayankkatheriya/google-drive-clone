@@ -18,6 +18,7 @@ import { Page } from "../common/PageShell";
 import ContentSkeleton from "@/components/common/skeleton/ContentSkeleton";
 import { getUploadHelpText } from "@/lib/uploadLimits";
 import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
+import CompareModeBar from "../common/CompareModeBar";
 
 const MainData = dynamic(() => import("./MainData"), { ssr: false });
 const FilesList = lazy(() => import("../common/FilesList"));
@@ -78,6 +79,7 @@ const Data = () => {
           <MainData files={files} />
         )}
       </Section>
+      <CompareModeBar />
     </Page>
   );
 };

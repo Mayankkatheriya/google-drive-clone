@@ -16,6 +16,9 @@ import {
 import { downloadFile } from "../../lib/fileAccess";
 import { DriveGridMenu } from "./DriveGridMenu";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
+import { useCompare } from "@/context/CompareContext";
+import { canCompareFile } from "@/lib/compareFiles";
+import CompareSelectMark from "./CompareSelectMark";
 
 function FileGridCard({
   file,
@@ -38,49 +41,99 @@ function FileGridCard({
   onDelete,
   onPermanentDelete,
 }) {
+  const { active: compareMode, toggleFile, isSelected } = useCompare();
   const { bgVar, colorVar, label } = getFileTypeTokens(
     file.data.contentType,
     file.data.filename,
   );
+  const driveCompare = isDrivePage && compareMode;
+  const compareSelected = driveCompare && isSelected(file.id);
+  const comparable = canCompareFile(file.data.contentType);
+
+  const handleCardClick = (event) => {
+    if (!driveCompare) return;
+    if (
+      event.target.closest(".card-actions") ||
+      event.target.closest(".drive-grid-menu") ||
+      event.target.closest(".drive-grid-menu-trigger")
+    ) {
+      return;
+    }
+    if (!comparable) return;
+    toggleFile(file);
+  };
+
+  const iconTile = (
+    <IconTile $bgVar={bgVar} $colorVar={colorVar}>
+      <FileIcons type={file.data.contentType} />
+    </IconTile>
+  );
 
   return (
-    <Card $menuOpen={isMenuOpen}>
-      <FileLink
-        fileData={file.data}
-        fileId={page === "trash" ? undefined : file.id}
-        files={data}
-      >
-        <IconTile $bgVar={bgVar} $colorVar={colorVar}>
-          <FileIcons type={file.data.contentType} />
-        </IconTile>
+    <Card
+      $menuOpen={isMenuOpen}
+      $compareMode={driveCompare}
+      $compareSelected={compareSelected}
+      $compareDisabled={driveCompare && !comparable}
+      onClick={handleCardClick}
+    >
+      {driveCompare && (
+        <CompareMarkWrap>
+          <CompareSelectMark
+            selected={compareSelected}
+            disabled={!comparable}
+            size="sm"
+          />
+        </CompareMarkWrap>
+      )}
+      {driveCompare ? (
+        <CompareLink>{iconTile}</CompareLink>
+      ) : (
+        <FileLink
+          fileData={file.data}
+          fileId={page === "trash" ? undefined : file.id}
+          files={data}
+        >
+          {iconTile}
+          <CardBody>
+            {isDrivePage && isRenaming ? (
+              <RenameInput
+                ref={renameInputRef}
+                value={renameValue}
+                onChange={onRenameValueChange}
+                onBlur={onRenameSubmit}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    onRenameSubmit();
+                  }
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    onRenameCancel();
+                  }
+                }}
+                onClick={(event) => event.stopPropagation()}
+              />
+            ) : (
+              <CardName title={file.data.filename}>{file.data.filename}</CardName>
+            )}
+            <CardMeta>
+              <TypeTag>{label}</TypeTag>
+              <span>{changeBytes(file.data.size)}</span>
+            </CardMeta>
+          </CardBody>
+        </FileLink>
+      )}
+
+      {driveCompare && (
         <CardBody>
-          {isDrivePage && isRenaming ? (
-            <RenameInput
-              ref={renameInputRef}
-              value={renameValue}
-              onChange={onRenameValueChange}
-              onBlur={onRenameSubmit}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  onRenameSubmit();
-                }
-                if (event.key === "Escape") {
-                  event.preventDefault();
-                  onRenameCancel();
-                }
-              }}
-              onClick={(event) => event.stopPropagation()}
-            />
-          ) : (
-            <CardName title={file.data.filename}>{file.data.filename}</CardName>
-          )}
+          <CardName title={file.data.filename}>{file.data.filename}</CardName>
           <CardMeta>
             <TypeTag>{label}</TypeTag>
             <span>{changeBytes(file.data.size)}</span>
           </CardMeta>
         </CardBody>
-      </FileLink>
+      )}
 
       {page === "starred" && (
         <StarBtn
@@ -179,18 +232,25 @@ const Card = styled.div`
   width: 100%;
   min-width: 0;
   overflow: hidden;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: ${(props) =>
+    props.$compareSelected ? "var(--primary-light)" : "var(--surface-2)"};
+  border: 1px solid
+    ${(props) =>
+      props.$compareSelected ? "var(--primary)" : "var(--border)"};
   border-radius: 12px;
   padding: 12px 14px;
   cursor: pointer;
+  opacity: ${(props) => (props.$compareDisabled ? 0.45 : 1)};
   transition:
     box-shadow 0.2s ease,
-    border-color 0.2s ease;
-  box-shadow: var(--shadow-sm);
+    border-color 0.2s ease,
+    background 0.2s ease;
+  box-shadow: ${(props) =>
+    props.$compareSelected ? "var(--shadow-md)" : "var(--shadow-sm)"};
 
   &:hover {
-    border-color: var(--primary-subtle);
+    border-color: ${(props) =>
+      props.$compareSelected ? "var(--primary)" : "var(--primary-subtle)"};
     box-shadow: var(--shadow-md);
   }
 
@@ -200,7 +260,7 @@ const Card = styled.div`
     padding: 16px 14px 14px;
 
     &:hover {
-      transform: translateY(-2px);
+      transform: ${(props) => (props.$compareMode ? "none" : "translateY(-2px)")};
     }
 
     &:hover .card-actions {
@@ -232,6 +292,24 @@ const FileLink = styled(SecureFileLink)`
   @media (min-width: 769px) {
     flex-direction: column;
     align-items: flex-start;
+    width: 100%;
+  }
+`;
+
+const CompareMarkWrap = styled.div`
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  pointer-events: none;
+`;
+
+const CompareLink = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  @media (min-width: 769px) {
     width: 100%;
   }
 `;

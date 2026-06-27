@@ -2,11 +2,15 @@
 
 import React from "react";
 import styled from "styled-components";
+import CompareArrowsRoundedIcon from "@mui/icons-material/CompareArrowsRounded";
 import { ListsIcon, GridIcon } from "./SvgIcons";
+import { useCompare } from "@/context/CompareContext";
 
 const PageHeader = ({ pageTitle, subtitle, subtitleMobile, viewMode, onViewModeChange }) => {
+  const { active: compareActive, toggleMode } = useCompare();
   const showViewToggle =
     pageTitle === "My Drive" && viewMode && onViewModeChange;
+  const showCompareToggle = pageTitle === "My Drive";
 
   return (
     <Header>
@@ -15,24 +19,46 @@ const PageHeader = ({ pageTitle, subtitle, subtitleMobile, viewMode, onViewModeC
         {subtitle && <Subtitle $hideOnMobile={Boolean(subtitleMobile)}>{subtitle}</Subtitle>}
         {subtitleMobile && <SubtitleMobile>{subtitleMobile}</SubtitleMobile>}
       </TitleBlock>
-      {showViewToggle && (
+      {(showViewToggle || showCompareToggle) && (
         <Actions>
-          <ActionBtn
-            title="List view"
-            $active={viewMode === "list"}
-            onClick={() => onViewModeChange("list")}
-            aria-pressed={viewMode === "list"}
-          >
-            <ListsIcon />
-          </ActionBtn>
-          <ActionBtn
-            title="Grid view"
-            $active={viewMode === "grid"}
-            onClick={() => onViewModeChange("grid")}
-            aria-pressed={viewMode === "grid"}
-          >
-            <GridIcon />
-          </ActionBtn>
+          {showCompareToggle && (
+            <CompareActions>
+              <CompareToggleBtn
+                type="button"
+                $active={compareActive}
+                onClick={toggleMode}
+                aria-pressed={compareActive}
+                title={
+                  compareActive
+                    ? "Exit compare mode"
+                    : "Pick 2 images or PDFs to view side by side"
+                }
+              >
+                <CompareArrowsRoundedIcon />
+                <span>{compareActive ? "Comparing" : "Compare"}</span>
+              </CompareToggleBtn>
+            </CompareActions>
+          )}
+          {showViewToggle && (
+            <ViewActions>
+              <ActionBtn
+                title="List view"
+                $active={viewMode === "list"}
+                onClick={() => onViewModeChange("list")}
+                aria-pressed={viewMode === "list"}
+              >
+                <ListsIcon />
+              </ActionBtn>
+              <ActionBtn
+                title="Grid view"
+                $active={viewMode === "grid"}
+                onClick={() => onViewModeChange("grid")}
+                aria-pressed={viewMode === "grid"}
+              >
+                <GridIcon />
+              </ActionBtn>
+            </ViewActions>
+          )}
         </Actions>
       )}
     </Header>
@@ -101,6 +127,62 @@ const Actions = styled.div`
   gap: 4px;
   flex-shrink: 0;
   padding-top: 2px;
+`;
+
+const CompareActions = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const CompareToggleBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px 0 11px;
+  border-radius: 999px;
+  border: 1px solid
+    ${(props) => (props.$active ? "var(--primary)" : "var(--border-light)")};
+  background: ${(props) =>
+    props.$active ? "var(--primary-light)" : "var(--surface-2)"};
+  color: ${(props) => (props.$active ? "var(--primary)" : "var(--text-2)")};
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    background: ${(props) =>
+      props.$active ? "var(--primary-light)" : "var(--surface-3)"};
+    border-color: var(--primary-subtle);
+    color: var(--primary);
+  }
+
+  svg {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 768px) {
+    height: 34px;
+    padding: 0 12px 0 10px;
+    font-size: 0.78rem;
+
+    svg {
+      font-size: 17px;
+    }
+  }
+`;
+
+const ViewActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
 
   @media (max-width: 768px) {
     display: none;

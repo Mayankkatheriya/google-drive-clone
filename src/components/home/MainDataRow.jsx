@@ -20,6 +20,8 @@ import ShareButtons from "../common/ShareButtons";
 import { downloadFile } from "../../lib/fileAccess";
 import { useMenuPlacement } from "@/hooks/useMenuPlacement";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
+import { canCompareFile } from "@/lib/compareFiles";
+import CompareSelectMark from "../common/CompareSelectMark";
 
 function FileRowOptionsMenu({
   file,
@@ -128,17 +130,54 @@ function MainDataRow({
   onDelete,
   onOptionsToggle,
   onShareClick,
+  compareMode = false,
+  compareSelected = false,
+  onCompareToggle,
 }) {
   const { bgVar, colorVar } = getFileTypeTokens(
     file.data.contentType,
     file.data.filename,
   );
+  const comparable = canCompareFile(file.data.contentType);
 
   return (
-    <Row $active={isMenuOpen} data-share-open={isShareOpen || undefined}>
+    <Row
+      $active={isMenuOpen}
+      $compareMode={compareMode}
+      $compareSelected={compareSelected}
+      $compareDisabled={compareMode && !comparable}
+      data-share-open={isShareOpen || undefined}
+      onClick={
+        compareMode
+          ? (event) => {
+              if (
+                event.target.closest(".optionsContainer") ||
+                event.target.closest(".hover-actions") ||
+                event.target.closest(".share-popover") ||
+                event.target.closest(".share-trigger")
+              ) {
+                return;
+              }
+              if (!comparable) return;
+              onCompareToggle?.();
+            }
+          : undefined
+      }
+    >
       <NameCol>
+        {compareMode && (
+          <CompareSelectWrap>
+            <CompareSelectMark
+              selected={compareSelected}
+              disabled={!comparable}
+            />
+          </CompareSelectWrap>
+        )}
         <StarBtn
-          onClick={onStar}
+          onClick={(event) => {
+            event.stopPropagation();
+            onStar();
+          }}
           $starred={file.data.starred}
           title={file.data.starred ? "Unstar" : "Star"}
         >
@@ -146,11 +185,17 @@ function MainDataRow({
         </StarBtn>
 
         <FileInfo>
-          <SecureFileLink fileData={file.data} fileId={file.id} files={files}>
+          {compareMode ? (
             <FileIconWrap $bgVar={bgVar} $colorVar={colorVar}>
               <FileIcons type={file.data.contentType} />
             </FileIconWrap>
-          </SecureFileLink>
+          ) : (
+            <SecureFileLink fileData={file.data} fileId={file.id} files={files}>
+              <FileIconWrap $bgVar={bgVar} $colorVar={colorVar}>
+                <FileIcons type={file.data.contentType} />
+              </FileIconWrap>
+            </SecureFileLink>
+          )}
 
           <NameBlock>
             {isRenaming ? (
@@ -259,7 +304,9 @@ export default memo(
     prev.isShareOpen === next.isShareOpen &&
     prev.shareUrl === next.shareUrl &&
     prev.showShareIcons === next.showShareIcons &&
-    prev.renameValue === next.renameValue,
+    prev.renameValue === next.renameValue &&
+    prev.compareMode === next.compareMode &&
+    prev.compareSelected === next.compareSelected,
 );
 
 const NameCol = styled.div`
@@ -304,12 +351,20 @@ const Row = styled.div`
   height: 52px;
   border-radius: 10px;
   margin: 1px 0;
-  background: ${(props) =>
-    props.$active ? "var(--primary-light)" : "transparent"};
-  transition: background 0.15s ease;
+  background: ${(props) => {
+    if (props.$compareSelected) return "var(--primary-light)";
+    if (props.$active) return "var(--primary-light)";
+    return "transparent";
+  }};
+  box-shadow: ${(props) =>
+    props.$compareSelected ? "inset 0 0 0 2px var(--primary)" : "none"};
+  opacity: ${(props) => (props.$compareDisabled ? 0.45 : 1)};
+  cursor: ${(props) => (props.$compareMode ? "pointer" : "default")};
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 
   &:hover {
-    background: var(--surface-2);
+    background: ${(props) =>
+      props.$compareSelected ? "var(--primary-light)" : "var(--surface-2)"};
   }
 
   @media (max-width: 768px) {
@@ -322,12 +377,22 @@ const Row = styled.div`
     border-bottom: 1px solid var(--border-light);
 
     &:hover {
-      background: transparent;
+      background: ${(props) =>
+        props.$compareSelected ? "var(--primary-light)" : "transparent"};
     }
 
     &:active {
       background: var(--surface-2);
     }
+  }
+`;
+
+const CompareSelectWrap = styled.span`
+  flex-shrink: 0;
+  margin-right: 2px;
+
+  @media (max-width: 768px) {
+    margin-top: 10px;
   }
 `;
 

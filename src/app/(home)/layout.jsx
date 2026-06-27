@@ -6,8 +6,10 @@ import Header from "@/components/header/Header";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { FilesProvider } from "@/context/FilesContext";
 import { FilePreviewProvider } from "@/context/FilePreviewContext";
+import { CompareProvider } from "@/context/CompareContext";
 import { FileUploadProvider } from "@/context/FileUploadContext";
 import FilePreviewModal from "@/components/common/FilePreviewModal";
+import CompareModal from "@/components/common/CompareModal";
 import SidebarPlaceholder from "@/components/sidebar/SidebarPlaceholder";
 
 const Sidebar = dynamic(() => import("@/components/sidebar/Sidebar"), {
@@ -28,22 +30,25 @@ export default function HomeLayout({ children }) {
   return (
     <FilesProvider>
       <FilePreviewProvider>
-        <FileUploadProvider>
-          <ProtectedRoute>
-            <AppShell>
-              <Header />
-              <ShellBody>
-                <HomeContainer>
-                  <Sidebar />
-                  <MainContent>{children}</MainContent>
-                </HomeContainer>
-                <MobileBottomNav />
-              </ShellBody>
-            </AppShell>
-          </ProtectedRoute>
-          <DropZone />
-          <FilePreviewModal />
-        </FileUploadProvider>
+        <CompareProvider>
+          <FileUploadProvider>
+            <ProtectedRoute>
+              <AppShell>
+                <Header />
+                <ShellBody>
+                  <HomeContainer>
+                    <Sidebar />
+                    <MainContent>{children}</MainContent>
+                  </HomeContainer>
+                  <MobileBottomNav />
+                </ShellBody>
+              </AppShell>
+            </ProtectedRoute>
+            <DropZone />
+            <FilePreviewModal />
+            <CompareModal />
+          </FileUploadProvider>
+        </CompareProvider>
       </FilePreviewProvider>
     </FilesProvider>
   );
