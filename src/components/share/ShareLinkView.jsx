@@ -90,6 +90,32 @@ export default function ShareLinkView({ state }) {
           </Card>
         )}
 
+        {state.status === "preview" && (
+          <Card>
+            <FileHead>
+              <IconWrap
+                $bgVar={
+                  getFileTypeTokens(state.contentType, state.filename).bgVar
+                }
+                $colorVar={
+                  getFileTypeTokens(state.contentType, state.filename).colorVar
+                }
+              >
+                <FileIcons type={state.contentType} />
+              </IconWrap>
+              <FileMeta>
+                <CardTitle>{state.filename}</CardTitle>
+                <CardSub>
+                  {changeBytes(state.size)} · One-time secure file link
+                </CardSub>
+              </FileMeta>
+            </FileHead>
+            <Notice>
+              Open this link in your browser to view the file once.
+            </Notice>
+          </Card>
+        )}
+
         {(state.status === "used" || state.status === "missing") && (
           <Card $muted>
             <StatusIcon $tone="warn">

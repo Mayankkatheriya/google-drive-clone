@@ -10,6 +10,25 @@ function shareLinkRef(token) {
   return getAdminFirestore().collection(COLLECTION).doc(token);
 }
 
+function assertValidToken(token) {
+  if (!token || typeof token !== "string" || token.length < 16) {
+    const error = new Error("Invalid share link");
+    error.statusCode = 400;
+    throw error;
+  }
+}
+
+export async function getShareLinkRecord(token) {
+  assertValidToken(token);
+
+  const snap = await shareLinkRef(token).get();
+  if (!snap.exists) {
+    return null;
+  }
+
+  return snap.data();
+}
+
 async function getOwnedFile(fileId, userId) {
   const db = getAdminFirestore();
   const snap = await db.collection("myfiles").doc(fileId).get();
@@ -60,11 +79,7 @@ export async function createShareLink({ fileId, userId, origin }) {
 }
 
 export async function redeemShareLink(token) {
-  if (!token || typeof token !== "string" || token.length < 16) {
-    const error = new Error("Invalid share link");
-    error.statusCode = 400;
-    throw error;
-  }
+  assertValidToken(token);
 
   const ref = shareLinkRef(token);
   let fileMeta = null;
