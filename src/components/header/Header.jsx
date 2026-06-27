@@ -52,7 +52,7 @@ const Header = () => {
       setUserLoginDetails({
         name: user.displayName,
         photo: user.photoURL,
-      })
+      }),
     );
   };
 
@@ -172,8 +172,14 @@ const MobileSearch = styled.div`
   animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 
   @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-8px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   @media (min-width: 769px) {

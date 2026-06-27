@@ -5,24 +5,12 @@ import styled from "styled-components";
 import FileIcons from "../common/FileIcons";
 import SecureFileLink from "../common/SecureFileLink";
 import { changeBytes } from "../common/common";
-
-function getTypeStyle(contentType, filename) {
-  const ext = filename?.split(".").pop()?.toUpperCase().slice(0, 4) || "";
-  if (contentType?.includes("pdf"))
-    return { tile: "#fce8e6", icon: "#d93025", label: "PDF" };
-  if (contentType?.includes("image"))
-    return { tile: "#e8eaf6", icon: "#5c6bc0", label: ext || "IMG" };
-  if (contentType?.includes("video"))
-    return { tile: "#e3f2fd", icon: "#1e88e5", label: ext || "VID" };
-  if (contentType?.includes("audio"))
-    return { tile: "#fff3e0", icon: "#ef6c00", label: ext || "AUD" };
-  return { tile: "#f1f3f4", icon: "#5f6368", label: ext || "FILE" };
-}
+import { getFileTypeTokens } from "@/lib/fileTypeColors";
 
 const QuickAccessTile = memo(function QuickAccessTile({ file, allFiles }) {
-  const { tile, icon, label } = getTypeStyle(
+  const { bgVar, colorVar, label } = getFileTypeTokens(
     file.data.contentType,
-    file.data.filename
+    file.data.filename,
   );
 
   return (
@@ -32,7 +20,7 @@ const QuickAccessTile = memo(function QuickAccessTile({ file, allFiles }) {
       files={allFiles}
       as={Tile}
     >
-      <IconWrap style={{ background: tile, color: icon }}>
+      <IconWrap $bgVar={bgVar} $colorVar={colorVar}>
         <FileIcons type={file.data.contentType} />
       </IconWrap>
       <TileBody>
@@ -130,6 +118,8 @@ const IconWrap = styled.div`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: var(${(p) => p.$bgVar});
+  color: var(${(p) => p.$colorVar});
 
   svg {
     font-size: 22px;

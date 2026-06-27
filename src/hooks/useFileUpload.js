@@ -41,7 +41,7 @@ export function useFileUpload() {
       }
       return false;
     },
-    [currentStorageBytes]
+    [currentStorageBytes],
   );
 
   const stageFile = useCallback(
@@ -49,7 +49,9 @@ export function useFileUpload() {
       if (!selected) return false;
 
       if (!isFileWithinUploadLimit(selected.size)) {
-        toast.error(`File is too large. Maximum size is ${getUploadLimitLabel()}.`);
+        toast.error(
+          `File is too large. Maximum size is ${getUploadLimitLabel()}.`,
+        );
         return false;
       }
 
@@ -62,7 +64,7 @@ export function useFileUpload() {
       setFileName(selected.name);
       return true;
     },
-    [rejectIfStorageFull]
+    [rejectIfStorageFull],
   );
 
   const handleFile = useCallback(
@@ -75,7 +77,7 @@ export function useFileUpload() {
         resetFileSelection();
       }
     },
-    [stageFile, resetFileSelection]
+    [stageFile, resetFileSelection],
   );
 
   const handleUpload = useCallback(
@@ -94,7 +96,9 @@ export function useFileUpload() {
       }
 
       if (!isFileWithinUploadLimit(file.size)) {
-        toast.error(`File is too large. Maximum size is ${getUploadLimitLabel()}.`);
+        toast.error(
+          `File is too large. Maximum size is ${getUploadLimitLabel()}.`,
+        );
         return;
       }
 
@@ -110,7 +114,7 @@ export function useFileUpload() {
         const { s3Key, size, contentType } = await uploadFileToS3(
           file,
           (value) => setProgress(value),
-          finalName
+          finalName,
         );
 
         await addDoc(collection(db, "myfiles"), {
@@ -134,7 +138,7 @@ export function useFileUpload() {
         toast.error(error.message || "Error uploading file. Please try again.");
       }
     },
-    [file, fileName, rejectIfStorageFull, resetFileSelection]
+    [file, fileName, rejectIfStorageFull, resetFileSelection],
   );
 
   return useMemo(
@@ -159,6 +163,6 @@ export function useFileUpload() {
       handleFile,
       stageFile,
       handleUpload,
-    ]
+    ],
   );
 }

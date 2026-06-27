@@ -39,38 +39,72 @@
   );
 
   --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  --file-image: #6366f1;
+  --file-image-bg: rgba(99, 102, 241, 0.1);
+  --file-pdf: #be123c;
+  --file-pdf-bg: rgba(190, 18, 60, 0.09);
+  --file-video: #0284c7;
+  --file-video-bg: rgba(2, 132, 199, 0.1);
+  --file-audio: #d97706;
+  --file-audio-bg: rgba(217, 119, 6, 0.1);
+  --file-other: #64748b;
+  --file-other-bg: rgba(100, 116, 139, 0.1);
+  --file-gif: #9333ea;
+  --file-gif-bg: rgba(147, 51, 234, 0.1);
+  --trash: #78716c;
+  --trash-bg: rgba(120, 113, 108, 0.12);
+  --danger: #dc2626;
+  --danger-bg: rgba(220, 38, 38, 0.08);
 }
 
 [data-theme="dark"] {
-  --primary: #60a5fa;
-  --primary-hover: #3b82f6;
-  --primary-light: rgba(96, 165, 250, 0.14);
-  --primary-subtle: rgba(96, 165, 250, 0.28);
+  --primary: #6ea8fe;
+  --primary-hover: #539af5;
+  --primary-light: rgba(110, 168, 254, 0.12);
+  --primary-subtle: rgba(110, 168, 254, 0.22);
 
-  --surface: #1a2233;
-  --surface-2: #242f42;
-  --surface-3: #111827;
+  --surface: #1e2433;
+  --surface-2: #283045;
+  --surface-3: #171c28;
 
-  --border: #3d5068;
-  --border-light: #2d3a4f;
+  --border: #3a4459;
+  --border-light: #2e384c;
 
-  --text-1: #eef2f7;
-  --text-2: #9db0c9;
-  --text-3: #6b8299;
+  --text-1: #e8ecf4;
+  --text-2: #b0b8d1;
+  --text-3: #7a8499;
 
   --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.45);
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.5);
   --shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.55);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+
+  --file-image: #b0b8d1;
+  --file-image-bg: #3a4256;
+  --file-pdf: #e57373;
+  --file-pdf-bg: #443c48;
+  --file-video: #7eb8da;
+  --file-video-bg: #2e4256;
+  --file-audio: #d4a574;
+  --file-audio-bg: #3d3828;
+  --file-other: #94a3b8;
+  --file-other-bg: #2f3644;
+  --file-gif: #c4a8e0;
+  --file-gif-bg: #3d3656;
+  --trash: #9ca3af;
+  --trash-bg: rgba(156, 163, 175, 0.14);
+  --danger: #e57373;
+  --danger-bg: rgba(229, 115, 115, 0.14);
 }
 
 [data-theme="dark"] *::-webkit-scrollbar-thumb {
-  background: #2a3347;
+  background: #3a4459;
 }
 
 [data-theme="dark"] *::-webkit-scrollbar-thumb:hover {
-  background: #3a4d6e;
+  background: #4a5568;
 }
 
 *, *::before, *::after {

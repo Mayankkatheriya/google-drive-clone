@@ -19,14 +19,7 @@ import SecureFileLink from "../common/SecureFileLink";
 import ShareButtons from "../common/ShareButtons";
 import { downloadFile } from "../../lib/fileAccess";
 import { useMenuPlacement } from "@/hooks/useMenuPlacement";
-
-function getTypeStyle(contentType) {
-  if (contentType?.includes("pdf")) return { bg: "#fce8e6", color: "#d93025" };
-  if (contentType?.includes("image")) return { bg: "#e8eaf6", color: "#5c6bc0" };
-  if (contentType?.includes("video")) return { bg: "#e3f2fd", color: "#1e88e5" };
-  if (contentType?.includes("audio")) return { bg: "#fff3e0", color: "#ef6c00" };
-  return { bg: "#f1f3f4", color: "#5f6368" };
-}
+import { getFileTypeTokens } from "@/lib/fileTypeColors";
 
 function FileRowOptionsMenu({
   file,
@@ -41,7 +34,11 @@ function FileRowOptionsMenu({
   menuRef,
 }) {
   const triggerRef = useRef(null);
-  const { top, right, flip, ready } = useMenuPlacement(triggerRef, menuRef, isOpen);
+  const { top, right, flip, ready } = useMenuPlacement(
+    triggerRef,
+    menuRef,
+    isOpen,
+  );
 
   return (
     <>
@@ -70,9 +67,15 @@ function FileRowOptionsMenu({
             <MenuItem onClick={() => onCopyLink(file.data)}>
               <CopyIcon /> Copy Link
             </MenuItem>
-            <MenuItem className="shareButton" onClick={() => onShareClick(file.data)}>
+            <MenuItem
+              className="shareButton"
+              onClick={() => onShareClick(file.data)}
+            >
               <ShareIcon /> Share
-              <ShareExpand className={showShareIcons ? "show" : ""} $flip={flip}>
+              <ShareExpand
+                className={showShareIcons ? "show" : ""}
+                $flip={flip}
+              >
                 <ShareButtons
                   url={shareUrl}
                   filename={file.data.filename}
@@ -90,10 +93,12 @@ function FileRowOptionsMenu({
             </MenuItem>
             <MenuFooter>
               <FooterRow>{changeBytes(file.data.size)}</FooterRow>
-              <FooterRow>{convertDates(file.data.timestamp?.seconds)}</FooterRow>
+              <FooterRow>
+                {convertDates(file.data.timestamp?.seconds)}
+              </FooterRow>
             </MenuFooter>
           </OptionsMenu>,
-          document.body
+          document.body,
         )}
     </>
   );
@@ -124,7 +129,10 @@ function MainDataRow({
   onOptionsToggle,
   onShareClick,
 }) {
-  const { bg, color } = getTypeStyle(file.data.contentType);
+  const { bgVar, colorVar } = getFileTypeTokens(
+    file.data.contentType,
+    file.data.filename,
+  );
 
   return (
     <Row $active={isMenuOpen} data-share-open={isShareOpen || undefined}>
@@ -139,10 +147,8 @@ function MainDataRow({
 
         <FileInfo>
           <SecureFileLink fileData={file.data} fileId={file.id} files={files}>
-            <FileIconWrap style={{ background: bg }}>
-              <span style={{ color, display: "flex" }}>
-                <FileIcons type={file.data.contentType} />
-              </span>
+            <FileIconWrap $bgVar={bgVar} $colorVar={colorVar}>
+              <FileIcons type={file.data.contentType} />
             </FileIconWrap>
           </SecureFileLink>
 
@@ -166,7 +172,8 @@ function MainDataRow({
               </FileName>
             )}
             <MobileMeta>
-              {changeBytes(file.data.size)} · {convertDates(file.data.timestamp?.seconds)}
+              {changeBytes(file.data.size)} ·{" "}
+              {convertDates(file.data.timestamp?.seconds)}
             </MobileMeta>
           </NameBlock>
         </FileInfo>
@@ -241,16 +248,18 @@ function MainDataRow({
   );
 }
 
-export default memo(MainDataRow, (prev, next) =>
-  prev.file.id === next.file.id &&
-  prev.file.data === next.file.data &&
-  prev.files === next.files &&
-  prev.isMenuOpen === next.isMenuOpen &&
-  prev.isRenaming === next.isRenaming &&
-  prev.isShareOpen === next.isShareOpen &&
-  prev.shareUrl === next.shareUrl &&
-  prev.showShareIcons === next.showShareIcons &&
-  prev.renameValue === next.renameValue
+export default memo(
+  MainDataRow,
+  (prev, next) =>
+    prev.file.id === next.file.id &&
+    prev.file.data === next.file.data &&
+    prev.files === next.files &&
+    prev.isMenuOpen === next.isMenuOpen &&
+    prev.isRenaming === next.isRenaming &&
+    prev.isShareOpen === next.isShareOpen &&
+    prev.shareUrl === next.shareUrl &&
+    prev.showShareIcons === next.showShareIcons &&
+    prev.renameValue === next.renameValue,
 );
 
 const NameCol = styled.div`
@@ -295,7 +304,8 @@ const Row = styled.div`
   height: 52px;
   border-radius: 10px;
   margin: 1px 0;
-  background: ${(props) => (props.$active ? "var(--primary-light)" : "transparent")};
+  background: ${(props) =>
+    props.$active ? "var(--primary-light)" : "transparent"};
   transition: background 0.15s ease;
 
   &:hover {
@@ -371,6 +381,8 @@ const FileIconWrap = styled.div`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: var(${(p) => p.$bgVar});
+  color: var(${(p) => p.$colorVar});
 
   svg {
     font-size: 19px;
@@ -503,7 +515,7 @@ const QuickBtn = styled.button`
   transition: all 0.15s ease;
 
   &:hover {
-    background: ${(props) => (props.$danger ? "#fef2f2" : "var(--surface-3)")};
+    background: ${(props) => (props.$danger ? "var(--danger-bg)" : "var(--surface-3)")};
     color: ${(props) => (props.$danger ? "#dc2626" : "var(--primary)")};
   }
 
@@ -589,7 +601,7 @@ const MenuItem = styled.div`
   transition: background 0.15s ease;
 
   &:hover {
-    background: ${(props) => (props.$danger ? "#fef2f2" : "var(--surface-2)")};
+    background: ${(props) => (props.$danger ? "var(--danger-bg)" : "var(--surface-2)")};
   }
 
   svg {

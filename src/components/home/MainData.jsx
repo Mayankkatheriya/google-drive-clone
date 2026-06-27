@@ -2,14 +2,23 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import styled from "styled-components";
-import { handleStarred, handleRenameFile, markFileOpened } from "../common/firebaseApi";
+import {
+  handleStarred,
+  handleRenameFile,
+  markFileOpened,
+} from "../common/firebaseApi";
 import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import { toast } from "react-toastify";
 import LottieImage from "../common/LottieImage";
 import { getFileDownloadUrl } from "../../lib/fileAccess";
 import { useFilePreview } from "@/context/FilePreviewContext";
 import { getUploadHelpText } from "@/lib/uploadLimits";
-import MainDataRow, { NameCol, SizeCol, DateCol, ActionsCol } from "./MainDataRow";
+import MainDataRow, {
+  NameCol,
+  SizeCol,
+  DateCol,
+  ActionsCol,
+} from "./MainDataRow";
 
 const MainData = ({ files }) => {
   const [showShareIcons, setShowShareIcons] = useState(false);
@@ -37,10 +46,10 @@ const MainData = ({ files }) => {
       markFileOpened(file.id);
       openPreview(
         file.data,
-        files.map((item) => item.data)
+        files.map((item) => item.data),
       );
     },
-    [files, openPreview]
+    [files, openPreview],
   );
 
   const startRename = useCallback((id, filename) => {
@@ -62,7 +71,7 @@ const MainData = ({ files }) => {
         cancelRename();
       }
     },
-    [renameValue, cancelRename]
+    [renameValue, cancelRename],
   );
 
   const handleDelete = useCallback(
@@ -70,7 +79,7 @@ const MainData = ({ files }) => {
       await confirmMoveToTrash(id, data);
       setOptionsVisible(null);
     },
-    [confirmMoveToTrash]
+    [confirmMoveToTrash],
   );
 
   const handleOptionsClick = useCallback((id) => {
@@ -80,36 +89,42 @@ const MainData = ({ files }) => {
     setShareUrl("");
   }, []);
 
-  const handleShareClick = useCallback(async (fileData) => {
-    if (!showShareIcons) {
+  const handleShareClick = useCallback(
+    async (fileData) => {
+      if (!showShareIcons) {
+        try {
+          const url = await getFileDownloadUrl(fileData);
+          setShareUrl(url);
+          setShowShareIcons(true);
+        } catch {
+          toast.error("Unable to share file");
+        }
+        return;
+      }
+      setShowShareIcons(false);
+      setShareUrl("");
+    },
+    [showShareIcons],
+  );
+
+  const handleQuickShare = useCallback(
+    async (file) => {
+      if (shareFileId === file.id) {
+        setShareFileId(null);
+        setShareUrl("");
+        return;
+      }
+
       try {
-        const url = await getFileDownloadUrl(fileData);
+        const url = await getFileDownloadUrl(file.data);
         setShareUrl(url);
-        setShowShareIcons(true);
+        setShareFileId(file.id);
       } catch {
         toast.error("Unable to share file");
       }
-      return;
-    }
-    setShowShareIcons(false);
-    setShareUrl("");
-  }, [showShareIcons]);
-
-  const handleQuickShare = useCallback(async (file) => {
-    if (shareFileId === file.id) {
-      setShareFileId(null);
-      setShareUrl("");
-      return;
-    }
-
-    try {
-      const url = await getFileDownloadUrl(file.data);
-      setShareUrl(url);
-      setShareFileId(file.id);
-    } catch {
-      toast.error("Unable to share file");
-    }
-  }, [shareFileId]);
+    },
+    [shareFileId],
+  );
 
   const handleCopyLink = useCallback(async (fileData) => {
     try {

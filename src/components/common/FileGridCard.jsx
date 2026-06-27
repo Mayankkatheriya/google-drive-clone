@@ -15,25 +15,7 @@ import {
 } from "./SvgIcons";
 import { downloadFile } from "../../lib/fileAccess";
 import { DriveGridMenu } from "./DriveGridMenu";
-
-function getTypeStyle(contentType, filename) {
-  const ext = filename?.split(".").pop()?.toUpperCase().slice(0, 4) || "";
-  if (contentType?.includes("pdf"))
-    return { tile: "#fce8e6", icon: "#d93025", label: "PDF" };
-  if (contentType?.includes("png"))
-    return { tile: "#e8eaf6", icon: "#5c6bc0", label: "PNG" };
-  if (contentType?.includes("gif"))
-    return { tile: "#f3e5f5", icon: "#8e24aa", label: "GIF" };
-  if (contentType?.includes("webp"))
-    return { tile: "#e8eaf6", icon: "#5c6bc0", label: "WEBP" };
-  if (contentType?.includes("image"))
-    return { tile: "#e8eaf6", icon: "#5c6bc0", label: ext || "IMG" };
-  if (contentType?.includes("mp4") || contentType?.includes("video"))
-    return { tile: "#e3f2fd", icon: "#1e88e5", label: ext || "VID" };
-  if (contentType?.includes("mp3") || contentType?.includes("audio"))
-    return { tile: "#fff3e0", icon: "#ef6c00", label: ext || "AUD" };
-  return { tile: "#f1f3f4", icon: "#5f6368", label: ext || "FILE" };
-}
+import { getFileTypeTokens } from "@/lib/fileTypeColors";
 
 function FileGridCard({
   file,
@@ -56,9 +38,9 @@ function FileGridCard({
   onDelete,
   onPermanentDelete,
 }) {
-  const { tile, icon, label } = getTypeStyle(
+  const { bgVar, colorVar, label } = getFileTypeTokens(
     file.data.contentType,
-    file.data.filename
+    file.data.filename,
   );
 
   return (
@@ -68,7 +50,7 @@ function FileGridCard({
         fileId={page === "trash" ? undefined : file.id}
         files={data}
       >
-        <IconTile style={{ background: tile, color: icon }}>
+        <IconTile $bgVar={bgVar} $colorVar={colorVar}>
           <FileIcons type={file.data.contentType} />
         </IconTile>
         <CardBody>
@@ -174,17 +156,19 @@ function FileGridCard({
   );
 }
 
-export default memo(FileGridCard, (prev, next) =>
-  prev.file.id === next.file.id &&
-  prev.file.data === next.file.data &&
-  prev.page === next.page &&
-  prev.isDrivePage === next.isDrivePage &&
-  prev.isMenuOpen === next.isMenuOpen &&
-  prev.isRenaming === next.isRenaming &&
-  prev.renameValue === next.renameValue &&
-  prev.shareOpen === next.shareOpen &&
-  prev.shareUrl === next.shareUrl &&
-  prev.data === next.data
+export default memo(
+  FileGridCard,
+  (prev, next) =>
+    prev.file.id === next.file.id &&
+    prev.file.data === next.file.data &&
+    prev.page === next.page &&
+    prev.isDrivePage === next.isDrivePage &&
+    prev.isMenuOpen === next.isMenuOpen &&
+    prev.isRenaming === next.isRenaming &&
+    prev.renameValue === next.renameValue &&
+    prev.shareOpen === next.shareOpen &&
+    prev.shareUrl === next.shareUrl &&
+    prev.data === next.data,
 );
 
 const Card = styled.div`
@@ -200,7 +184,9 @@ const Card = styled.div`
   border-radius: 12px;
   padding: 12px 14px;
   cursor: pointer;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   box-shadow: var(--shadow-sm);
 
   &:hover {
@@ -258,6 +244,8 @@ const IconTile = styled.div`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: var(${(p) => p.$bgVar});
+  color: var(${(p) => p.$colorVar});
 
   svg {
     font-size: 24px;
@@ -384,9 +372,11 @@ const ActionBtn = styled.button`
   transition: all 0.15s ease;
 
   &:hover {
-    background: ${(props) => (props.$danger ? "rgba(248, 113, 113, 0.12)" : "var(--primary-light)")};
+    background: ${(props) =>
+      props.$danger ? "rgba(248, 113, 113, 0.12)" : "var(--primary-light)"};
     color: ${(props) => (props.$danger ? "#fca5a5" : "var(--primary)")};
-    border-color: ${(props) => (props.$danger ? "rgba(248, 113, 113, 0.35)" : "var(--primary-subtle)")};
+    border-color: ${(props) =>
+      props.$danger ? "rgba(248, 113, 113, 0.35)" : "var(--primary-subtle)"};
   }
 
   svg {

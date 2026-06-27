@@ -383,6 +383,6 @@ const SignOutBtn = styled.button`
   transition: background 0.15s ease;
 
   &:hover {
-    background: #fef2f2;
+    background: var(--danger-bg);
   }
 `;

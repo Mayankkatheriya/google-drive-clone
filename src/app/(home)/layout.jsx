@@ -21,7 +21,7 @@ const DropZone = dynamic(() => import("@/components/common/DropZone"), {
 
 const MobileBottomNav = dynamic(
   () => import("@/components/mobile/MobileBottomNav"),
-  { ssr: false }
+  { ssr: false },
 );
 
 export default function HomeLayout({ children }) {

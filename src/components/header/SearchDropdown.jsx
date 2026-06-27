@@ -7,6 +7,7 @@ import { useMyFiles } from "@/context/FilesContext";
 import { searchFiles } from "@/lib/searchFiles";
 import { changeBytes, convertDates } from "../common/common";
 import FileIcons from "../common/FileIcons";
+import { getFileTypeTokens } from "@/lib/fileTypeColors";
 
 const DROPDOWN_LIMIT = 6;
 
@@ -21,14 +22,6 @@ function highlightMatch(text, query) {
       {text.slice(idx + query.trim().length)}
     </>
   );
-}
-
-function getTypeStyle(contentType) {
-  if (contentType?.includes("pdf")) return { bg: "#fef2f2", color: "#dc2626" };
-  if (contentType?.includes("image")) return { bg: "#faf5ff", color: "#7c3aed" };
-  if (contentType?.includes("video")) return { bg: "#eff6ff", color: "#2563eb" };
-  if (contentType?.includes("audio")) return { bg: "#fff7ed", color: "#ea580c" };
-  return { bg: "var(--surface-3)", color: "var(--text-2)" };
 }
 
 export default function SearchDropdown({
@@ -66,7 +59,10 @@ export default function SearchDropdown({
         {results.length} result{results.length !== 1 ? "s" : ""}
       </DropdownLabel>
       {dropdownResults.map((file, index) => {
-        const { bg, color } = getTypeStyle(file.data.contentType);
+        const { bgVar, colorVar } = getFileTypeTokens(
+          file.data.contentType,
+          file.data.filename,
+        );
         return (
           <ResultRow
             key={file.id}
@@ -75,10 +71,8 @@ export default function SearchDropdown({
             onMouseEnter={() => onActiveIndexChange(index)}
             onClick={() => onSelect(file, results)}
           >
-            <ResultIcon style={{ background: bg }}>
-              <span style={{ color, display: "flex" }}>
-                <FileIcons type={file.data.contentType} />
-              </span>
+            <ResultIcon $bgVar={bgVar} $colorVar={colorVar}>
+              <FileIcons type={file.data.contentType} />
             </ResultIcon>
             <ResultMeta>
               <ResultName>
@@ -170,6 +164,8 @@ const ResultIcon = styled.div`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: var(${(p) => p.$bgVar});
+  color: var(${(p) => p.$colorVar});
 `;
 
 const ResultMeta = styled.div`

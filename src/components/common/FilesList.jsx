@@ -7,7 +7,14 @@ import LottieImage from "./LottieImage";
 import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import { useDriveGridMenuState } from "./DriveGridMenu";
 
-const FilesList = ({ data, page = null, imagePath, text1, text2, compact = false }) => {
+const FilesList = ({
+  data,
+  page = null,
+  imagePath,
+  text1,
+  text2,
+  compact = false,
+}) => {
   const driveMenu = useDriveGridMenuState();
   const { confirmMoveToTrash, confirmPermanentDelete } = useFileTrashActions();
   const isDrivePage = page === "drive";
@@ -20,7 +27,7 @@ const FilesList = ({ data, page = null, imagePath, text1, text2, compact = false
       }
       await confirmMoveToTrash(id, fileData);
     },
-    [page, confirmMoveToTrash, confirmPermanentDelete]
+    [page, confirmMoveToTrash, confirmPermanentDelete],
   );
 
   if (data.length === 0) {
@@ -53,9 +60,15 @@ const FilesList = ({ data, page = null, imagePath, text1, text2, compact = false
             menuRef={isMenuOpen ? driveMenu.menuRef : undefined}
             onToggleMenu={driveMenu.setOpenMenuId}
             onRename={driveMenu.startRename}
-            onShareClick={(fileData) => driveMenu.handleShareClick(fileData, file.id)}
-            onRenameValueChange={(event) => driveMenu.setRenameValue(event.target.value)}
-            onRenameSubmit={() => driveMenu.submitRename(file.id, file.data.filename)}
+            onShareClick={(fileData) =>
+              driveMenu.handleShareClick(fileData, file.id)
+            }
+            onRenameValueChange={(event) =>
+              driveMenu.setRenameValue(event.target.value)
+            }
+            onRenameSubmit={() =>
+              driveMenu.submitRename(file.id, file.data.filename)
+            }
             onRenameCancel={driveMenu.cancelRename}
             onDelete={() => handleDelete(file.id, file.data)}
             onPermanentDelete={() => confirmPermanentDelete(file.id, file.data)}
@@ -72,7 +85,9 @@ const List = styled.div`
   flex-direction: column;
   gap: 8px;
   padding: ${(props) =>
-    props.$compact ? "0 0 var(--mobile-scroll-inset)" : "8px 16px var(--mobile-scroll-inset)"};
+    props.$compact
+      ? "0 0 var(--mobile-scroll-inset)"
+      : "8px 16px var(--mobile-scroll-inset)"};
   scroll-padding-bottom: var(--mobile-scroll-inset);
 
   @media (min-width: 769px) {

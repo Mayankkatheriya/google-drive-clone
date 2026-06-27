@@ -33,7 +33,11 @@ export function DriveGridMenu({
 }) {
   const { confirmMoveToTrash } = useFileTrashActions();
   const triggerRef = useRef(null);
-  const { top, right, flip, ready } = useMenuPlacement(triggerRef, menuRef, isOpen);
+  const { top, right, flip, ready } = useMenuPlacement(
+    triggerRef,
+    menuRef,
+    isOpen,
+  );
 
   const handleCopyLink = async () => {
     try {
@@ -82,7 +86,10 @@ export function DriveGridMenu({
             <MenuItem onClick={handleCopyLink}>
               <CopyIcon /> Copy link
             </MenuItem>
-            <MenuItem className="shareButton" onClick={() => onShareClick(file.data)}>
+            <MenuItem
+              className="shareButton"
+              onClick={() => onShareClick(file.data)}
+            >
               <ShareIcon /> Share
               <ShareExpand className={shareOpen ? "show" : ""} $flip={flip}>
                 <ShareButtons
@@ -106,10 +113,12 @@ export function DriveGridMenu({
             </MenuItem>
             <MenuFooter>
               <FooterRow>{changeBytes(file.data.size)}</FooterRow>
-              <FooterRow>{convertDates(file.data.timestamp?.seconds)}</FooterRow>
+              <FooterRow>
+                {convertDates(file.data.timestamp?.seconds)}
+              </FooterRow>
             </MenuFooter>
           </OptionsMenu>,
-          document.body
+          document.body,
         )}
     </MenuWrap>
   );
@@ -233,7 +242,8 @@ const MenuTrigger = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${(props) => (props.$active ? "var(--primary-light)" : "var(--surface)")};
+  background: ${(props) =>
+    props.$active ? "var(--primary-light)" : "var(--surface)"};
   border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
@@ -283,7 +293,7 @@ const MenuItem = styled.div`
   transition: background 0.15s ease;
 
   &:hover {
-    background: ${(props) => (props.$danger ? "#fef2f2" : "var(--surface-2)")};
+    background: ${(props) => (props.$danger ? "var(--danger-bg)" : "var(--surface-2)")};
   }
 
   svg {

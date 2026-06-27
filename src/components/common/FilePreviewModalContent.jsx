@@ -12,6 +12,7 @@ import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { getFileTypeTokens } from "@/lib/fileTypeColors";
 
 function getCategory(contentType = "") {
   if (contentType.includes("image")) return "image";
@@ -19,14 +20,6 @@ function getCategory(contentType = "") {
   if (contentType.includes("audio")) return "audio";
   if (contentType.includes("pdf"))   return "pdf";
   return "other";
-}
-
-function getTypeAccent(contentType = "") {
-  if (contentType.includes("pdf"))   return { bg: "#fef2f2", color: "#dc2626" };
-  if (contentType.includes("image")) return { bg: "#faf5ff", color: "#7c3aed" };
-  if (contentType.includes("video")) return { bg: "#eff6ff", color: "#2563eb" };
-  if (contentType.includes("audio")) return { bg: "#fff7ed", color: "#ea580c" };
-  return { bg: "var(--surface-3)", color: "var(--text-2)" };
 }
 
 export default function FilePreviewModalContent() {
@@ -91,7 +84,10 @@ export default function FilePreviewModalContent() {
   if (!file) return null;
 
   const category = getCategory(file.contentType);
-  const { bg, color } = getTypeAccent(file.contentType);
+  const { bgVar, colorVar } = getFileTypeTokens(
+    file.contentType,
+    file.filename,
+  );
 
   const handleDownload = async () => {
     if (!file) return;
@@ -127,10 +123,8 @@ export default function FilePreviewModalContent() {
         {/* ── Header ── */}
         <PanelHeader>
           <FileInfo>
-            <FileIconWrap style={{ background: bg }}>
-              <span style={{ color, display: "flex" }}>
-                <FileIcons type={file.contentType} />
-              </span>
+            <FileIconWrap $bgVar={bgVar} $colorVar={colorVar}>
+              <FileIcons type={file.contentType} />
             </FileIconWrap>
             <FileDetails>
               <FileName title={file.filename}>{file.filename}</FileName>
@@ -187,10 +181,8 @@ export default function FilePreviewModalContent() {
 
           {url && !loading && category === "audio" && (
             <AudioWrap>
-              <AudioIcon style={{ background: bg }}>
-                <span style={{ color, display: "flex" }}>
-                  <FileIcons type={file.contentType} />
-                </span>
+              <AudioIcon $bgVar={bgVar} $colorVar={colorVar}>
+                <FileIcons type={file.contentType} />
               </AudioIcon>
               <AudioName>{file.filename}</AudioName>
               <AudioPlayer controls src={url}>
@@ -205,10 +197,8 @@ export default function FilePreviewModalContent() {
 
           {url && !loading && category === "other" && (
             <StateWrap>
-              <OtherIcon style={{ background: bg }}>
-                <span style={{ color, display: "flex", fontSize: 52 }}>
-                  <FileIcons type={file.contentType} />
-                </span>
+              <OtherIcon $bgVar={bgVar} $colorVar={colorVar}>
+                <FileIcons type={file.contentType} />
               </OtherIcon>
               <StateText style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text-1)" }}>
                 {file.filename}
@@ -314,7 +304,12 @@ const FileIconWrap = styled.div`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  svg { font-size: 20px; }
+  background: var(${(p) => p.$bgVar});
+  color: var(${(p) => p.$colorVar});
+
+  svg {
+    font-size: 20px;
+  }
 `;
 
 const FileDetails = styled.div`
@@ -365,8 +360,8 @@ const HeaderBtn = styled.button`
 
 const CloseBtn = styled(HeaderBtn)`
   &:hover {
-    background: #fef2f2;
-    color: #ef4444;
+    background: var(--danger-bg);
+    color: var(--danger);
   }
 `;
 
@@ -459,7 +454,12 @@ const AudioIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  svg { font-size: 52px; }
+  background: var(${(p) => p.$bgVar});
+  color: var(${(p) => p.$colorVar});
+
+  svg {
+    font-size: 52px;
+  }
 `;
 
 const AudioName = styled.p`
@@ -502,6 +502,12 @@ const OtherIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(${(p) => p.$bgVar});
+  color: var(${(p) => p.$colorVar});
+
+  svg {
+    font-size: 52px;
+  }
 `;
 
 const Spinner = styled.div`
