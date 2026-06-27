@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import styled, { keyframes } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 
 const SHOW_DELAY = 420;
 const HIDE_DELAY = 60;
@@ -246,8 +246,7 @@ const TipBubble = styled.div`
 
   ${(p) =>
     p.$placement === "bottom" &&
-    `
-    animation-name: ${fadeIn};
-    transform-origin: top center;
-  `}
+    css`
+      transform-origin: top center;
+    `}
 `;
