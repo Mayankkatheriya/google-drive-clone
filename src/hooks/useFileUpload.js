@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { db, auth } from "../firebase";
@@ -27,114 +27,138 @@ export function useFileUpload() {
 
   const currentStorageBytes = getTotalStorageBytes(myFiles, trashFiles);
 
-  const resetFileSelection = () => {
+  const resetFileSelection = useCallback(() => {
     setSelectedFile("");
     setFile(null);
     setFileName("");
-  };
+  }, []);
 
-  const rejectIfStorageFull = (newFileBytes) => {
-    if (!canAddToUserStorage(currentStorageBytes, newFileBytes)) {
-      toast.error(getStorageQuotaError());
+  const rejectIfStorageFull = useCallback(
+    (newFileBytes) => {
+      if (!canAddToUserStorage(currentStorageBytes, newFileBytes)) {
+        toast.error(getStorageQuotaError());
+        return true;
+      }
+      return false;
+    },
+    [currentStorageBytes]
+  );
+
+  const stageFile = useCallback(
+    (selected) => {
+      if (!selected) return false;
+
+      if (!isFileWithinUploadLimit(selected.size)) {
+        toast.error(`File is too large. Maximum size is ${getUploadLimitLabel()}.`);
+        return false;
+      }
+
+      if (rejectIfStorageFull(selected.size)) {
+        return false;
+      }
+
+      setSelectedFile(selected.name);
+      setFile(selected);
+      setFileName(selected.name);
       return true;
-    }
-    return false;
-  };
+    },
+    [rejectIfStorageFull]
+  );
 
-  const stageFile = (selected) => {
-    if (!selected) return false;
+  const handleFile = useCallback(
+    (e) => {
+      const selected = e.target.files[0];
+      if (!selected) return;
 
-    if (!isFileWithinUploadLimit(selected.size)) {
-      toast.error(`File is too large. Maximum size is ${getUploadLimitLabel()}.`);
-      return false;
-    }
+      if (!stageFile(selected)) {
+        e.target.value = "";
+        resetFileSelection();
+      }
+    },
+    [stageFile, resetFileSelection]
+  );
 
-    if (rejectIfStorageFull(selected.size)) {
-      return false;
-    }
+  const handleUpload = useCallback(
+    async (e) => {
+      e.preventDefault();
 
-    setSelectedFile(selected.name);
-    setFile(selected);
-    setFileName(selected.name);
-    return true;
-  };
+      if (!file) {
+        toast.error("Please choose a file first.");
+        return;
+      }
 
-  const handleFile = (e) => {
-    const selected = e.target.files[0];
-    if (!selected) return;
+      const finalName = resolveDisplayFilename(fileName, file.name);
+      if (!finalName) {
+        toast.error("Please enter a valid file name.");
+        return;
+      }
 
-    if (!stageFile(selected)) {
-      e.target.value = "";
-      resetFileSelection();
-    }
-  };
+      if (!isFileWithinUploadLimit(file.size)) {
+        toast.error(`File is too large. Maximum size is ${getUploadLimitLabel()}.`);
+        return;
+      }
 
-  const handleUpload = async (e) => {
-    e.preventDefault();
+      if (rejectIfStorageFull(file.size)) {
+        return;
+      }
 
-    if (!file) {
-      toast.error("Please choose a file first.");
-      return;
-    }
-
-    const finalName = resolveDisplayFilename(fileName, file.name);
-    if (!finalName) {
-      toast.error("Please enter a valid file name.");
-      return;
-    }
-
-    if (!isFileWithinUploadLimit(file.size)) {
-      toast.error(`File is too large. Maximum size is ${getUploadLimitLabel()}.`);
-      return;
-    }
-
-    if (rejectIfStorageFull(file.size)) {
-      return;
-    }
-
-    setSelectedFile("");
-    setUploading(true);
-    setProgress(0);
-
-    try {
-      const { s3Key, size, contentType } = await uploadFileToS3(
-        file,
-        (value) => setProgress(value),
-        finalName
-      );
-
-      await addDoc(collection(db, "myfiles"), {
-        userId: auth.currentUser.uid,
-        timestamp: serverTimestamp(),
-        filename: finalName,
-        s3Key,
-        size,
-        contentType,
-        starred: false,
-      });
-
-      toast.success("File Uploaded Successfully");
-      setUploading(false);
-      resetFileSelection();
-      setOpen(false);
+      setSelectedFile("");
+      setUploading(true);
       setProgress(0);
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      setUploading(false);
-      toast.error(error.message || "Error uploading file. Please try again.");
-    }
-  };
 
-  return {
-    open,
-    setOpen,
-    uploading,
-    progress,
-    selectedFile,
-    fileName,
-    setFileName,
-    handleFile,
-    stageFile,
-    handleUpload,
-  };
+      try {
+        const { s3Key, size, contentType } = await uploadFileToS3(
+          file,
+          (value) => setProgress(value),
+          finalName
+        );
+
+        await addDoc(collection(db, "myfiles"), {
+          userId: auth.currentUser.uid,
+          timestamp: serverTimestamp(),
+          filename: finalName,
+          s3Key,
+          size,
+          contentType,
+          starred: false,
+        });
+
+        toast.success("File Uploaded Successfully");
+        setUploading(false);
+        resetFileSelection();
+        setOpen(false);
+        setProgress(0);
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        setUploading(false);
+        toast.error(error.message || "Error uploading file. Please try again.");
+      }
+    },
+    [file, fileName, rejectIfStorageFull, resetFileSelection]
+  );
+
+  return useMemo(
+    () => ({
+      open,
+      setOpen,
+      uploading,
+      progress,
+      selectedFile,
+      fileName,
+      setFileName,
+      handleFile,
+      stageFile,
+      handleUpload,
+    }),
+    [
+      open,
+      uploading,
+      progress,
+      selectedFile,
+      fileName,
+      handleFile,
+      stageFile,
+      handleUpload,
+    ]
+  );
 }

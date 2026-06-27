@@ -1,17 +1,25 @@
 "use client";
 
 import styled from "styled-components";
-import { useState, useEffect, Suspense, lazy } from "react";
+import dynamic from "next/dynamic";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  Suspense,
+  lazy,
+} from "react";
 import { useMyFiles, useMyFilesLoading } from "@/context/FilesContext";
 import { getQuickAccessFiles } from "@/lib/quickAccess";
 import RecentDataGrid from "./RecentDataGrid";
-import MainData from "./MainData";
 import PageHeader from "../common/PageHeader";
 import { Page } from "../common/PageShell";
-import LoaderContainer from "../loaders/LoaderContainer";
+import ContentSkeleton from "@/components/common/skeleton/ContentSkeleton";
 import { getUploadHelpText } from "@/lib/uploadLimits";
 import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
 
+const MainData = dynamic(() => import("./MainData"), { ssr: false });
 const FilesList = lazy(() => import("../common/FilesList"));
 
 const VIEW_STORAGE_KEY = "driveViewMode";
@@ -20,7 +28,7 @@ const Data = () => {
   const files = useMyFiles();
   const filesLoading = useMyFilesLoading();
   const [viewMode, setViewMode] = useState("list");
-  const quickAccessFiles = getQuickAccessFiles(files);
+  const quickAccessFiles = useMemo(() => getQuickAccessFiles(files), [files]);
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_STORAGE_KEY);
@@ -29,10 +37,10 @@ const Data = () => {
     }
   }, []);
 
-  const handleViewModeChange = (mode) => {
+  const handleViewModeChange = useCallback((mode) => {
     setViewMode(mode);
     localStorage.setItem(VIEW_STORAGE_KEY, mode);
-  };
+  }, []);
 
   return (
     <Page>
@@ -54,9 +62,9 @@ const Data = () => {
       <Section>
         {files.length > 0 && <SectionLabel>All Files</SectionLabel>}
         {filesLoading ? (
-          <LoaderContainer grid={viewMode === "grid"} compact={viewMode === "grid"} />
+          <ContentSkeleton grid={viewMode === "grid"} compact={viewMode === "grid"} />
         ) : viewMode === "grid" ? (
-          <Suspense fallback={<LoaderContainer grid compact />}>
+          <Suspense fallback={<ContentSkeleton grid compact />}>
             <FilesList
               data={files}
               page="drive"

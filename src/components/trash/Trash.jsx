@@ -4,7 +4,7 @@ import React, { Suspense, lazy } from "react";
 import PageHeader from "../common/PageHeader";
 import { Page } from "../common/PageShell";
 import { useTrashFiles, useTrashFilesLoading } from "@/context/FilesContext";
-import LoaderContainer from "../loaders/LoaderContainer";
+import ContentSkeleton from "@/components/common/skeleton/ContentSkeleton";
 import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
 import { getTrashRetentionLabel } from "@/lib/trashRetention";
 const FilesList = lazy(() => import("../common/FilesList"));
@@ -20,9 +20,9 @@ const Trash = () => {
         subtitle={PAGE_SUBTITLES.trash.subtitle}
       />
       {filesLoading ? (
-        <LoaderContainer grid />
+        <ContentSkeleton grid />
       ) : (
-        <Suspense fallback={<LoaderContainer grid />}>
+        <Suspense fallback={<ContentSkeleton grid />}>
           <FilesList
             data={files}
             page={"trash"}

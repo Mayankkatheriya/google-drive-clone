@@ -1,42 +1,48 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
 import { useUserFiles } from "@/hooks/useUserFiles";
 import { useTrashAutoPurge } from "@/hooks/useTrashAutoPurge";
 
-const FilesStateContext = createContext({
-  myFiles: [],
-  myFilesLoading: true,
-  trashFiles: [],
-  trashLoading: true,
-});
+const MyFilesContext = createContext({ files: [], loading: true });
+const TrashFilesContext = createContext({ files: [], loading: true });
 
 export function FilesProvider({ children }) {
   const { files: myFiles, loading: myFilesLoading } = useUserFiles("myfiles");
   const { files: trashFiles, loading: trashLoading } = useUserFiles("trash");
   useTrashAutoPurge();
 
+  const myFilesValue = useMemo(
+    () => ({ files: myFiles, loading: myFilesLoading }),
+    [myFiles, myFilesLoading]
+  );
+
+  const trashFilesValue = useMemo(
+    () => ({ files: trashFiles, loading: trashLoading }),
+    [trashFiles, trashLoading]
+  );
+
   return (
-    <FilesStateContext.Provider
-      value={{ myFiles, myFilesLoading, trashFiles, trashLoading }}
-    >
-      {children}
-    </FilesStateContext.Provider>
+    <MyFilesContext.Provider value={myFilesValue}>
+      <TrashFilesContext.Provider value={trashFilesValue}>
+        {children}
+      </TrashFilesContext.Provider>
+    </MyFilesContext.Provider>
   );
 }
 
 export function useMyFiles() {
-  return useContext(FilesStateContext).myFiles;
+  return useContext(MyFilesContext).files;
 }
 
 export function useMyFilesLoading() {
-  return useContext(FilesStateContext).myFilesLoading;
+  return useContext(MyFilesContext).loading;
 }
 
 export function useTrashFiles() {
-  return useContext(FilesStateContext).trashFiles;
+  return useContext(TrashFilesContext).files;
 }
 
 export function useTrashFilesLoading() {
-  return useContext(FilesStateContext).trashLoading;
+  return useContext(TrashFilesContext).loading;
 }

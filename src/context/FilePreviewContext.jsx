@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useMemo } from "react";
 
 const Ctx = createContext({
   file: null,
@@ -19,11 +19,12 @@ export function FilePreviewProvider({ children }) {
     setState({ file: null, siblings: null });
   }, []);
 
-  return (
-    <Ctx.Provider value={{ ...state, open, close }}>
-      {children}
-    </Ctx.Provider>
+  const value = useMemo(
+    () => ({ file: state.file, siblings: state.siblings, open, close }),
+    [state.file, state.siblings, open, close]
   );
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useFilePreview() {

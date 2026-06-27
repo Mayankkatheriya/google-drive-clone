@@ -19,16 +19,7 @@ import { handleRenameFile, handleStarred } from "./firebaseApi";
 import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import { useMenuPlacement } from "@/hooks/useMenuPlacement";
 import { toast } from "react-toastify";
-import {
-  EmailShareButton,
-  FacebookShareButton,
-  LinkedinShareButton,
-  WhatsappShareButton,
-  EmailIcon,
-  FacebookIcon,
-  LinkedinIcon,
-  WhatsappIcon,
-} from "react-share";
+import ShareButtons from "./ShareButtons";
 
 export function DriveGridMenu({
   file,
@@ -94,18 +85,11 @@ export function DriveGridMenu({
             <MenuItem className="shareButton" onClick={() => onShareClick(file.data)}>
               <ShareIcon /> Share
               <ShareExpand className={shareOpen ? "show" : ""} $flip={flip}>
-                <EmailShareButton url={shareUrl} subject={`${file.data.filename} file link`}>
-                  <EmailIcon size={28} round />
-                </EmailShareButton>
-                <FacebookShareButton url={shareUrl} hashtag={file.data.filename}>
-                  <FacebookIcon size={28} round />
-                </FacebookShareButton>
-                <LinkedinShareButton url={shareUrl} title={`${file.data.filename} file link`}>
-                  <LinkedinIcon size={28} round />
-                </LinkedinShareButton>
-                <WhatsappShareButton url={shareUrl} title={`${file.data.filename} file link`}>
-                  <WhatsappIcon size={28} round />
-                </WhatsappShareButton>
+                <ShareButtons
+                  url={shareUrl}
+                  filename={file.data.filename}
+                  layout="expand"
+                />
               </ShareExpand>
             </MenuItem>
             <MenuDivider />

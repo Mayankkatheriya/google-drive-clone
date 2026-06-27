@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { memo } from "react";
 import styled from "styled-components";
 import FileIcons from "../common/FileIcons";
 import SecureFileLink from "../common/SecureFileLink";
@@ -19,38 +19,41 @@ function getTypeStyle(contentType, filename) {
   return { tile: "#f1f3f4", icon: "#5f6368", label: ext || "FILE" };
 }
 
+const QuickAccessTile = memo(function QuickAccessTile({ file, allFiles }) {
+  const { tile, icon, label } = getTypeStyle(
+    file.data.contentType,
+    file.data.filename
+  );
+
+  return (
+    <SecureFileLink
+      fileData={file.data}
+      fileId={file.id}
+      files={allFiles}
+      as={Tile}
+    >
+      <IconWrap style={{ background: tile, color: icon }}>
+        <FileIcons type={file.data.contentType} />
+      </IconWrap>
+      <TileBody>
+        <TileName title={file.data.filename}>{file.data.filename}</TileName>
+        <TileMeta>
+          <TypeTag>{label}</TypeTag>
+          <span>{changeBytes(file.data.size)}</span>
+        </TileMeta>
+      </TileBody>
+    </SecureFileLink>
+  );
+});
+
 const RecentDataGrid = ({ files, allFiles = files }) => {
   if (!files?.length) return null;
 
   return (
     <Grid>
-      {files.map((file) => {
-        const { tile, icon, label } = getTypeStyle(
-          file.data.contentType,
-          file.data.filename
-        );
-
-        return (
-          <SecureFileLink
-            key={file.id}
-            fileData={file.data}
-            fileId={file.id}
-            files={allFiles}
-            as={Tile}
-          >
-            <IconWrap style={{ background: tile, color: icon }}>
-              <FileIcons type={file.data.contentType} />
-            </IconWrap>
-            <TileBody>
-              <TileName title={file.data.filename}>{file.data.filename}</TileName>
-              <TileMeta>
-                <TypeTag>{label}</TypeTag>
-                <span>{changeBytes(file.data.size)}</span>
-              </TileMeta>
-            </TileBody>
-          </SecureFileLink>
-        );
-      })}
+      {files.map((file) => (
+        <QuickAccessTile key={file.id} file={file} allFiles={allFiles} />
+      ))}
     </Grid>
   );
 };

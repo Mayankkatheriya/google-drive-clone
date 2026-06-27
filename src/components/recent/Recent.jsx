@@ -4,7 +4,7 @@ import React, { Suspense, lazy, useMemo } from "react";
 import PageHeader from "../common/PageHeader";
 import { Page } from "../common/PageShell";
 import { useMyFiles, useMyFilesLoading } from "@/context/FilesContext";
-import LoaderContainer from "../loaders/LoaderContainer";
+import ContentSkeleton from "@/components/common/skeleton/ContentSkeleton";
 import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
 
 const FilesList = lazy(() => import("../common/FilesList"));
@@ -31,13 +31,13 @@ const Recent = () => {
   return (
     <Page>
       <PageHeader
-        pageTitle="Recents"
+        pageTitle="Recent"
         subtitle={PAGE_SUBTITLES.recent.subtitle}
       />
       {filesLoading ? (
-        <LoaderContainer grid />
+        <ContentSkeleton grid />
       ) : (
-        <Suspense fallback={<LoaderContainer grid />}>
+        <Suspense fallback={<ContentSkeleton grid />}>
           <FilesList
             data={recentFiles}
             imagePath={"/recent.svg"}

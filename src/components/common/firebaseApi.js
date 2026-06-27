@@ -14,15 +14,13 @@ import {
 import { toast } from "react-toastify";
 import { deleteFileFromS3 } from "../../lib/fileAccess";
 import { resolveDisplayFilename } from "../../lib/fileNames";
+import { filesSnapshotEqual } from "../../lib/filesSnapshotEqual";
 
-let trashRef = collection(db, "trash");
-
-export const postTrashCollection = (object) => {
-  addDoc(trashRef, object)
-    .then(() => {})
-    .catch((err) => {
-      console.error(err);
-    });
+const applySnapshot = (setFiles, buildNext) => {
+  setFiles((prev) => {
+    const next = buildNext();
+    return filesSnapshotEqual(prev, next) ? prev : next;
+  });
 };
 
 const getTrashFiles = (userId, setFiles) => {
@@ -30,8 +28,8 @@ const getTrashFiles = (userId, setFiles) => {
   const unsubscribeFiles = onSnapshot(
     query(filesData, where("userId", "==", userId)),
     (snapshot) => {
-      setFiles(() => {
-        const fileArr = snapshot.docs
+      applySnapshot(setFiles, () =>
+        snapshot.docs
           .map((doc) => ({
             id: doc.id,
             data: doc.data(),
@@ -42,9 +40,8 @@ const getTrashFiles = (userId, setFiles) => {
             const bSec =
               b.data.trashedAt?.seconds ?? b.data.timestamp?.seconds ?? 0;
             return bSec - aSec;
-          });
-        return fileArr;
-      });
+          })
+      );
     }
   );
 
@@ -115,10 +112,32 @@ const handleRenameFile = async (id, currentFilename, newName) => {
   }
 };
 
+const OPENED_FLUSH_MS = 2500;
+const pendingOpenedIds = new Set();
+let openedFlushTimer = null;
+
+const flushOpenedUpdates = () => {
+  openedFlushTimer = null;
+  const ids = [...pendingOpenedIds];
+  pendingOpenedIds.clear();
+
+  ids.forEach((id) => {
+    updateDoc(doc(db, "myfiles", id), {
+      lastOpenedAt: serverTimestamp(),
+    }).catch(() => {});
+  });
+};
+
 const markFileOpened = (id) => {
-  updateDoc(doc(db, "myfiles", id), {
-    lastOpenedAt: serverTimestamp(),
-  }).catch(() => {});
+  if (!id) return;
+
+  pendingOpenedIds.add(id);
+
+  if (openedFlushTimer) {
+    clearTimeout(openedFlushTimer);
+  }
+
+  openedFlushTimer = setTimeout(flushOpenedUpdates, OPENED_FLUSH_MS);
 };
 
 const getFilesForUser = (userId, setFiles) => {
@@ -126,17 +145,18 @@ const getFilesForUser = (userId, setFiles) => {
   const unsubscribeFiles = onSnapshot(
     query(filesData, where("userId", "==", userId)),
     (snapshot) => {
-      setFiles(() => {
-        const fileArr = snapshot.docs
+      applySnapshot(setFiles, () =>
+        snapshot.docs
           .map((doc) => ({
             id: doc.id,
             data: doc.data(),
           }))
           .sort(
-            (a, b) => b.data.timestamp?.seconds - a.data.timestamp?.seconds
-          );
-        return fileArr;
-      });
+            (a, b) =>
+              (b.data.timestamp?.seconds ?? 0) -
+              (a.data.timestamp?.seconds ?? 0)
+          )
+      );
     }
   );
 

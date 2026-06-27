@@ -1,22 +1,30 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { onAuthStateChanged } from "firebase/auth";
 import { toast } from "react-toastify";
-import { auth } from "@/firebase";
+import { useAuth } from "@/context/AuthProvider";
 import { purgeExpiredTrash } from "@/lib/fileAccess";
 
 export function useTrashAutoPurge() {
+  const { user, authReady } = useAuth();
   const ranForUser = useRef(null);
+  const userId = user?.uid ?? null;
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user || ranForUser.current === user.uid) {
-        return;
-      }
+    if (!authReady) return;
 
-      ranForUser.current = user.uid;
+    if (!userId) {
+      ranForUser.current = null;
+      return;
+    }
 
+    if (ranForUser.current === userId) {
+      return;
+    }
+
+    ranForUser.current = userId;
+
+    (async () => {
       try {
         const { deletedCount } = await purgeExpiredTrash();
         if (deletedCount > 0) {
@@ -29,8 +37,6 @@ export function useTrashAutoPurge() {
       } catch {
         // Ignore — purge will retry on next sign-in
       }
-    });
-
-    return unsubscribe;
-  }, []);
+    })();
+  }, [authReady, userId]);
 }

@@ -1,9 +1,10 @@
 "use client";
 
+import { memo, useCallback } from "react";
 import { useFilePreview } from "@/context/FilePreviewContext";
 import { markFileOpened } from "./firebaseApi";
 
-export default function SecureFileLink({
+function SecureFileLink({
   fileData,
   fileId,
   files,
@@ -14,15 +15,18 @@ export default function SecureFileLink({
 }) {
   const { open } = useFilePreview();
 
-  const handleClick = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (fileId) {
-      markFileOpened(fileId);
-    }
-    const siblings = files?.map((item) => item.data ?? item) ?? null;
-    open(fileData, siblings);
-  };
+  const handleClick = useCallback(
+    (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (fileId) {
+        markFileOpened(fileId);
+      }
+      const siblings = files?.map((item) => item.data ?? item) ?? null;
+      open(fileData, siblings);
+    },
+    [fileId, fileData, files, open]
+  );
 
   return (
     <Component
@@ -42,3 +46,5 @@ export default function SecureFileLink({
     </Component>
   );
 }
+
+export default memo(SecureFileLink);

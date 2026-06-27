@@ -1,47 +1,41 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/firebase";
+import { useAuth } from "@/context/AuthProvider";
 import { getFilesForUser, getTrashFiles } from "@/components/common/firebaseApi";
 
 export function useUserFiles(collection) {
+  const { user } = useAuth();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const userId = user?.uid ?? null;
 
   useEffect(() => {
     let unsubscribeFiles;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (unsubscribeFiles) {
-        unsubscribeFiles();
-        unsubscribeFiles = undefined;
-      }
+    if (userId) {
+      setLoading(true);
 
-      if (user) {
-        setLoading(true);
-        const onFilesUpdate = (updater) => {
-          setFiles(updater);
-          setLoading(false);
-        };
-
-        unsubscribeFiles =
-          collection === "trash"
-            ? getTrashFiles(user.uid, onFilesUpdate)
-            : getFilesForUser(user.uid, onFilesUpdate);
-      } else {
-        setFiles([]);
+      const onFilesUpdate = (updater) => {
+        setFiles(updater);
         setLoading(false);
-      }
-    });
+      };
+
+      unsubscribeFiles =
+        collection === "trash"
+          ? getTrashFiles(userId, onFilesUpdate)
+          : getFilesForUser(userId, onFilesUpdate);
+    } else {
+      setFiles([]);
+      setLoading(false);
+    }
 
     return () => {
-      unsubscribeAuth();
       if (unsubscribeFiles) {
         unsubscribeFiles();
       }
     };
-  }, [collection]);
+  }, [collection, userId]);
 
   return { files, loading };
 }

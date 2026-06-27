@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { memo } from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 
@@ -13,7 +13,7 @@ const LottieImage = ({ imagePath, text1, text2 }) => {
     >
       {imagePath && (
         <IllustrationWrap>
-          <img src={imagePath} alt="" />
+          <img src={imagePath} alt="" loading="lazy" decoding="async" />
         </IllustrationWrap>
       )}
       {text1 && <Heading>{text1}</Heading>}
@@ -58,4 +58,4 @@ const Sub = styled.p`
   line-height: 1.6;
 `;
 
-export default LottieImage;
+export default memo(LottieImage);
