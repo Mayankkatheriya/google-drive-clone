@@ -9,7 +9,15 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ["firebase-admin"],
-    optimizePackageImports: ["@mui/icons-material", "@mui/material"],
+    optimizePackageImports: [
+      "firebase",
+      "firebase/app",
+      "firebase/auth",
+      "firebase/firestore",
+      "@mui/icons-material",
+      "@mui/material",
+      "framer-motion",
+    ],
   },
   env: {
     NEXT_PUBLIC_APIKEY: clientEnv("NEXT_PUBLIC_APIKEY", "VITE_APIKEY"),

@@ -1,12 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Provider } from "react-redux";
-import { ToastContainer } from "react-toastify";
 import { store } from "@/store/Store";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ConfirmDialogProvider } from "@/context/ConfirmDialogProvider";
 import { AuthProvider } from "@/context/AuthProvider";
-import "react-toastify/dist/ReactToastify.css";
+
+const ToastHost = dynamic(() => import("@/components/common/ToastHost"), {
+  ssr: false,
+});
 
 export default function Providers({ children }) {
   return (
@@ -15,18 +18,7 @@ export default function Providers({ children }) {
         <Provider store={store}>
           <AuthProvider>
             {children}
-            <ToastContainer
-              position="top-right"
-              autoClose={1000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="dark"
-            />
+            <ToastHost />
           </AuthProvider>
         </Provider>
       </ConfirmDialogProvider>

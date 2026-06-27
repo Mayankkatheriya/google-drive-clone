@@ -1,15 +1,28 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import styled from "styled-components";
 import Header from "@/components/header/Header";
-import Sidebar from "@/components/sidebar/Sidebar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { FilesProvider } from "@/context/FilesContext";
 import { FilePreviewProvider } from "@/context/FilePreviewContext";
 import { FileUploadProvider } from "@/context/FileUploadContext";
 import FilePreviewModal from "@/components/common/FilePreviewModal";
-import DropZone from "@/components/common/DropZone";
-import MobileBottomNav from "@/components/mobile/MobileBottomNav";
+import SidebarPlaceholder from "@/components/sidebar/SidebarPlaceholder";
+
+const Sidebar = dynamic(() => import("@/components/sidebar/Sidebar"), {
+  ssr: false,
+  loading: () => <SidebarPlaceholder />,
+});
+
+const DropZone = dynamic(() => import("@/components/common/DropZone"), {
+  ssr: false,
+});
+
+const MobileBottomNav = dynamic(
+  () => import("@/components/mobile/MobileBottomNav"),
+  { ssr: false }
+);
 
 export default function HomeLayout({ children }) {
   return (

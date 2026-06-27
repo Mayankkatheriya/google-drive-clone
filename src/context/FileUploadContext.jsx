@@ -1,8 +1,13 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { createContext, useContext } from "react";
 import { useFileUpload } from "@/hooks/useFileUpload";
-import FileUploadModal from "@/components/sidebar/FileUploadModal";
+
+const FileUploadModal = dynamic(
+  () => import("@/components/sidebar/FileUploadModal"),
+  { ssr: false }
+);
 
 const FileUploadContext = createContext(null);
 
@@ -11,18 +16,20 @@ export function FileUploadProvider({ children }) {
 
   return (
     <FileUploadContext.Provider value={upload}>
-      <FileUploadModal
-        open={upload.open}
-        setOpen={upload.setOpen}
-        handleUpload={upload.handleUpload}
-        uploading={upload.uploading}
-        handleFile={upload.handleFile}
-        stageFile={upload.stageFile}
-        selectedFile={upload.selectedFile}
-        fileName={upload.fileName}
-        onFileNameChange={upload.setFileName}
-        progress={upload.progress}
-      />
+      {upload.open && (
+        <FileUploadModal
+          open={upload.open}
+          setOpen={upload.setOpen}
+          handleUpload={upload.handleUpload}
+          uploading={upload.uploading}
+          handleFile={upload.handleFile}
+          stageFile={upload.stageFile}
+          selectedFile={upload.selectedFile}
+          fileName={upload.fileName}
+          onFileNameChange={upload.setFileName}
+          progress={upload.progress}
+        />
+      )}
       {children}
     </FileUploadContext.Provider>
   );
