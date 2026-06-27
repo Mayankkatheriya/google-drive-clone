@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import { selectSidebarBool } from "../../store/BoolSlice";
 import { useFileUploadContext } from "@/context/FileUploadContext";
 import AddFile from "./AddFile";
+import VoiceMemoButton from "./VoiceMemoButton";
 import SidebarTabs from "./SidebarTabs";
 
 const Sidebar = () => {
@@ -15,6 +16,7 @@ const Sidebar = () => {
   return (
     <SidebarContainer $open={sidebarBool}>
       <AddFile onClick={() => upload.setOpen(true)} />
+      <VoiceMemoButton onClick={() => upload.openVoiceMemo()} />
       <SidebarTabs />
     </SidebarContainer>
   );

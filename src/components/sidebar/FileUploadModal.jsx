@@ -7,6 +7,7 @@ import Lottie from "react-lottie-player";
 import uploadJson from "../lottie/uploadLottie.json";
 import closeJson from "../lottie/closeLottie.json";
 import { UploadFileIcon } from "../common/SvgIcons";
+import MicRoundedIcon from "@mui/icons-material/MicRounded";
 import { getUploadModalHint } from "@/lib/uploadLimits";
 
 const FileUploadModal = ({
@@ -20,6 +21,7 @@ const FileUploadModal = ({
   fileName,
   onFileNameChange,
   progress,
+  onOpenVoiceMemo,
 }) => {
   const [dragging, setDragging] = useState(false);
 
@@ -118,6 +120,11 @@ const FileUploadModal = ({
                     </RenameHint>
                   </RenameField>
                 )}
+
+                <VoiceMemoLink type="button" onClick={onOpenVoiceMemo}>
+                  <MicRoundedIcon />
+                  Record a voice memo
+                </VoiceMemoLink>
 
                 <SubmitBtn type="submit" disabled={!selectedFile || !fileName?.trim()}>
                   Upload
@@ -293,6 +300,37 @@ const RenameHint = styled.p`
   font-size: 0.72rem;
   color: var(--text-3);
   line-height: 1.4;
+`;
+
+const VoiceMemoLink = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition);
+
+  svg {
+    font-size: 18px;
+    color: var(--file-audio);
+  }
+
+  &:hover {
+    background: var(--file-audio-bg);
+    border-color: color-mix(in srgb, var(--file-audio) 30%, var(--border));
+    color: var(--text-1);
+  }
 `;
 
 const SubmitBtn = styled.button`

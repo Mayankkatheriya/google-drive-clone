@@ -80,39 +80,36 @@ export function useFileUpload() {
     [stageFile, resetFileSelection],
   );
 
-  const handleUpload = useCallback(
-    async (e) => {
-      e.preventDefault();
-
-      if (!file) {
+  const uploadFileDirect = useCallback(
+    async (uploadFile, customName) => {
+      if (!uploadFile) {
         toast.error("Please choose a file first.");
-        return;
+        return false;
       }
 
-      const finalName = resolveDisplayFilename(fileName, file.name);
+      const finalName = resolveDisplayFilename(customName, uploadFile.name);
       if (!finalName) {
         toast.error("Please enter a valid file name.");
-        return;
+        return false;
       }
 
-      if (!isFileWithinUploadLimit(file.size)) {
+      if (!isFileWithinUploadLimit(uploadFile.size)) {
         toast.error(
           `File is too large. Maximum size is ${getUploadLimitLabel()}.`,
         );
-        return;
+        return false;
       }
 
-      if (rejectIfStorageFull(file.size)) {
-        return;
+      if (rejectIfStorageFull(uploadFile.size)) {
+        return false;
       }
 
-      setSelectedFile("");
       setUploading(true);
       setProgress(0);
 
       try {
         const { s3Key, size, contentType } = await uploadFileToS3(
-          file,
+          uploadFile,
           (value) => setProgress(value),
           finalName,
         );
@@ -128,17 +125,41 @@ export function useFileUpload() {
         });
 
         toast.success("File Uploaded Successfully");
-        setUploading(false);
-        resetFileSelection();
-        setOpen(false);
         setProgress(0);
+        return true;
       } catch (error) {
         console.error("Error uploading file:", error);
-        setUploading(false);
         toast.error(error.message || "Error uploading file. Please try again.");
+        return false;
+      } finally {
+        setUploading(false);
       }
     },
-    [file, fileName, rejectIfStorageFull, resetFileSelection],
+    [rejectIfStorageFull],
+  );
+
+  const handleUpload = useCallback(
+    async (e) => {
+      e.preventDefault();
+
+      if (!file) {
+        toast.error("Please choose a file first.");
+        return;
+      }
+
+      const finalName = resolveDisplayFilename(fileName, file.name);
+      if (!finalName) {
+        toast.error("Please enter a valid file name.");
+        return;
+      }
+
+      const success = await uploadFileDirect(file, finalName);
+      if (success) {
+        resetFileSelection();
+        setOpen(false);
+      }
+    },
+    [file, fileName, uploadFileDirect, resetFileSelection],
   );
 
   return useMemo(
@@ -153,6 +174,7 @@ export function useFileUpload() {
       handleFile,
       stageFile,
       handleUpload,
+      uploadFileDirect,
     }),
     [
       open,
@@ -163,6 +185,7 @@ export function useFileUpload() {
       handleFile,
       stageFile,
       handleUpload,
+      uploadFileDirect,
     ],
   );
 }
