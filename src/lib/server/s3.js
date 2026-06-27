@@ -112,3 +112,21 @@ export async function getObjectBytes(s3Key) {
     contentLength: result.ContentLength,
   };
 }
+
+export async function getObjectStream(s3Key, { range } = {}) {
+  const result = await getS3Client().send(
+    new GetObjectCommand({
+      Bucket: getRequiredEnv("S3_BUCKET_NAME"),
+      Key: s3Key,
+      ...(range && { Range: range }),
+    })
+  );
+
+  return {
+    body: result.Body,
+    contentType: result.ContentType || "application/octet-stream",
+    contentLength: result.ContentLength,
+    contentRange: result.ContentRange,
+    acceptRanges: result.AcceptRanges || "bytes",
+  };
+}

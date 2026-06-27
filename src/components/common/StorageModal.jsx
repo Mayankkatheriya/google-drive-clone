@@ -14,6 +14,7 @@ import { computeStorageBreakdown } from "@/lib/storageBreakdown";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
 import { MAX_USER_STORAGE_BYTES } from "@/lib/uploadLimits";
 import FileIcons from "./FileIcons";
+import Tooltip from "./Tooltip";
 
 const RING_R = 52;
 const RING_C = 2 * Math.PI * RING_R;
@@ -202,9 +203,9 @@ const StorageModal = ({ open, onClose }) => {
                           <FileIcons type={file.contentType} />
                         </FileIconWrap>
                         <FileMeta>
-                          <FileName title={file.filename}>
-                            {file.filename}
-                          </FileName>
+                          <Tooltip label={file.filename} onlyIfTruncated>
+                            <FileName>{file.filename}</FileName>
+                          </Tooltip>
                           <FileSizeRow>
                             <FileSize>{changeBytes(file.size)}</FileSize>
                             {file.location === "trash" && (
@@ -212,18 +213,22 @@ const StorageModal = ({ open, onClose }) => {
                             )}
                           </FileSizeRow>
                         </FileMeta>
-                        <FreeBtn
-                          type="button"
-                          onClick={() => handleFreeSpace(file)}
-                          aria-label={`Free space: ${file.filename}`}
-                          title={
+                        <Tooltip
+                          label={
                             file.location === "trash"
                               ? "Delete permanently"
                               : "Move to trash"
                           }
+                          iconOnly
                         >
-                          <DeleteOutlineRoundedIcon style={{ fontSize: 18 }} />
-                        </FreeBtn>
+                          <FreeBtn
+                            type="button"
+                            onClick={() => handleFreeSpace(file)}
+                            aria-label={`Free space: ${file.filename}`}
+                          >
+                            <DeleteOutlineRoundedIcon style={{ fontSize: 18 }} />
+                          </FreeBtn>
+                        </Tooltip>
                       </FileRow>
                     );
                   })}

@@ -37,6 +37,9 @@ import DisabledByDefaultOutlinedIcon from '@mui/icons-material/DisabledByDefault
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import SettingsBackupRestoreOutlinedIcon from "@mui/icons-material/SettingsBackupRestoreOutlined";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
+import OneTimeLinkIcon from "./OneTimeLinkIcon";
+
+export { OneTimeLinkIcon };
 
 export const MobileScreenShareIcon = () => <MobileScreenShareOutlinedIcon />;
 export const DevicesIcons = () => <DevicesIcon />;

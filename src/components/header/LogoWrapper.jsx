@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { SidebarToggleIcon } from "../common/SidebarToggleIcon";
 import Link from "next/link";
 import DiskDriveLogo from "../common/DiskDriveLogo";
+import Tooltip from "../common/Tooltip";
 
 const LogoWrapperComponent = ({
   onClick,
@@ -15,13 +16,14 @@ const LogoWrapperComponent = ({
   return (
     <LogoWrapper>
       {userName && !hideMenuToggle && (
-        <MenuBtn
-          onClick={onClick}
-          aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
-          title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
-        >
-          <SidebarToggleIcon open={sidebarOpen} />
-        </MenuBtn>
+        <Tooltip label={sidebarOpen ? "Hide sidebar" : "Show sidebar"} iconOnly>
+          <MenuBtn
+            onClick={onClick}
+            aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+          >
+            <SidebarToggleIcon open={sidebarOpen} />
+          </MenuBtn>
+        </Tooltip>
       )}
       <Link href="/home">
         <Logo>

@@ -3,6 +3,7 @@
 import styled, { keyframes } from "styled-components";
 import { motion } from "framer-motion";
 import { useTheme } from "@/context/ThemeContext";
+import Tooltip from "./Tooltip";
 
 const SIZES = {
   sm: { w: 44, h: 22 },
@@ -36,17 +37,17 @@ export function ThemeToggle({ size = "md" }) {
   const iconSize = size === "sm" ? 12 : 14;
 
   return (
-    <ToggleBtn
-      type="button"
-      role="switch"
-      aria-checked={isDark}
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      title={isDark ? "Light mode" : "Dark mode"}
-      onClick={toggleTheme}
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.96 }}
-      transition={{ type: "spring", stiffness: 400, damping: 24 }}
-    >
+    <Tooltip label={isDark ? "Light mode" : "Dark mode"}>
+      <ToggleBtn
+        type="button"
+        role="switch"
+        aria-checked={isDark}
+        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        onClick={toggleTheme}
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ type: "spring", stiffness: 400, damping: 24 }}
+      >
       <Track
         $size={size}
         animate={{
@@ -123,6 +124,7 @@ export function ThemeToggle({ size = "md" }) {
         </MoonWrap>
       </Track>
     </ToggleBtn>
+    </Tooltip>
   );
 }
 

@@ -12,6 +12,7 @@ import {
   DeleteIcon,
   ShareIcon,
   RenameIcon,
+  OneTimeLinkIcon,
 } from "../common/SvgIcons";
 import { changeBytes, convertDates } from "../common/common";
 import FileIcons from "../common/FileIcons";
@@ -22,6 +23,7 @@ import { useMenuPlacement } from "@/hooks/useMenuPlacement";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
 import { canCompareFile } from "@/lib/compareFiles";
 import CompareSelectMark from "../common/CompareSelectMark";
+import Tooltip from "../common/Tooltip";
 
 function FileRowOptionsMenu({
   file,
@@ -31,6 +33,7 @@ function FileRowOptionsMenu({
   onToggle,
   onShareClick,
   onCopyLink,
+  onOneTimeLink,
   onRename,
   onDelete,
   menuRef,
@@ -44,15 +47,16 @@ function FileRowOptionsMenu({
 
   return (
     <>
-      <OptionsTrigger
-        ref={triggerRef}
-        className="optionsContainer"
-        title="More options"
-        $active={isOpen}
-        onClick={onToggle}
-      >
-        <MoreOptionsIcon />
-      </OptionsTrigger>
+      <Tooltip label="More options" iconOnly>
+        <OptionsTrigger
+          ref={triggerRef}
+          className="optionsContainer"
+          $active={isOpen}
+          onClick={onToggle}
+        >
+          <MoreOptionsIcon />
+        </OptionsTrigger>
+      </Tooltip>
 
       {isOpen &&
         createPortal(
@@ -68,6 +72,9 @@ function FileRowOptionsMenu({
             </MenuItem>
             <MenuItem onClick={() => onCopyLink(file.data)}>
               <CopyIcon /> Copy Link
+            </MenuItem>
+            <MenuItem onClick={() => onOneTimeLink(file.id)}>
+              <OneTimeLinkIcon /> One-time link
             </MenuItem>
             <MenuItem
               className="shareButton"
@@ -124,6 +131,7 @@ function MainDataRow({
   onRenameBlur,
   onRenameKeyDown,
   onCopyLink,
+  onOneTimeLink,
   onQuickShare,
   onRenameStart,
   onRename,
@@ -179,16 +187,17 @@ function MainDataRow({
           </CompareSelectWrap>
         )}
         {!focusMode && (
-          <StarBtn
-            onClick={(event) => {
-              event.stopPropagation();
-              onStar();
-            }}
-            $starred={file.data.starred}
-            title={file.data.starred ? "Unstar" : "Star"}
-          >
-            {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
-          </StarBtn>
+          <Tooltip label={file.data.starred ? "Unstar" : "Star"} iconOnly>
+            <StarBtn
+              onClick={(event) => {
+                event.stopPropagation();
+                onStar();
+              }}
+              $starred={file.data.starred}
+            >
+              {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
+            </StarBtn>
+          </Tooltip>
         )}
 
         <FileInfo>
@@ -215,17 +224,11 @@ function MainDataRow({
                 onClick={(event) => event.stopPropagation()}
               />
             ) : (
-              <FileName
-                title={
-                  focusMode
-                    ? file.data.filename
-                    : `${file.data.filename} — double-click to rename`
-                }
-                onClick={onNameClick}
-                onDoubleClick={onNameDoubleClick}
-              >
-                {file.data.filename}
-              </FileName>
+              <Tooltip label={file.data.filename} onlyIfTruncated>
+                <FileName onClick={onNameClick} onDoubleClick={onNameDoubleClick}>
+                  {file.data.filename}
+                </FileName>
+              </Tooltip>
             )}
             <MobileMeta>
               {changeBytes(file.data.size)} ·{" "}
@@ -254,33 +257,47 @@ function MainDataRow({
       {!focusMode && (
       <ActionsCol>
         <HoverActions className="hover-actions">
-          <QuickBtn onClick={() => downloadFile(file.data)} title="Download">
-            <DownloadIcon />
-          </QuickBtn>
-          <QuickBtn onClick={() => onCopyLink(file.data)} title="Copy link">
-            <CopyIcon />
-          </QuickBtn>
-          <ShareWrap>
-            <QuickBtn
-              className="share-trigger"
-              onClick={onQuickShare}
-              title="Share"
-              $active={isShareOpen}
-            >
-              <ShareIcon />
+          <Tooltip label="Download" iconOnly>
+            <QuickBtn onClick={() => downloadFile(file.data)}>
+              <DownloadIcon />
             </QuickBtn>
+          </Tooltip>
+          <Tooltip label="Copy link" iconOnly>
+            <QuickBtn onClick={() => onCopyLink(file.data)}>
+              <CopyIcon />
+            </QuickBtn>
+          </Tooltip>
+          <Tooltip label="One-time link — expires after first open" iconOnly>
+            <QuickBtn onClick={() => onOneTimeLink(file.id)}>
+              <OneTimeLinkIcon />
+            </QuickBtn>
+          </Tooltip>
+          <ShareWrap>
+            <Tooltip label="Share" iconOnly>
+              <QuickBtn
+                className="share-trigger"
+                onClick={onQuickShare}
+                $active={isShareOpen}
+              >
+                <ShareIcon />
+              </QuickBtn>
+            </Tooltip>
             {isShareOpen && shareUrl && (
               <ShareBar className="share-popover">
                 <ShareButtons url={shareUrl} filename={file.data.filename} />
               </ShareBar>
             )}
           </ShareWrap>
-          <QuickBtn onClick={onRenameStart} title="Rename">
-            <RenameIcon />
-          </QuickBtn>
-          <QuickBtn $danger onClick={onDelete} title="Delete">
-            <DeleteIcon />
-          </QuickBtn>
+          <Tooltip label="Rename" iconOnly>
+            <QuickBtn onClick={onRenameStart}>
+              <RenameIcon />
+            </QuickBtn>
+          </Tooltip>
+          <Tooltip label="Delete" iconOnly>
+            <QuickBtn $danger onClick={onDelete}>
+              <DeleteIcon />
+            </QuickBtn>
+          </Tooltip>
         </HoverActions>
 
         <MobileMenu>
@@ -293,19 +310,21 @@ function MainDataRow({
               onToggle={onOptionsToggle}
               onShareClick={onShareClick}
               onCopyLink={onCopyLink}
+              onOneTimeLink={onOneTimeLink}
               onRename={onRename}
               onDelete={onDelete}
               menuRef={optionsMenuRef}
             />
           ) : (
-            <OptionsTrigger
-              className="optionsContainer"
-              title="More options"
-              $active={false}
-              onClick={onOptionsToggle}
-            >
-              <MoreOptionsIcon />
-            </OptionsTrigger>
+            <Tooltip label="More options" iconOnly>
+              <OptionsTrigger
+                className="optionsContainer"
+                $active={false}
+                onClick={onOptionsToggle}
+              >
+                <MoreOptionsIcon />
+              </OptionsTrigger>
+            </Tooltip>
           )}
         </MobileMenu>
       </ActionsCol>
@@ -352,7 +371,7 @@ const DateCol = styled.div`
 `;
 
 const ActionsCol = styled.div`
-  flex: 0 0 188px;
+  flex: 0 0 220px;
   display: flex;
   align-items: center;
   justify-content: flex-end;

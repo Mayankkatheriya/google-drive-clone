@@ -6,6 +6,7 @@ import FileIcons from "../common/FileIcons";
 import SecureFileLink from "../common/SecureFileLink";
 import { changeBytes } from "../common/common";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
+import Tooltip from "../common/Tooltip";
 
 const QuickAccessTile = memo(function QuickAccessTile({ file, allFiles }) {
   const { bgVar, colorVar, label } = getFileTypeTokens(
@@ -24,7 +25,9 @@ const QuickAccessTile = memo(function QuickAccessTile({ file, allFiles }) {
         <FileIcons type={file.data.contentType} />
       </IconWrap>
       <TileBody>
-        <TileName title={file.data.filename}>{file.data.filename}</TileName>
+        <Tooltip label={file.data.filename} onlyIfTruncated>
+          <TileName>{file.data.filename}</TileName>
+        </Tooltip>
         <TileMeta>
           <TypeTag>{label}</TypeTag>
           <span>{changeBytes(file.data.size)}</span>

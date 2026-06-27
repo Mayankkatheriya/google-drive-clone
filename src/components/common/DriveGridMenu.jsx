@@ -12,6 +12,7 @@ import {
   DeleteIcon,
   StarBorderIcon,
   StarFilledIcon,
+  OneTimeLinkIcon,
 } from "./SvgIcons";
 import { changeBytes, convertDates } from "./common";
 import { downloadFile, getFileDownloadUrl } from "../../lib/fileAccess";
@@ -20,6 +21,8 @@ import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import { useMenuPlacement } from "@/hooks/useMenuPlacement";
 import { toast } from "react-toastify";
 import ShareButtons from "./ShareButtons";
+import { createAndCopyShareLink } from "@/lib/shareLink";
+import Tooltip from "./Tooltip";
 
 export function DriveGridMenu({
   file,
@@ -50,6 +53,16 @@ export function DriveGridMenu({
     }
   };
 
+  const handleOneTimeLink = async () => {
+    try {
+      await createAndCopyShareLink(file.id);
+      toast.success("One-time link copied — expires after first open");
+      onToggle(null);
+    } catch {
+      toast.error("Unable to create one-time link");
+    }
+  };
+
   const handleDelete = async () => {
     await confirmMoveToTrash(file.id, file.data);
     onToggle(null);
@@ -57,18 +70,19 @@ export function DriveGridMenu({
 
   return (
     <MenuWrap className="card-actions">
-      <MenuTrigger
-        ref={triggerRef}
-        className="drive-grid-menu-trigger"
-        title="More options"
-        $active={isOpen}
-        onClick={(event) => {
-          event.stopPropagation();
-          onToggle(isOpen ? null : file.id);
-        }}
-      >
-        <MoreOptionsIcon />
-      </MenuTrigger>
+      <Tooltip label="More options" iconOnly>
+        <MenuTrigger
+          ref={triggerRef}
+          className="drive-grid-menu-trigger"
+          $active={isOpen}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggle(isOpen ? null : file.id);
+          }}
+        >
+          <MoreOptionsIcon />
+        </MenuTrigger>
+      </Tooltip>
 
       {isOpen &&
         createPortal(
@@ -85,6 +99,9 @@ export function DriveGridMenu({
             </MenuItem>
             <MenuItem onClick={handleCopyLink}>
               <CopyIcon /> Copy link
+            </MenuItem>
+            <MenuItem onClick={handleOneTimeLink}>
+              <OneTimeLinkIcon /> One-time link
             </MenuItem>
             <MenuItem
               className="shareButton"

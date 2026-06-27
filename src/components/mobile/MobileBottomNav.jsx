@@ -12,6 +12,7 @@ import {
   DeleteOutlineIcon,
 } from "../common/SvgIcons";
 import { useFileUploadContext } from "@/context/FileUploadContext";
+import Tooltip from "../common/Tooltip";
 
 const navItems = [
   { href: "/home", label: "Drive", icon: MobileScreenShareIcon },
@@ -40,13 +41,14 @@ const MobileBottomNav = () => {
         })}
       </NavBar>
 
-      <Fab
-        onClick={() => upload.setOpen(true)}
-        aria-label="Upload new file"
-        title="Upload — or drag and drop files anywhere"
-      >
-        <AddIcon />
-      </Fab>
+      <Tooltip label="Upload — or drag and drop files anywhere">
+        <Fab
+          onClick={() => upload.setOpen(true)}
+          aria-label="Upload new file"
+        >
+          <AddIcon />
+        </Fab>
+      </Tooltip>
     </>
   );
 };

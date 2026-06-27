@@ -21,6 +21,7 @@ import { useFilePreview } from "@/context/FilePreviewContext";
 import { markFileOpened } from "./firebaseApi";
 import { canCompareFile } from "@/lib/compareFiles";
 import CompareSelectMark from "./CompareSelectMark";
+import Tooltip from "./Tooltip";
 
 function FileGridCard({
   file,
@@ -135,7 +136,9 @@ function FileGridCard({
                 onClick={(event) => event.stopPropagation()}
               />
             ) : (
-              <CardName title={file.data.filename}>{file.data.filename}</CardName>
+              <Tooltip label={file.data.filename} onlyIfTruncated>
+                <CardName>{file.data.filename}</CardName>
+              </Tooltip>
             )}
             <CardMeta>
               <TypeTag>{label}</TypeTag>
@@ -147,7 +150,9 @@ function FileGridCard({
 
       {driveFocus && (
         <CardBody>
-          <CardName title={file.data.filename}>{file.data.filename}</CardName>
+          <Tooltip label={file.data.filename} onlyIfTruncated>
+            <CardName>{file.data.filename}</CardName>
+          </Tooltip>
           <CardMeta>
             <TypeTag>{label}</TypeTag>
             <span>{changeBytes(file.data.size)}</span>
@@ -157,7 +162,9 @@ function FileGridCard({
 
       {driveCompare && (
         <CardBody>
-          <CardName title={file.data.filename}>{file.data.filename}</CardName>
+          <Tooltip label={file.data.filename} onlyIfTruncated>
+            <CardName>{file.data.filename}</CardName>
+          </Tooltip>
           <CardMeta>
             <TypeTag>{label}</TypeTag>
             <span>{changeBytes(file.data.size)}</span>
@@ -166,13 +173,14 @@ function FileGridCard({
       )}
 
       {page === "starred" && !driveFocus && (
-        <StarBtn
-          onClick={() => handleStarred(file.id)}
-          $starred={file.data.starred}
-          title={file.data.starred ? "Unstar" : "Star"}
-        >
-          {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
-        </StarBtn>
+        <Tooltip label={file.data.starred ? "Unstar" : "Star"} iconOnly>
+          <StarBtn
+            onClick={() => handleStarred(file.id)}
+            $starred={file.data.starred}
+          >
+            {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
+          </StarBtn>
+        </Tooltip>
       )}
 
       {isDrivePage && !driveFocus && (
@@ -190,49 +198,53 @@ function FileGridCard({
 
       {page !== "trash" && page !== "starred" && !isDrivePage && (
         <CardActions className="card-actions">
-          <ActionBtn
-            onClick={(e) => {
-              e.stopPropagation();
-              downloadFile(file.data);
-            }}
-            title="Download"
-          >
-            <DownloadIcon />
-          </ActionBtn>
-          <ActionBtn
-            $danger
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            title="Delete"
-          >
-            <DeleteIcon />
-          </ActionBtn>
+          <Tooltip label="Download" iconOnly>
+            <ActionBtn
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadFile(file.data);
+              }}
+            >
+              <DownloadIcon />
+            </ActionBtn>
+          </Tooltip>
+          <Tooltip label="Delete" iconOnly>
+            <ActionBtn
+              $danger
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+            >
+              <DeleteIcon />
+            </ActionBtn>
+          </Tooltip>
         </CardActions>
       )}
 
       {page === "trash" && (
         <TrashActions className="trash-actions">
-          <ActionBtn
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRestoreFromTrash(file.id, file.data);
-            }}
-            title="Restore"
-          >
-            <RestoreIcon />
-          </ActionBtn>
-          <ActionBtn
-            $danger
-            onClick={async (e) => {
-              e.stopPropagation();
-              await onPermanentDelete();
-            }}
-            title="Delete forever"
-          >
-            <DeleteIcon />
-          </ActionBtn>
+          <Tooltip label="Restore" iconOnly>
+            <ActionBtn
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRestoreFromTrash(file.id, file.data);
+              }}
+            >
+              <RestoreIcon />
+            </ActionBtn>
+          </Tooltip>
+          <Tooltip label="Delete forever" iconOnly>
+            <ActionBtn
+              $danger
+              onClick={async (e) => {
+                e.stopPropagation();
+                await onPermanentDelete();
+              }}
+            >
+              <DeleteIcon />
+            </ActionBtn>
+          </Tooltip>
         </TrashActions>
       )}
     </Card>

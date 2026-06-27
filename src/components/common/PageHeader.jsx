@@ -7,6 +7,7 @@ import CenterFocusStrongRoundedIcon from "@mui/icons-material/CenterFocusStrongR
 import { ListsIcon, GridIcon } from "./SvgIcons";
 import { useCompare } from "@/context/CompareContext";
 import { useFocus } from "@/context/FocusContext";
+import Tooltip from "./Tooltip";
 
 const PageHeader = ({
   pageTitle,
@@ -58,22 +59,24 @@ const PageHeader = ({
         </TitleBlock>
         {showViewToggle && (
           <ViewActions>
-            <ActionBtn
-              title="List view"
-              $active={viewMode === "list"}
-              onClick={() => onViewModeChange("list")}
-              aria-pressed={viewMode === "list"}
-            >
-              <ListsIcon />
-            </ActionBtn>
-            <ActionBtn
-              title="Grid view"
-              $active={viewMode === "grid"}
-              onClick={() => onViewModeChange("grid")}
-              aria-pressed={viewMode === "grid"}
-            >
-              <GridIcon />
-            </ActionBtn>
+            <Tooltip label="List view" iconOnly>
+              <ActionBtn
+                $active={viewMode === "list"}
+                onClick={() => onViewModeChange("list")}
+                aria-pressed={viewMode === "list"}
+              >
+                <ListsIcon />
+              </ActionBtn>
+            </Tooltip>
+            <Tooltip label="Grid view" iconOnly>
+              <ActionBtn
+                $active={viewMode === "grid"}
+                onClick={() => onViewModeChange("grid")}
+                aria-pressed={viewMode === "grid"}
+              >
+                <GridIcon />
+              </ActionBtn>
+            </Tooltip>
           </ViewActions>
         )}
       </TopRow>
@@ -85,11 +88,6 @@ const PageHeader = ({
               $active={focusActive}
               onClick={handleFocusToggle}
               aria-pressed={focusActive}
-              title={
-                focusActive
-                  ? "Exit focus mode"
-                  : "Hide clutter and browse files distraction-free"
-              }
             >
               <CenterFocusStrongRoundedIcon />
               <span>{focusActive ? "Focusing" : "Focus"}</span>
@@ -101,11 +99,6 @@ const PageHeader = ({
               $active={compareActive}
               onClick={handleCompareToggle}
               aria-pressed={compareActive}
-              title={
-                compareActive
-                  ? "Exit compare mode"
-                  : "Pick 2 images or PDFs to view side by side"
-              }
             >
               <CompareArrowsRoundedIcon />
               <span>{compareActive ? "Comparing" : "Compare"}</span>

@@ -5,7 +5,7 @@ import MicRoundedIcon from "@mui/icons-material/MicRounded";
 
 export default function VoiceMemoButton({ onClick }) {
   return (
-    <Btn type="button" onClick={onClick} title="Record a voice memo">
+    <Btn type="button" onClick={onClick}>
       <MicRoundedIcon />
       <span>Voice memo</span>
     </Btn>

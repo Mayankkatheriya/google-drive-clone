@@ -13,6 +13,7 @@ import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
+import Tooltip from "./Tooltip";
 
 function getCategory(contentType = "") {
   if (contentType.includes("image")) return "image";
@@ -105,18 +106,19 @@ export default function FilePreviewModalContent() {
   return (
     <Backdrop onClick={close}>
       {hasPrev && (
-        <NavBtn
-          type="button"
-          $side="left"
-          onClick={(e) => {
-            e.stopPropagation();
-            goPrev();
-          }}
-          title="Previous file (←)"
-          aria-label="Previous file"
-        >
-          <ChevronLeftIcon />
-        </NavBtn>
+        <Tooltip label="Previous file (←)" iconOnly>
+          <NavBtn
+            type="button"
+            $side="left"
+            onClick={(e) => {
+              e.stopPropagation();
+              goPrev();
+            }}
+            aria-label="Previous file"
+          >
+            <ChevronLeftIcon />
+          </NavBtn>
+        </Tooltip>
       )}
 
       <Panel onClick={(e) => e.stopPropagation()}>
@@ -127,7 +129,9 @@ export default function FilePreviewModalContent() {
               <FileIcons type={file.contentType} />
             </FileIconWrap>
             <FileDetails>
-              <FileName title={file.filename}>{file.filename}</FileName>
+              <Tooltip label={file.filename} onlyIfTruncated>
+                <FileName>{file.filename}</FileName>
+              </Tooltip>
               <FileMeta>
                 {changeBytes(file.size)}
                 {hasNav && (
@@ -139,17 +143,23 @@ export default function FilePreviewModalContent() {
           <HeaderActions>
             {url && (
               <>
-                <HeaderBtn onClick={handleDownload} title="Download">
-                  <DownloadOutlinedIcon style={{ fontSize: 20 }} />
-                </HeaderBtn>
-                <HeaderBtn onClick={handleOpenTab} title="Open in new tab">
-                  <OpenInNewOutlinedIcon style={{ fontSize: 20 }} />
-                </HeaderBtn>
+                <Tooltip label="Download" iconOnly>
+                  <HeaderBtn onClick={handleDownload}>
+                    <DownloadOutlinedIcon style={{ fontSize: 20 }} />
+                  </HeaderBtn>
+                </Tooltip>
+                <Tooltip label="Open in new tab" iconOnly>
+                  <HeaderBtn onClick={handleOpenTab}>
+                    <OpenInNewOutlinedIcon style={{ fontSize: 20 }} />
+                  </HeaderBtn>
+                </Tooltip>
               </>
             )}
-            <CloseBtn onClick={close} title="Close (Esc)">
-              <CloseIcon style={{ fontSize: 20 }} />
-            </CloseBtn>
+            <Tooltip label="Close (Esc)" iconOnly>
+              <CloseBtn onClick={close}>
+                <CloseIcon style={{ fontSize: 20 }} />
+              </CloseBtn>
+            </Tooltip>
           </HeaderActions>
         </PanelHeader>
 
@@ -213,18 +223,19 @@ export default function FilePreviewModalContent() {
       </Panel>
 
       {hasNext && (
-        <NavBtn
-          type="button"
-          $side="right"
-          onClick={(e) => {
-            e.stopPropagation();
-            goNext();
-          }}
-          title="Next file (→)"
-          aria-label="Next file"
-        >
-          <ChevronRightIcon />
-        </NavBtn>
+        <Tooltip label="Next file (→)" iconOnly>
+          <NavBtn
+            type="button"
+            $side="right"
+            onClick={(e) => {
+              e.stopPropagation();
+              goNext();
+            }}
+            aria-label="Next file"
+          >
+            <ChevronRightIcon />
+          </NavBtn>
+        </Tooltip>
       )}
     </Backdrop>
   );

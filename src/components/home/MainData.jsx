@@ -11,6 +11,7 @@ import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import { toast } from "react-toastify";
 import LottieImage from "../common/LottieImage";
 import { getFileDownloadUrl } from "../../lib/fileAccess";
+import { createAndCopyShareLink } from "@/lib/shareLink";
 import { useFilePreview } from "@/context/FilePreviewContext";
 import { useCompare } from "@/context/CompareContext";
 import { getUploadHelpText } from "@/lib/uploadLimits";
@@ -138,6 +139,16 @@ const MainData = ({ files, focusMode = false }) => {
     }
   }, []);
 
+  const handleOneTimeLink = useCallback(async (fileId) => {
+    try {
+      await createAndCopyShareLink(fileId);
+      toast.success("One-time link copied — expires after first open");
+      setOptionsVisible(null);
+    } catch {
+      toast.error("Unable to create one-time link");
+    }
+  }, []);
+
   useEffect(() => {
     if (renamingId && renameInputRef.current) {
       renameInputRef.current.focus();
@@ -261,6 +272,7 @@ const MainData = ({ files, focusMode = false }) => {
               }
             }}
             onCopyLink={handleCopyLink}
+            onOneTimeLink={handleOneTimeLink}
             onQuickShare={() => handleQuickShare(file)}
             onRenameStart={() => startRename(file.id, file.data.filename)}
             onRename={startRename}

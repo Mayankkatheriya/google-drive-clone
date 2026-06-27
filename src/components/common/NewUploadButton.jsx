@@ -8,7 +8,6 @@ export default function NewUploadButton({ onClick, variant = "sidebar" }) {
     <Btn
       type="button"
       $variant={variant}
-      title="Upload a file — or drag and drop anywhere"
       aria-label="Upload new file"
       onClick={onClick}
     >

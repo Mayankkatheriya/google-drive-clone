@@ -9,6 +9,7 @@ import closeJson from "../lottie/closeLottie.json";
 import { UploadFileIcon } from "../common/SvgIcons";
 import MicRoundedIcon from "@mui/icons-material/MicRounded";
 import { getUploadModalHint } from "@/lib/uploadLimits";
+import Tooltip from "../common/Tooltip";
 
 const FileUploadModal = ({
   open,
@@ -83,7 +84,9 @@ const FileUploadModal = ({
                   </DropIcon>
                   <DropText>
                     {selectedFile ? (
-                      <FileName title={selectedFile}>{selectedFile}</FileName>
+                      <Tooltip label={selectedFile} onlyIfTruncated>
+                        <FileName>{selectedFile}</FileName>
+                      </Tooltip>
                     ) : (
                       <>
                         <DropLead>Drag & drop your file here</DropLead>

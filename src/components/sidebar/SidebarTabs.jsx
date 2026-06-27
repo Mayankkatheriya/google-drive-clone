@@ -20,6 +20,7 @@ import { selectUserName, selectUserPhoto } from "../../store/UserSlice";
 import HardDriveOutlinedIcon from "@mui/icons-material/MemoryOutlined";
 import StorageOutlinedIcon from "@mui/icons-material/StorageOutlined";
 import { useState } from "react";
+import Tooltip from "../common/Tooltip";
 
 const navItems = [
   { href: "/home", label: "My Drive", icon: <MobileScreenShareIcon /> },
@@ -42,7 +43,7 @@ const SidebarTabs = () => {
       <Nav>
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
-            <NavItem $active={pathname === item.href} title={item.label}>
+            <NavItem $active={pathname === item.href}>
               <NavIcon $active={pathname === item.href}>{item.icon}</NavIcon>
               <NavLabel>{item.label}</NavLabel>
             </NavItem>
@@ -52,7 +53,6 @@ const SidebarTabs = () => {
         <NavDivider />
 
         <NavItem
-          title="Help &amp; Support"
           onClick={() => dispatch(setHelpModal(true))}
           style={{ cursor: "pointer" }}
         >
@@ -61,7 +61,6 @@ const SidebarTabs = () => {
         </NavItem>
 
         <NavItem
-          title={`${storage} of ${storageLimitLabel} used`}
           onClick={() => setOpenStorageModal(true)}
           style={{ cursor: "pointer" }}
         >
@@ -87,7 +86,9 @@ const SidebarTabs = () => {
         <UserSection>
           <UserAvatar src={userPhoto} alt={userName} />
           <UserInfo>
-            <UserName title={userName}>{userName.split(" ")[0]}</UserName>
+            <Tooltip label={userName} onlyIfTruncated>
+              <UserName>{userName.split(" ")[0]}</UserName>
+            </Tooltip>
             <UserRole>Personal Drive</UserRole>
           </UserInfo>
         </UserSection>

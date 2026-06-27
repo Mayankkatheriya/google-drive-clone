@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectHelpModal, setHelpModal } from "../../store/HelpSlice";
 import HelpModal from "../common/Modal";
 import { ThemeToggle } from "../common/ThemeToggle";
+import Tooltip from "../common/Tooltip";
 
 const LeftIcons = () => {
   const openHelp = useSelector(selectHelpModal);
@@ -19,13 +20,14 @@ const LeftIcons = () => {
         closeHelpModal={() => dispatch(setHelpModal(false))}
       />
 
-      <IconBtn
-        onClick={() => dispatch(setHelpModal(true))}
-        aria-label="Help"
-        title="Help"
-      >
-        <HelpIcon />
-      </IconBtn>
+      <Tooltip label="Help" iconOnly>
+        <IconBtn
+          onClick={() => dispatch(setHelpModal(true))}
+          aria-label="Help"
+        >
+          <HelpIcon />
+        </IconBtn>
+      </Tooltip>
 
       <ThemeToggle />
     </LeftSection>

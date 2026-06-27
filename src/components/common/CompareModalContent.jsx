@@ -11,6 +11,7 @@ import { getCompareKind } from "@/lib/compareFiles";
 import { changeBytes } from "./common";
 import FileIcons from "./FileIcons";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
+import Tooltip from "./Tooltip";
 
 export default function CompareModalContent() {
   const { selected, modalOpen, closeCompare } = useCompare();
@@ -85,7 +86,9 @@ export default function CompareModalContent() {
                     <FileIcons type={file.contentType} />
                   </PaneIcon>
                   <PaneMeta>
-                    <PaneName title={file.filename}>{file.filename}</PaneName>
+                    <Tooltip label={file.filename} onlyIfTruncated>
+                      <PaneName>{file.filename}</PaneName>
+                    </Tooltip>
                     <PaneSize>{changeBytes(file.size)}</PaneSize>
                   </PaneMeta>
                 </PaneHead>
