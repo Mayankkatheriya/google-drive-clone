@@ -14,19 +14,25 @@ import {
 import { selectSidebarBool, setSidebarBool } from "../../store/BoolSlice";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthProvider";
+import { useFocus } from "@/context/FocusContext";
+import { usePathname } from "next/navigation";
 import LogoWrapperComponent from "./LogoWrapper";
 import SearchBar from "./SearchBar";
 import LeftIcons from "./LeftIcons";
 import ProfileSection from "./ProfileSection";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 
 const Header = () => {
   const dispatch = useDispatch();
   const { authReady } = useAuth();
+  const { active: focusActive, exitMode: exitFocus } = useFocus();
+  const pathname = usePathname();
   const userName = useSelector(selectUserName);
   const userPhoto = useSelector(selectUserPhoto);
   const sidebarBool = useSelector(selectSidebarBool);
   const [showSearch, setShowSearch] = useState(false);
   const router = useRouter();
+  const isFocusShell = focusActive && pathname === "/home";
 
   const handleAuth = async () => {
     if (!userName) {
@@ -57,28 +63,32 @@ const Header = () => {
   };
 
   return (
-    <Container>
+    <Container $focus={isFocusShell}>
       <Wrapper>
-        {/* Left */}
         <Left>
           <LogoWrapperComponent
             onClick={() => dispatch(setSidebarBool(!sidebarBool))}
             userName={userName}
             sidebarOpen={sidebarBool}
+            hideMenuToggle={isFocusShell}
           />
+          {isFocusShell && <FocusBadge>Focus mode</FocusBadge>}
         </Left>
 
-        {/* Center — hidden on mobile */}
-        {authReady && userName && (
+        {authReady && userName && !isFocusShell && (
           <Center>
             <SearchBar />
           </Center>
         )}
 
-        {/* Right */}
         <Right>
           {!authReady ? null : !userName ? (
             <LoginBtn onClick={handleAuth}>Sign in</LoginBtn>
+          ) : isFocusShell ? (
+            <ExitFocusBtn type="button" onClick={exitFocus}>
+              <CloseRoundedIcon />
+              <span>Exit Focus</span>
+            </ExitFocusBtn>
           ) : (
             <>
               <LeftIcons />
@@ -94,8 +104,7 @@ const Header = () => {
         </Right>
       </Wrapper>
 
-      {/* Mobile search drawer */}
-      {showSearch && (
+      {showSearch && !isFocusShell && (
         <MobileSearch>
           <SearchBar variant="mobile" onClose={() => setShowSearch(false)} />
         </MobileSearch>
@@ -112,6 +121,16 @@ const Container = styled.header`
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-xs);
+  transition:
+    background var(--transition),
+    border-color var(--transition);
+
+  ${(p) =>
+    p.$focus &&
+    `
+    background: var(--surface-2);
+    border-bottom-color: var(--border-light);
+  `}
 `;
 
 const Wrapper = styled.div`
@@ -126,8 +145,52 @@ const Left = styled.div`
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  gap: 6px;
+  gap: 10px;
   min-width: 0;
+`;
+
+const FocusBadge = styled.span`
+  display: none;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+
+  @media (min-width: 769px) {
+    display: inline-flex;
+  }
+`;
+
+const ExitFocusBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--primary-subtle);
+  border-radius: var(--radius-full);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--transition),
+    border-color var(--transition);
+
+  &:hover {
+    background: var(--primary-subtle);
+    border-color: var(--primary);
+  }
+
+  svg {
+    font-size: 18px;
+  }
 `;
 
 const Center = styled.div`

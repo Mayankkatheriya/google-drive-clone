@@ -14,6 +14,7 @@ const FilesList = ({
   text1,
   text2,
   compact = false,
+  focusMode = false,
 }) => {
   const driveMenu = useDriveGridMenuState();
   const { confirmMoveToTrash, confirmPermanentDelete } = useFileTrashActions();
@@ -35,7 +36,7 @@ const FilesList = ({
   }
 
   return (
-    <List $compact={compact}>
+    <List $compact={compact} $focus={focusMode}>
       {data.map((file) => {
         const isMenuOpen = driveMenu.openMenuId === file.id;
         const isRenaming = isDrivePage && driveMenu.renamingId === file.id;
@@ -47,6 +48,7 @@ const FilesList = ({
             data={data}
             page={page}
             isDrivePage={isDrivePage}
+            focusMode={isDrivePage && focusMode}
             isMenuOpen={isMenuOpen}
             isRenaming={isRenaming}
             renameValue={isRenaming ? driveMenu.renameValue : ""}
@@ -95,6 +97,14 @@ const List = styled.div`
     grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
     gap: 16px;
     padding: ${(props) => (props.$compact ? "0 0 8px" : "20px 24px 28px")};
+
+    ${(props) =>
+      props.$focus &&
+      `
+      max-width: 920px;
+      margin: 0 auto;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    `}
   }
 `;
 

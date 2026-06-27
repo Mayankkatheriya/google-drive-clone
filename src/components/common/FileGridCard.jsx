@@ -17,6 +17,8 @@ import { downloadFile } from "../../lib/fileAccess";
 import { DriveGridMenu } from "./DriveGridMenu";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
 import { useCompare } from "@/context/CompareContext";
+import { useFilePreview } from "@/context/FilePreviewContext";
+import { markFileOpened } from "./firebaseApi";
 import { canCompareFile } from "@/lib/compareFiles";
 import CompareSelectMark from "./CompareSelectMark";
 
@@ -40,17 +42,32 @@ function FileGridCard({
   onRenameCancel,
   onDelete,
   onPermanentDelete,
+  focusMode = false,
 }) {
   const { active: compareMode, toggleFile, isSelected } = useCompare();
+  const { open: openPreview } = useFilePreview();
   const { bgVar, colorVar, label } = getFileTypeTokens(
     file.data.contentType,
     file.data.filename,
   );
   const driveCompare = isDrivePage && compareMode;
+  const driveFocus = isDrivePage && focusMode;
   const compareSelected = driveCompare && isSelected(file.id);
   const comparable = canCompareFile(file.data.contentType);
 
+  const openFilePreview = () => {
+    markFileOpened(file.id);
+    openPreview(
+      file.data,
+      data.map((item) => item.data),
+    );
+  };
+
   const handleCardClick = (event) => {
+    if (driveFocus) {
+      openFilePreview();
+      return;
+    }
     if (!driveCompare) return;
     if (
       event.target.closest(".card-actions") ||
@@ -75,7 +92,8 @@ function FileGridCard({
       $compareMode={driveCompare}
       $compareSelected={compareSelected}
       $compareDisabled={driveCompare && !comparable}
-      onClick={handleCardClick}
+      $focusMode={driveFocus}
+      onClick={driveFocus || driveCompare ? handleCardClick : undefined}
     >
       {driveCompare && (
         <CompareMarkWrap>
@@ -88,6 +106,8 @@ function FileGridCard({
       )}
       {driveCompare ? (
         <CompareLink>{iconTile}</CompareLink>
+      ) : driveFocus ? (
+        <FocusLink>{iconTile}</FocusLink>
       ) : (
         <FileLink
           fileData={file.data}
@@ -125,6 +145,16 @@ function FileGridCard({
         </FileLink>
       )}
 
+      {driveFocus && (
+        <CardBody>
+          <CardName title={file.data.filename}>{file.data.filename}</CardName>
+          <CardMeta>
+            <TypeTag>{label}</TypeTag>
+            <span>{changeBytes(file.data.size)}</span>
+          </CardMeta>
+        </CardBody>
+      )}
+
       {driveCompare && (
         <CardBody>
           <CardName title={file.data.filename}>{file.data.filename}</CardName>
@@ -135,7 +165,7 @@ function FileGridCard({
         </CardBody>
       )}
 
-      {page === "starred" && (
+      {page === "starred" && !driveFocus && (
         <StarBtn
           onClick={() => handleStarred(file.id)}
           $starred={file.data.starred}
@@ -145,7 +175,7 @@ function FileGridCard({
         </StarBtn>
       )}
 
-      {isDrivePage && (
+      {isDrivePage && !driveFocus && (
         <DriveGridMenu
           file={file}
           isOpen={isMenuOpen}
@@ -221,7 +251,8 @@ export default memo(
     prev.renameValue === next.renameValue &&
     prev.shareOpen === next.shareOpen &&
     prev.shareUrl === next.shareUrl &&
-    prev.data === next.data,
+    prev.data === next.data &&
+    prev.focusMode === next.focusMode,
 );
 
 const Card = styled.div`
@@ -239,19 +270,39 @@ const Card = styled.div`
       props.$compareSelected ? "var(--primary)" : "var(--border)"};
   border-radius: 12px;
   padding: 12px 14px;
-  cursor: pointer;
   opacity: ${(props) => (props.$compareDisabled ? 0.45 : 1)};
+  cursor: pointer;
   transition:
     box-shadow 0.2s ease,
     border-color 0.2s ease,
-    background 0.2s ease;
-  box-shadow: ${(props) =>
-    props.$compareSelected ? "var(--shadow-md)" : "var(--shadow-sm)"};
+    background 0.2s ease,
+    transform 0.2s ease;
+  box-shadow: ${(props) => {
+    if (props.$compareSelected) return "var(--shadow-md)";
+    if (props.$focusMode) return "var(--shadow-xs)";
+    return "var(--shadow-sm)";
+  }};
+
+  ${(props) =>
+    props.$focusMode &&
+    `
+    background: var(--surface-2);
+    border-color: var(--border-light);
+
+    &:hover {
+      background: var(--surface);
+      border-color: var(--primary-subtle);
+      box-shadow: var(--shadow-sm);
+      transform: translateY(-1px);
+    }
+  `}
 
   &:hover {
-    border-color: ${(props) =>
-      props.$compareSelected ? "var(--primary)" : "var(--primary-subtle)"};
-    box-shadow: var(--shadow-md);
+    border-color: ${(props) => {
+      if (props.$focusMode) return undefined;
+      return props.$compareSelected ? "var(--primary)" : "var(--primary-subtle)";
+    }};
+    box-shadow: ${(props) => (props.$focusMode ? undefined : "var(--shadow-md)")};
   }
 
   @media (min-width: 769px) {
@@ -260,7 +311,8 @@ const Card = styled.div`
     padding: 16px 14px 14px;
 
     &:hover {
-      transform: ${(props) => (props.$compareMode ? "none" : "translateY(-2px)")};
+      transform: ${(props) =>
+        props.$compareMode || props.$focusMode ? "translateY(-1px)" : "translateY(-2px)"};
     }
 
     &:hover .card-actions {
@@ -305,6 +357,16 @@ const CompareMarkWrap = styled.div`
 `;
 
 const CompareLink = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  @media (min-width: 769px) {
+    width: 100%;
+  }
+`;
+
+const FocusLink = styled.div`
   display: flex;
   align-items: center;
   flex-shrink: 0;

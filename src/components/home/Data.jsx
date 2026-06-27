@@ -12,6 +12,11 @@ import {
 } from "react";
 import { useMyFiles, useMyFilesLoading } from "@/context/FilesContext";
 import { getQuickAccessFiles } from "@/lib/quickAccess";
+import {
+  filterFilesForFocus,
+  getFocusEmptyState,
+} from "@/lib/focusFilter";
+import { useFocus } from "@/context/FocusContext";
 import RecentDataGrid from "./RecentDataGrid";
 import PageHeader from "../common/PageHeader";
 import { Page } from "../common/PageShell";
@@ -19,6 +24,7 @@ import ContentSkeleton from "@/components/common/skeleton/ContentSkeleton";
 import { getUploadHelpText } from "@/lib/uploadLimits";
 import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
 import CompareModeBar from "../common/CompareModeBar";
+import FocusFilterBar from "../common/FocusFilterBar";
 
 const MainData = dynamic(() => import("./MainData"), { ssr: false });
 const FilesList = lazy(() => import("../common/FilesList"));
@@ -28,8 +34,14 @@ const VIEW_STORAGE_KEY = "driveViewMode";
 const Data = () => {
   const files = useMyFiles();
   const filesLoading = useMyFilesLoading();
+  const { active: focusActive, filter } = useFocus();
   const [viewMode, setViewMode] = useState("list");
   const quickAccessFiles = useMemo(() => getQuickAccessFiles(files), [files]);
+  const visibleFiles = useMemo(
+    () => (focusActive ? filterFilesForFocus(files, filter) : files),
+    [files, focusActive, filter],
+  );
+  const focusEmpty = getFocusEmptyState(filter);
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_STORAGE_KEY);
@@ -53,33 +65,44 @@ const Data = () => {
         onViewModeChange={handleViewModeChange}
       />
 
-      {quickAccessFiles.length > 0 && (
+      {focusActive && (
+        <FocusFilterBar fileCount={visibleFiles.length} totalCount={files.length} />
+      )}
+
+      {!focusActive && quickAccessFiles.length > 0 && (
         <QuickSection>
           <SectionLabel>Quick Access</SectionLabel>
           <RecentDataGrid files={quickAccessFiles} allFiles={files} />
         </QuickSection>
       )}
 
-      <Section>
-        {files.length > 0 && <SectionLabel>All Files</SectionLabel>}
+      <Section $focus={focusActive}>
+        {visibleFiles.length > 0 && (
+          <SectionLabel>
+            {focusActive ? "Your files" : "All Files"}
+          </SectionLabel>
+        )}
         {filesLoading ? (
           <ContentSkeleton grid={viewMode === "grid"} compact={viewMode === "grid"} />
         ) : viewMode === "grid" ? (
           <Suspense fallback={<ContentSkeleton grid compact />}>
             <FilesList
-              data={files}
+              data={visibleFiles}
               page="drive"
-              imagePath="/homePage.svg"
-              text1="A place for all of your files"
-              text2={getUploadHelpText()}
+              focusMode={focusActive}
+              imagePath={focusActive ? "/homePage.svg" : "/homePage.svg"}
+              text1={focusActive ? focusEmpty.text1 : "A place for all of your files"}
+              text2={
+                focusActive ? focusEmpty.text2 : getUploadHelpText()
+              }
               compact
             />
           </Suspense>
         ) : (
-          <MainData files={files} />
+          <MainData files={visibleFiles} focusMode={focusActive} />
         )}
       </Section>
-      <CompareModeBar />
+      {!focusActive && <CompareModeBar />}
     </Page>
   );
 };
@@ -90,6 +113,12 @@ const Section = styled.div`
   &:last-child {
     padding-bottom: 24px;
   }
+
+  ${(p) =>
+    p.$focus &&
+    `
+    padding-top: 0;
+  `}
 
   @media (max-width: 768px) {
     padding: 0;

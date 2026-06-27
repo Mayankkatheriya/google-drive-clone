@@ -56,6 +56,8 @@
   --trash-bg: rgba(120, 113, 108, 0.12);
   --danger: #dc2626;
   --danger-bg: rgba(220, 38, 38, 0.08);
+
+  --focus-scroll-inset: 24px;
 }
 
 [data-theme="dark"] {
@@ -157,4 +159,13 @@ a {
 
 input, textarea {
   font-family: inherit;
+}
+
+[data-focus-mode="true"] {
+  --mobile-scroll-inset: var(--focus-scroll-inset);
+}
+
+[data-focus-mode="true"] header {
+  background: var(--surface);
+  border-bottom-color: var(--border-light);
 }

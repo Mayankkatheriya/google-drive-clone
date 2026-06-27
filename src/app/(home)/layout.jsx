@@ -7,9 +7,11 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { FilesProvider } from "@/context/FilesContext";
 import { FilePreviewProvider } from "@/context/FilePreviewContext";
 import { CompareProvider } from "@/context/CompareContext";
+import { FocusProvider } from "@/context/FocusContext";
 import { FileUploadProvider } from "@/context/FileUploadContext";
 import FilePreviewModal from "@/components/common/FilePreviewModal";
 import CompareModal from "@/components/common/CompareModal";
+import FocusLayoutGate from "@/components/common/FocusLayoutGate";
 import SidebarPlaceholder from "@/components/sidebar/SidebarPlaceholder";
 
 const Sidebar = dynamic(() => import("@/components/sidebar/Sidebar"), {
@@ -31,23 +33,29 @@ export default function HomeLayout({ children }) {
     <FilesProvider>
       <FilePreviewProvider>
         <CompareProvider>
-          <FileUploadProvider>
-            <ProtectedRoute>
-              <AppShell>
-                <Header />
-                <ShellBody>
-                  <HomeContainer>
-                    <Sidebar />
-                    <MainContent>{children}</MainContent>
-                  </HomeContainer>
-                  <MobileBottomNav />
-                </ShellBody>
-              </AppShell>
-            </ProtectedRoute>
-            <DropZone />
-            <FilePreviewModal />
-            <CompareModal />
-          </FileUploadProvider>
+          <FocusProvider>
+            <FileUploadProvider>
+              <ProtectedRoute>
+                <AppShell>
+                  <Header />
+                  <ShellBody>
+                    <HomeContainer>
+                      <FocusLayoutGate>
+                        <Sidebar />
+                      </FocusLayoutGate>
+                      <MainContent>{children}</MainContent>
+                    </HomeContainer>
+                    <FocusLayoutGate>
+                      <MobileBottomNav />
+                    </FocusLayoutGate>
+                  </ShellBody>
+                </AppShell>
+              </ProtectedRoute>
+              <DropZone />
+              <FilePreviewModal />
+              <CompareModal />
+            </FileUploadProvider>
+          </FocusProvider>
         </CompareProvider>
       </FilePreviewProvider>
     </FilesProvider>

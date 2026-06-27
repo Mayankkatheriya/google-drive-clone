@@ -133,6 +133,8 @@ function MainDataRow({
   compareMode = false,
   compareSelected = false,
   onCompareToggle,
+  focusMode = false,
+  onFocusOpen,
 }) {
   const { bgVar, colorVar } = getFileTypeTokens(
     file.data.contentType,
@@ -146,9 +148,12 @@ function MainDataRow({
       $compareMode={compareMode}
       $compareSelected={compareSelected}
       $compareDisabled={compareMode && !comparable}
+      $focusMode={focusMode}
       data-share-open={isShareOpen || undefined}
       onClick={
-        compareMode
+        focusMode
+          ? () => onFocusOpen?.()
+          : compareMode
           ? (event) => {
               if (
                 event.target.closest(".optionsContainer") ||
@@ -173,19 +178,21 @@ function MainDataRow({
             />
           </CompareSelectWrap>
         )}
-        <StarBtn
-          onClick={(event) => {
-            event.stopPropagation();
-            onStar();
-          }}
-          $starred={file.data.starred}
-          title={file.data.starred ? "Unstar" : "Star"}
-        >
-          {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
-        </StarBtn>
+        {!focusMode && (
+          <StarBtn
+            onClick={(event) => {
+              event.stopPropagation();
+              onStar();
+            }}
+            $starred={file.data.starred}
+            title={file.data.starred ? "Unstar" : "Star"}
+          >
+            {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
+          </StarBtn>
+        )}
 
         <FileInfo>
-          {compareMode ? (
+          {compareMode || focusMode ? (
             <FileIconWrap $bgVar={bgVar} $colorVar={colorVar}>
               <FileIcons type={file.data.contentType} />
             </FileIconWrap>
@@ -209,7 +216,11 @@ function MainDataRow({
               />
             ) : (
               <FileName
-                title={`${file.data.filename} — double-click to rename`}
+                title={
+                  focusMode
+                    ? file.data.filename
+                    : `${file.data.filename} — double-click to rename`
+                }
                 onClick={onNameClick}
                 onDoubleClick={onNameDoubleClick}
               >
@@ -220,18 +231,27 @@ function MainDataRow({
               {changeBytes(file.data.size)} ·{" "}
               {convertDates(file.data.timestamp?.seconds)}
             </MobileMeta>
+            {focusMode && (
+              <FocusMeta className="hide-sm">
+                {changeBytes(file.data.size)} ·{" "}
+                {convertDates(file.data.timestamp?.seconds)}
+              </FocusMeta>
+            )}
           </NameBlock>
         </FileInfo>
       </NameCol>
 
       <SizeCol className="hide-sm">
-        <MetaText>{changeBytes(file.data.size)}</MetaText>
+        {!focusMode && <MetaText>{changeBytes(file.data.size)}</MetaText>}
       </SizeCol>
 
       <DateCol className="hide-md">
-        <MetaText>{convertDates(file.data.timestamp?.seconds)}</MetaText>
+        {!focusMode && (
+          <MetaText>{convertDates(file.data.timestamp?.seconds)}</MetaText>
+        )}
       </DateCol>
 
+      {!focusMode && (
       <ActionsCol>
         <HoverActions className="hover-actions">
           <QuickBtn onClick={() => downloadFile(file.data)} title="Download">
@@ -289,6 +309,7 @@ function MainDataRow({
           )}
         </MobileMenu>
       </ActionsCol>
+      )}
     </Row>
   );
 }
@@ -306,7 +327,8 @@ export default memo(
     prev.showShareIcons === next.showShareIcons &&
     prev.renameValue === next.renameValue &&
     prev.compareMode === next.compareMode &&
-    prev.compareSelected === next.compareSelected,
+    prev.compareSelected === next.compareSelected &&
+    prev.focusMode === next.focusMode,
 );
 
 const NameCol = styled.div`
@@ -359,26 +381,51 @@ const Row = styled.div`
   box-shadow: ${(props) =>
     props.$compareSelected ? "inset 0 0 0 2px var(--primary)" : "none"};
   opacity: ${(props) => (props.$compareDisabled ? 0.45 : 1)};
-  cursor: ${(props) => (props.$compareMode ? "pointer" : "default")};
+  cursor: ${(props) =>
+    props.$focusMode || props.$compareMode ? "pointer" : "default"};
   transition: background 0.15s ease, box-shadow 0.15s ease;
 
+  ${(props) =>
+    props.$focusMode &&
+    `
+    height: auto;
+    min-height: 58px;
+    padding: 10px 12px;
+    margin: 0 0 6px;
+    border: 1px solid var(--border-light);
+    background: var(--surface-2);
+    box-shadow: var(--shadow-xs);
+
+    &:hover {
+      background: var(--surface);
+      border-color: var(--primary-subtle);
+      box-shadow: var(--shadow-sm);
+    }
+  `}
+
   &:hover {
-    background: ${(props) =>
-      props.$compareSelected ? "var(--primary-light)" : "var(--surface-2)"};
+    background: ${(props) => {
+      if (props.$focusMode) return undefined;
+      if (props.$compareSelected) return "var(--primary-light)";
+      return "var(--surface-2)";
+    }};
   }
 
   @media (max-width: 768px) {
     align-items: flex-start;
     height: auto;
-    min-height: 64px;
-    padding: 12px 12px 12px 8px;
-    margin: 0;
-    border-radius: 0;
-    border-bottom: 1px solid var(--border-light);
+    min-height: ${(props) => (props.$focusMode ? "58px" : "64px")};
+    padding: ${(props) => (props.$focusMode ? "10px 12px" : "12px 12px 12px 8px")};
+    margin: ${(props) => (props.$focusMode ? "0 16px 8px" : "0")};
+    border-radius: ${(props) => (props.$focusMode ? "12px" : "0")};
+    border-bottom: ${(props) =>
+      props.$focusMode ? "1px solid var(--border-light)" : "1px solid var(--border-light)"};
 
     &:hover {
-      background: ${(props) =>
-        props.$compareSelected ? "var(--primary-light)" : "transparent"};
+      background: ${(props) => {
+        if (props.$focusMode) return "var(--surface)";
+        return props.$compareSelected ? "var(--primary-light)" : "transparent";
+      }};
     }
 
     &:active {
@@ -517,6 +564,14 @@ const MobileMeta = styled.span`
     color: var(--text-3);
     line-height: 1.3;
   }
+`;
+
+const FocusMeta = styled.span`
+  display: block;
+  margin-top: 3px;
+  font-size: 0.74rem;
+  color: var(--text-3);
+  line-height: 1.3;
 `;
 
 const MetaText = styled.span`

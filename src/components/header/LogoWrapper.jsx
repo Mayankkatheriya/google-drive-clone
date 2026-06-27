@@ -6,10 +6,15 @@ import { SidebarToggleIcon } from "../common/SidebarToggleIcon";
 import Link from "next/link";
 import DiskDriveLogo from "../common/DiskDriveLogo";
 
-const LogoWrapperComponent = ({ onClick, userName, sidebarOpen = true }) => {
+const LogoWrapperComponent = ({
+  onClick,
+  userName,
+  sidebarOpen = true,
+  hideMenuToggle = false,
+}) => {
   return (
     <LogoWrapper>
-      {userName && (
+      {userName && !hideMenuToggle && (
         <MenuBtn
           onClick={onClick}
           aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}

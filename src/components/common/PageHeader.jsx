@@ -3,63 +3,115 @@
 import React from "react";
 import styled from "styled-components";
 import CompareArrowsRoundedIcon from "@mui/icons-material/CompareArrowsRounded";
+import CenterFocusStrongRoundedIcon from "@mui/icons-material/CenterFocusStrongRounded";
 import { ListsIcon, GridIcon } from "./SvgIcons";
 import { useCompare } from "@/context/CompareContext";
+import { useFocus } from "@/context/FocusContext";
 
-const PageHeader = ({ pageTitle, subtitle, subtitleMobile, viewMode, onViewModeChange }) => {
-  const { active: compareActive, toggleMode } = useCompare();
-  const showViewToggle =
-    pageTitle === "My Drive" && viewMode && onViewModeChange;
-  const showCompareToggle = pageTitle === "My Drive";
+const PageHeader = ({
+  pageTitle,
+  subtitle,
+  subtitleMobile,
+  viewMode,
+  onViewModeChange,
+}) => {
+  const { active: compareActive, toggleMode: toggleCompare, exitMode: exitCompare } =
+    useCompare();
+  const { active: focusActive, toggleMode: toggleFocus, exitMode: exitFocus } =
+    useFocus();
+
+  const isMyDrive = pageTitle === "My Drive";
+  const showViewToggle = isMyDrive && viewMode && onViewModeChange && !focusActive;
+  const showCompareToggle = isMyDrive && !focusActive;
+  const showFocusToggle = isMyDrive;
+
+  const handleCompareToggle = () => {
+    if (focusActive) exitFocus();
+    toggleCompare();
+  };
+
+  const handleFocusToggle = () => {
+    if (compareActive) exitCompare();
+    toggleFocus();
+  };
 
   return (
-    <Header>
-      <TitleBlock>
-        <Title>{pageTitle}</Title>
-        {subtitle && <Subtitle $hideOnMobile={Boolean(subtitleMobile)}>{subtitle}</Subtitle>}
-        {subtitleMobile && <SubtitleMobile>{subtitleMobile}</SubtitleMobile>}
-      </TitleBlock>
-      {(showViewToggle || showCompareToggle) && (
-        <Actions>
+    <Header $focus={focusActive}>
+      <TopRow>
+        <TitleBlock>
+          <Title>{focusActive ? "Focus" : pageTitle}</Title>
+          {focusActive ? (
+            <>
+              <Subtitle>Distraction-free browsing — sidebar and actions hidden</Subtitle>
+              <SubtitleMobile>Clean view for reading and browsing files</SubtitleMobile>
+            </>
+          ) : (
+            <>
+              {subtitle && (
+                <Subtitle $hideOnMobile={Boolean(subtitleMobile)}>
+                  {subtitle}
+                </Subtitle>
+              )}
+              {subtitleMobile && <SubtitleMobile>{subtitleMobile}</SubtitleMobile>}
+            </>
+          )}
+        </TitleBlock>
+        {showViewToggle && (
+          <ViewActions>
+            <ActionBtn
+              title="List view"
+              $active={viewMode === "list"}
+              onClick={() => onViewModeChange("list")}
+              aria-pressed={viewMode === "list"}
+            >
+              <ListsIcon />
+            </ActionBtn>
+            <ActionBtn
+              title="Grid view"
+              $active={viewMode === "grid"}
+              onClick={() => onViewModeChange("grid")}
+              aria-pressed={viewMode === "grid"}
+            >
+              <GridIcon />
+            </ActionBtn>
+          </ViewActions>
+        )}
+      </TopRow>
+      {(showCompareToggle || showFocusToggle) && (
+        <ModeActions>
+          {showFocusToggle && (
+            <ModeToggleBtn
+              type="button"
+              $active={focusActive}
+              onClick={handleFocusToggle}
+              aria-pressed={focusActive}
+              title={
+                focusActive
+                  ? "Exit focus mode"
+                  : "Hide clutter and browse files distraction-free"
+              }
+            >
+              <CenterFocusStrongRoundedIcon />
+              <span>{focusActive ? "Focusing" : "Focus"}</span>
+            </ModeToggleBtn>
+          )}
           {showCompareToggle && (
-            <CompareActions>
-              <CompareToggleBtn
-                type="button"
-                $active={compareActive}
-                onClick={toggleMode}
-                aria-pressed={compareActive}
-                title={
-                  compareActive
-                    ? "Exit compare mode"
-                    : "Pick 2 images or PDFs to view side by side"
-                }
-              >
-                <CompareArrowsRoundedIcon />
-                <span>{compareActive ? "Comparing" : "Compare"}</span>
-              </CompareToggleBtn>
-            </CompareActions>
+            <ModeToggleBtn
+              type="button"
+              $active={compareActive}
+              onClick={handleCompareToggle}
+              aria-pressed={compareActive}
+              title={
+                compareActive
+                  ? "Exit compare mode"
+                  : "Pick 2 images or PDFs to view side by side"
+              }
+            >
+              <CompareArrowsRoundedIcon />
+              <span>{compareActive ? "Comparing" : "Compare"}</span>
+            </ModeToggleBtn>
           )}
-          {showViewToggle && (
-            <ViewActions>
-              <ActionBtn
-                title="List view"
-                $active={viewMode === "list"}
-                onClick={() => onViewModeChange("list")}
-                aria-pressed={viewMode === "list"}
-              >
-                <ListsIcon />
-              </ActionBtn>
-              <ActionBtn
-                title="Grid view"
-                $active={viewMode === "grid"}
-                onClick={() => onViewModeChange("grid")}
-                aria-pressed={viewMode === "grid"}
-              >
-                <GridIcon />
-              </ActionBtn>
-            </ViewActions>
-          )}
-        </Actions>
+        </ModeActions>
       )}
     </Header>
   );
@@ -67,14 +119,36 @@ const PageHeader = ({ pageTitle, subtitle, subtitleMobile, viewMode, onViewModeC
 
 const Header = styled.div`
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
   padding: 20px 24px 12px;
 
+  ${(p) =>
+    p.$focus &&
+    `
+    padding-bottom: 8px;
+  `}
+
+  @media (min-width: 769px) {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
   @media (max-width: 768px) {
     padding: 16px 16px 12px;
+    gap: 10px;
   }
+`;
+
+const TopRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
 `;
 
 const TitleBlock = styled.div`
@@ -89,7 +163,7 @@ const Title = styled.h1`
   letter-spacing: -0.3px;
 
   @media (max-width: 768px) {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
   }
 `;
 
@@ -121,26 +195,38 @@ const SubtitleMobile = styled.p`
   }
 `;
 
-const Actions = styled.div`
+const ModeActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+
+  @media (min-width: 769px) {
+    width: auto;
+    margin-left: auto;
+    align-self: flex-start;
+  }
+`;
+
+const ViewActions = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
-  padding-top: 2px;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
-const CompareActions = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const CompareToggleBtn = styled.button`
+const ModeToggleBtn = styled.button`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   height: 36px;
   padding: 0 14px 0 11px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   border: 1px solid
     ${(props) => (props.$active ? "var(--primary)" : "var(--border-light)")};
   background: ${(props) =>
@@ -150,11 +236,16 @@ const CompareToggleBtn = styled.button`
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
   transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease;
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition);
+
+  &:only-child {
+    max-width: 220px;
+  }
 
   &:hover {
     background: ${(props) =>
@@ -169,23 +260,17 @@ const CompareToggleBtn = styled.button`
   }
 
   @media (max-width: 768px) {
-    height: 34px;
-    padding: 0 12px 0 10px;
-    font-size: 0.78rem;
+    height: 38px;
+    padding: 0 12px;
+    font-size: 0.8rem;
 
     svg {
       font-size: 17px;
     }
   }
-`;
 
-const ViewActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  @media (max-width: 768px) {
-    display: none;
+  @media (min-width: 769px) {
+    flex: 0 0 auto;
   }
 `;
 
@@ -207,7 +292,9 @@ const ActionBtn = styled.button`
     color: var(--primary);
   }
 
-  svg { font-size: 20px; }
+  svg {
+    font-size: 20px;
+  }
 `;
 
 export default PageHeader;

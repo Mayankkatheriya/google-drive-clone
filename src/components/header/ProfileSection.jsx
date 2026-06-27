@@ -42,6 +42,9 @@ const ProfileSection = ({
   }, []);
 
   const firstName = userName?.split(" ")[0] ?? "";
+  const [photoError, setPhotoError] = useState(false);
+  const showPhoto = userPhoto && !photoError;
+  const initial = (firstName.charAt(0) || userName?.charAt(0) || "?").toUpperCase();
 
   const closeMenu = () => {
     setOpen(false);
@@ -59,14 +62,33 @@ const ProfileSection = ({
 
       <AvatarWrap ref={ref}>
         <AvatarBtn onClick={() => setOpen((p) => !p)} aria-label="Account menu">
-          <Avatar src={userPhoto} alt={firstName} />
+          {showPhoto ? (
+            <Avatar
+              src={userPhoto}
+              alt={firstName}
+              onError={() => setPhotoError(true)}
+            />
+          ) : (
+            <AvatarFallback aria-hidden="true">{initial}</AvatarFallback>
+          )}
         </AvatarBtn>
 
         {open && (
           <DropMenu>
             <Arrow />
             <UserRow>
-              <Avatar src={userPhoto} alt={firstName} style={{ width: 36, height: 36 }} />
+              {showPhoto ? (
+                <Avatar
+                  src={userPhoto}
+                  alt={firstName}
+                  style={{ width: 36, height: 36 }}
+                  onError={() => setPhotoError(true)}
+                />
+              ) : (
+                <AvatarFallback $large aria-hidden="true">
+                  {initial}
+                </AvatarFallback>
+              )}
               <UserMeta>
                 <UserName>{userName}</UserName>
                 <UserSub>Personal Drive</UserSub>
@@ -196,6 +218,26 @@ const Avatar = styled.img`
   object-fit: cover;
   border: 2px solid var(--border);
   display: block;
+  transition: border-color 0.15s ease;
+
+  ${AvatarBtn}:hover & {
+    border-color: var(--primary);
+  }
+`;
+
+const AvatarFallback = styled.div`
+  width: ${(p) => (p.$large ? "36px" : "34px")};
+  height: ${(p) => (p.$large ? "36px" : "34px")};
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: ${(p) => (p.$large ? "0.9rem" : "0.82rem")};
+  font-weight: 700;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
   transition: border-color 0.15s ease;
 
   ${AvatarBtn}:hover & {

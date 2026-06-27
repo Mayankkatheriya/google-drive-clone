@@ -4,13 +4,17 @@ import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { UploadFileIcon } from "./SvgIcons";
 import { useFileUploadContext } from "@/context/FileUploadContext";
+import { useFocus } from "@/context/FocusContext";
 
 export default function DropZone() {
   const { stageFile, setOpen, uploading } = useFileUploadContext();
+  const { active: focusActive } = useFocus();
   const [dragging, setDragging] = useState(false);
   const [dragDepth, setDragDepth] = useState(0);
 
   useEffect(() => {
+    if (focusActive) return undefined;
+
     const hasFiles = (event) =>
       Array.from(event.dataTransfer?.types ?? []).includes("Files");
 
@@ -63,9 +67,9 @@ export default function DropZone() {
       window.removeEventListener("dragleave", onDragLeave);
       window.removeEventListener("drop", onDrop);
     };
-  }, [stageFile, setOpen, uploading]);
+  }, [stageFile, setOpen, uploading, focusActive]);
 
-  if (!dragging || uploading) return null;
+  if (!dragging || uploading || focusActive) return null;
 
   return (
     <Overlay aria-hidden="true">

@@ -21,7 +21,7 @@ import MainDataRow, {
   ActionsCol,
 } from "./MainDataRow";
 
-const MainData = ({ files }) => {
+const MainData = ({ files, focusMode = false }) => {
   const [showShareIcons, setShowShareIcons] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [shareFileId, setShareFileId] = useState(null);
@@ -179,20 +179,26 @@ const MainData = ({ files }) => {
     return (
       <LottieImage
         imagePath="/homePage.svg"
-        text1="A place for all of your files"
-        text2={getUploadHelpText()}
+        text1={focusMode ? "Nothing matches this filter" : "A place for all of your files"}
+        text2={
+          focusMode
+            ? "Try another filter or exit focus mode."
+            : getUploadHelpText()
+        }
       />
     );
   }
 
   return (
-    <TableWrap>
-      <TableHead>
-        <NameCol>Name</NameCol>
-        <SizeCol className="hide-sm">Size</SizeCol>
-        <DateCol className="hide-md">Modified</DateCol>
-        <ActionsCol />
-      </TableHead>
+    <TableWrap $focus={focusMode}>
+      {!focusMode && (
+        <TableHead>
+          <NameCol>Name</NameCol>
+          <SizeCol className="hide-sm">Size</SizeCol>
+          <DateCol className="hide-md">Modified</DateCol>
+          <ActionsCol />
+        </TableHead>
+      )}
 
       {files.map((file) => {
         const isMenuOpen = optionsVisible === file.id;
@@ -215,9 +221,11 @@ const MainData = ({ files }) => {
             onStar={() => handleStarred(file.id)}
             compareMode={compareMode}
             compareSelected={isSelected(file.id)}
+            focusMode={focusMode}
             onCompareToggle={() => toggleFile(file)}
+            onFocusOpen={() => openFilePreview(file)}
             onNameClick={(event) => {
-              if (compareMode) {
+              if (compareMode || focusMode) {
                 event.preventDefault();
                 return;
               }
@@ -231,7 +239,7 @@ const MainData = ({ files }) => {
               }, 250);
             }}
             onNameDoubleClick={(event) => {
-              if (compareMode) return;
+              if (compareMode || focusMode) return;
               event.preventDefault();
               event.stopPropagation();
               if (nameClickTimerRef.current) {
@@ -270,6 +278,14 @@ const TableWrap = styled.div`
   width: 100%;
   padding-bottom: 24px;
 
+  ${(p) =>
+    p.$focus &&
+    `
+    padding-top: 4px;
+    max-width: 920px;
+    margin: 0 auto;
+  `}
+
   .hide-sm {
     @media (max-width: 640px) {
       display: none !important;
@@ -283,8 +299,9 @@ const TableWrap = styled.div`
   }
 
   @media (max-width: 768px) {
-    padding-bottom: var(--mobile-scroll-inset);
-    scroll-padding-bottom: var(--mobile-scroll-inset);
+    padding-bottom: ${(p) => (p.$focus ? "16px" : "var(--mobile-scroll-inset)")};
+    scroll-padding-bottom: ${(p) =>
+      p.$focus ? "16px" : "var(--mobile-scroll-inset)"};
   }
 `;
 
