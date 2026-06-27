@@ -69,6 +69,20 @@ export async function downloadFile(fileData) {
   URL.revokeObjectURL(blobUrl);
 }
 
+export async function purgeExpiredTrash() {
+  const response = await fetch("/api/purge-trash", {
+    method: "POST",
+    headers: await getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || "Failed to purge trash");
+  }
+
+  return response.json();
+}
+
 export async function deleteFileFromS3(s3Key) {
   if (!s3Key) {
     return;

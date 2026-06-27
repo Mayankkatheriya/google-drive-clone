@@ -7,6 +7,7 @@ import { useTrashFiles } from "@/context/FilesContext";
 import LoaderContainer from "../loaders/LoaderContainer";
 import { delayInRender } from "../common/common";
 import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
+import { getTrashRetentionLabel } from "@/lib/trashRetention";
 const FilesList = lazy(() => delayInRender(import("../common/FilesList")));
 
 const Trash = () => {
@@ -24,9 +25,7 @@ const Trash = () => {
           page={"trash"}
           imagePath={"/trash.svg"}
           text1={"Nothing in trash"}
-          text2={
-            "Move items you don't need to trash. Items in trash will be deleted forever after you delete them from here"
-          }
+          text2={`Move items you don't need to trash. They are permanently deleted after ${getTrashRetentionLabel()}.`}
         />
       </Suspense>
     </Page>

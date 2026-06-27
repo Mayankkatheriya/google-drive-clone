@@ -27,10 +27,10 @@ import {
 } from "react-share";
 import {
   handleStarred,
-  handleMoveToTrash,
   handleRenameFile,
   markFileOpened,
 } from "../common/firebaseApi";
+import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import { toast } from "react-toastify";
 import LottieImage from "../common/LottieImage";
 import SecureFileLink from "../common/SecureFileLink";
@@ -140,6 +140,7 @@ const MainData = ({ files }) => {
   const renameInputRef = useRef(null);
   const nameClickTimerRef = useRef(null);
   const { open: openPreview } = useFilePreview();
+  const { confirmMoveToTrash } = useFileTrashActions();
 
   useEffect(() => {
     return () => {
@@ -179,7 +180,7 @@ const MainData = ({ files }) => {
   };
 
   const handleDelete = async (id, data) => {
-    await handleMoveToTrash(id, data);
+    await confirmMoveToTrash(id, data);
     setOptionsVisible(null);
   };
 

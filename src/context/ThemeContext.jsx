@@ -1,4 +1,5 @@
 "use client";
+
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 
 const STORAGE_KEY = "disk-drive-theme";
@@ -8,39 +9,52 @@ function getSystemTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function applyTheme(pref) {
-  const resolved = pref === "system" ? getSystemTheme() : pref;
-  document.documentElement.setAttribute("data-theme", resolved);
+function normalizePreference(value) {
+  if (value === "dark") return "dark";
+  if (value === "light") return "light";
+  return getSystemTheme();
 }
 
-const ThemeCtx = createContext({ preference: "system", setTheme: () => {} });
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+}
+
+const ThemeCtx = createContext({
+  theme: "light",
+  isDark: false,
+  setTheme: () => {},
+  toggleTheme: () => {},
+});
 
 export function ThemeProvider({ children }) {
-  const [preference, setPreference] = useState("system");
+  const [theme, setThemeState] = useState("light");
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) || "system";
-    setPreference(stored);
+    const stored = normalizePreference(localStorage.getItem(STORAGE_KEY));
+    setThemeState(stored);
     applyTheme(stored);
-
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => {
-      if ((localStorage.getItem(STORAGE_KEY) || "system") === "system") {
-        applyTheme("system");
-      }
-    };
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  const setTheme = useCallback((pref) => {
-    setPreference(pref);
-    localStorage.setItem(STORAGE_KEY, pref);
-    applyTheme(pref);
+  const setTheme = useCallback((next) => {
+    const value = next === "dark" ? "dark" : "light";
+    setThemeState(value);
+    localStorage.setItem(STORAGE_KEY, value);
+    applyTheme(value);
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setThemeState((current) => {
+      const next = current === "dark" ? "light" : "dark";
+      localStorage.setItem(STORAGE_KEY, next);
+      applyTheme(next);
+      return next;
+    });
   }, []);
 
   return (
-    <ThemeCtx.Provider value={{ preference, setTheme }}>
+    <ThemeCtx.Provider
+      value={{ theme, isDark: theme === "dark", setTheme, toggleTheme }}
+    >
       {children}
     </ThemeCtx.Provider>
   );

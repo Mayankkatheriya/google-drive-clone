@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/purge-trash",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

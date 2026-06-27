@@ -15,6 +15,7 @@ import { useDispatch } from "react-redux";
 import { setUserLoginDetails } from "../../store/UserSlice";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import DiskDriveLogo from "../common/DiskDriveLogo";
 
 const GoogleG = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -99,7 +100,7 @@ const Login = () => {
 
       <Nav>
         <LogoRow>
-          <LogoImg src="/google-logo.png" alt="" />
+          <DiskDriveLogo size={34} />
           <LogoName>Disk Drive</LogoName>
         </LogoRow>
         <NavTag>Free personal cloud</NavTag>
@@ -280,11 +281,6 @@ const LogoRow = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-`;
-
-const LogoImg = styled.img`
-  width: 34px;
-  height: 34px;
 `;
 
 const LogoName = styled.span`
@@ -589,6 +585,13 @@ const SignInList = styled.ul`
   gap: 10px;
   padding-top: 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
+
+  @media (max-width: 899px) {
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+    align-items: flex-start;
+  }
 `;
 
 const SignInItem = styled.li`
@@ -598,10 +601,7 @@ const SignInItem = styled.li`
   font-size: 0.8rem;
   color: #94a3b8;
   line-height: 1.4;
-
-  @media (max-width: 899px) {
-    justify-content: center;
-  }
+  text-align: left;
 `;
 
 const SignInIcon = styled.span`

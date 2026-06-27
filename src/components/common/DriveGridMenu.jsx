@@ -15,7 +15,8 @@ import {
 } from "./SvgIcons";
 import { changeBytes, convertDates } from "./common";
 import { downloadFile, getFileDownloadUrl } from "../../lib/fileAccess";
-import { handleMoveToTrash, handleRenameFile, handleStarred } from "./firebaseApi";
+import { handleRenameFile, handleStarred } from "./firebaseApi";
+import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import { useMenuPlacement } from "@/hooks/useMenuPlacement";
 import { toast } from "react-toastify";
 import {
@@ -39,6 +40,7 @@ export function DriveGridMenu({
   onShareClick,
   menuRef,
 }) {
+  const { confirmMoveToTrash } = useFileTrashActions();
   const triggerRef = useRef(null);
   const { top, right, flip, ready } = useMenuPlacement(triggerRef, menuRef, isOpen);
 
@@ -54,7 +56,7 @@ export function DriveGridMenu({
   };
 
   const handleDelete = async () => {
-    await handleMoveToTrash(file.id, file.data);
+    await confirmMoveToTrash(file.id, file.data);
     onToggle(null);
   };
 

@@ -17,6 +17,8 @@ import LogoWrapperComponent from "./LogoWrapper";
 import SearchBar from "./SearchBar";
 import LeftIcons from "./LeftIcons";
 import ProfileSection from "./ProfileSection";
+import NewUploadButton from "../common/NewUploadButton";
+import { useFileUploadContext } from "@/context/FileUploadContext";
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -25,6 +27,7 @@ const Header = () => {
   const sidebarBool = useSelector(selectSidebarBool);
   const [showSearch, setShowSearch] = useState(false);
   const router = useRouter();
+  const upload = useFileUploadContext();
 
   useEffect(() => {
     onAuthStateChanged(auth, async (user) => {
@@ -71,7 +74,14 @@ const Header = () => {
           <LogoWrapperComponent
             onClick={() => dispatch(setSidebarBool(!sidebarBool))}
             userName={userName}
+            sidebarOpen={sidebarBool}
           />
+          {userName && !sidebarBool && (
+            <NewUploadButton
+              variant="header"
+              onClick={() => upload.setOpen(true)}
+            />
+          )}
         </Left>
 
         {/* Center — hidden on mobile */}
@@ -132,6 +142,8 @@ const Left = styled.div`
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  gap: 6px;
+  min-width: 0;
 `;
 
 const Center = styled.div`

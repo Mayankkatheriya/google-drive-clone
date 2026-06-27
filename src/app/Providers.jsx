@@ -4,14 +4,16 @@ import { Provider } from "react-redux";
 import { ToastContainer } from "react-toastify";
 import { store } from "@/store/Store";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { ConfirmDialogProvider } from "@/context/ConfirmDialogProvider";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function Providers({ children }) {
   return (
     <ThemeProvider>
-      <Provider store={store}>
-        {children}
-        <ToastContainer
+      <ConfirmDialogProvider>
+        <Provider store={store}>
+          {children}
+          <ToastContainer
           position="top-right"
           autoClose={1000}
           hideProgressBar={false}
@@ -23,7 +25,8 @@ export default function Providers({ children }) {
           pauseOnHover
           theme="dark"
         />
-      </Provider>
+        </Provider>
+      </ConfirmDialogProvider>
     </ThemeProvider>
   );
 }

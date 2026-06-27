@@ -1,4 +1,5 @@
 import { getUploadHelpText, getUploadHelpTextMobile } from "./uploadLimits";
+import { getTrashRetentionLabel } from "./trashRetention";
 
 export const PAGE_SUBTITLES = {
   myDrive: {
@@ -12,7 +13,6 @@ export const PAGE_SUBTITLES = {
     subtitle: "Files you've starred — find them quickly anytime.",
   },
   trash: {
-    subtitle:
-      "Restore items to My Drive or delete them permanently. Trashed files still count toward storage.",
+    subtitle: `Restore items to My Drive or delete them permanently. Items in trash are auto-deleted after ${getTrashRetentionLabel()}.`,
   },
 };

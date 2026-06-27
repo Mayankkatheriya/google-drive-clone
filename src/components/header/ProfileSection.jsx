@@ -5,21 +5,12 @@ import styled from "styled-components";
 import { useDispatch, useSelector } from "react-redux";
 import { SearchIcons, CloseIcon, HelpIcon } from "../common/SvgIcons";
 import StorageOutlinedIcon from "@mui/icons-material/StorageOutlined";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
-import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
-import DesktopWindowsOutlinedIcon from "@mui/icons-material/DesktopWindowsOutlined";
 import { selectHelpModal, setHelpModal } from "../../store/HelpSlice";
 import HelpModal from "../common/Modal";
 import StorageModal from "../common/StorageModal";
 import { useStorageInfo } from "@/hooks/useStorageInfo";
 import { useTheme } from "@/context/ThemeContext";
-
-const THEME_OPTIONS = [
-  { id: "light", label: "Light", Icon: LightModeOutlinedIcon },
-  { id: "dark", label: "Dark", Icon: DarkModeOutlinedIcon },
-  { id: "system", label: "Device", Icon: DesktopWindowsOutlinedIcon },
-];
+import { ThemeToggle } from "../common/ThemeToggle";
 
 const ProfileSection = ({
   userPhoto,
@@ -30,18 +21,16 @@ const ProfileSection = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [storageOpen, setStorageOpen] = useState(false);
-  const [themeOpen, setThemeOpen] = useState(false);
   const ref = useRef(null);
   const dispatch = useDispatch();
   const openHelp = useSelector(selectHelpModal);
-  const { preference, setTheme } = useTheme();
+  const { isDark } = useTheme();
   const { storage, storageLimitLabel, storagePercent } = useStorageInfo();
 
   useEffect(() => {
     const handler = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
         setOpen(false);
-        setThemeOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
@@ -56,7 +45,6 @@ const ProfileSection = ({
 
   const closeMenu = () => {
     setOpen(false);
-    setThemeOpen(false);
   };
 
   return (
@@ -120,39 +108,12 @@ const ProfileSection = ({
                 </MenuBtnBody>
               </MenuBtn>
 
-              <MenuBtn
-                onClick={() => setThemeOpen((p) => !p)}
-                aria-expanded={themeOpen}
-              >
-                <MenuIconWrap>
-                  <SettingsOutlinedIcon style={{ fontSize: 18 }} />
-                </MenuIconWrap>
-                <MenuBtnBody>
-                  <MenuBtnLabel>Appearance</MenuBtnLabel>
-                  <MenuBtnSub>
-                    {THEME_OPTIONS.find((o) => o.id === preference)?.label ?? "Device"}
-                  </MenuBtnSub>
-                </MenuBtnBody>
-              </MenuBtn>
-
-              {themeOpen && (
-                <ThemeGroup>
-                  {THEME_OPTIONS.map(({ id, label, Icon }) => (
-                    <ThemeChip
-                      key={id}
-                      type="button"
-                      $active={preference === id}
-                      onClick={() => {
-                        setTheme(id);
-                        setThemeOpen(false);
-                      }}
-                    >
-                      <Icon style={{ fontSize: 16 }} />
-                      {label}
-                    </ThemeChip>
-                  ))}
-                </ThemeGroup>
-              )}
+              <ThemeRow>
+                <ThemeRowLabel>
+                  <MenuBtnLabel>{isDark ? "Dark mode" : "Light mode"}</MenuBtnLabel>
+                </ThemeRowLabel>
+                <ThemeToggle size="sm" />
+              </ThemeRow>
             </MobileMenuItems>
 
             <Divider />
@@ -385,27 +346,21 @@ const MiniFill = styled.div`
   border-radius: 999px;
 `;
 
-const ThemeGroup = styled.div`
+const ThemeRow = styled.div`
   display: flex;
-  gap: 6px;
-  padding: 4px 8px 8px 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 10px;
+  border-radius: 10px;
+
+  &:hover {
+    background: var(--surface-3);
+  }
 `;
 
-const ThemeChip = styled.button`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 4px;
-  border-radius: 10px;
-  border: 1.5px solid ${(p) => (p.$active ? "var(--primary)" : "var(--border)")};
-  background: ${(p) => (p.$active ? "var(--primary-light)" : "var(--surface)")};
-  color: ${(p) => (p.$active ? "var(--primary)" : "var(--text-2)")};
-  font-size: 0.68rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
+const ThemeRowLabel = styled.div`
+  min-width: 0;
 `;
 
 const Divider = styled.div`

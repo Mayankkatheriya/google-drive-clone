@@ -4,7 +4,7 @@ import Providers from "./Providers";
 export const metadata = {
   title: "Disk Drive",
   icons: {
-    icon: "/google-logo.png",
+    icon: "/disk-drive-logo.svg",
   },
   verification: {
     google: "SP1wNhMPVs8vRWq1f3rzq23I0Di3MZ5U-VeJuGJsH-c",
@@ -25,7 +25,7 @@ export default function RootLayout({ children }) {
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=localStorage.getItem('disk-drive-theme')||'system';var r=p==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;document.documentElement.setAttribute('data-theme',r);}catch(e){}})();`,
+            __html: `(function(){try{var p=localStorage.getItem('disk-drive-theme');var r=p==='dark'?'dark':(p==='light'?'light':(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));document.documentElement.setAttribute('data-theme',r);}catch(e){}})();`,
           }}
         />
       </head>

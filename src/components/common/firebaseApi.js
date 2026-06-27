@@ -36,9 +36,13 @@ const getTrashFiles = (userId, setFiles) => {
             id: doc.id,
             data: doc.data(),
           }))
-          .sort(
-            (a, b) => b.data.timestamp?.seconds - a.data.timestamp?.seconds
-          );
+          .sort((a, b) => {
+            const aSec =
+              a.data.trashedAt?.seconds ?? a.data.timestamp?.seconds ?? 0;
+            const bSec =
+              b.data.trashedAt?.seconds ?? b.data.timestamp?.seconds ?? 0;
+            return bSec - aSec;
+          });
         return fileArr;
       });
     }
@@ -47,22 +51,16 @@ const getTrashFiles = (userId, setFiles) => {
   return unsubscribeFiles;
 };
 
-const handleDeleteFromTrash = async (id, fileData) => {
+const permanentDeleteFromTrash = async (id, fileData) => {
   try {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this file?"
-    );
-
-    if (confirmed) {
-      if (fileData?.s3Key) {
-        await deleteFileFromS3(fileData.s3Key);
-      }
-
-      const docRef = doc(db, "trash", id);
-
-      await deleteDoc(docRef);
-      toast.error("Permanently Deleted");
+    if (fileData?.s3Key) {
+      await deleteFileFromS3(fileData.s3Key);
     }
+
+    const docRef = doc(db, "trash", id);
+
+    await deleteDoc(docRef);
+    toast.error("Permanently Deleted");
   } catch (error) {
     console.error("Error deleting document: ", error);
     toast.error("Failed to delete file");
@@ -80,15 +78,12 @@ const handleRestoreFromTrash = async (id, fileData) => {
   }
 };
 
-const handleMoveToTrash = async (id, fileData) => {
+const moveToTrash = async (id, fileData) => {
   try {
-    const confirmed = window.confirm(
-      "Are you sure you want to move this file to trash?"
-    );
-
-    if (!confirmed) return;
-
-    await postTrashCollection(fileData);
+    await addDoc(collection(db, "trash"), {
+      ...fileData,
+      trashedAt: serverTimestamp(),
+    });
     await deleteDoc(doc(db, "myfiles", id));
     toast.warn("File moved to trash");
   } catch (error) {
@@ -172,9 +167,9 @@ export {
   getFilesForUser,
   handleStarred,
   getTrashFiles,
-  handleDeleteFromTrash,
+  moveToTrash,
+  permanentDeleteFromTrash,
   handleRestoreFromTrash,
-  handleMoveToTrash,
   handleRenameFile,
   markFileOpened,
 };

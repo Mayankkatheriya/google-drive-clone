@@ -2,20 +2,25 @@
 
 import React from "react";
 import styled from "styled-components";
-import { MenuIcon } from "../common/SvgIcons";
+import { SidebarToggleIcon } from "../common/SidebarToggleIcon";
 import Link from "next/link";
+import DiskDriveLogo from "../common/DiskDriveLogo";
 
-const LogoWrapperComponent = ({ onClick, userName }) => {
+const LogoWrapperComponent = ({ onClick, userName, sidebarOpen = true }) => {
   return (
     <LogoWrapper>
       {userName && (
-        <MenuBtn onClick={onClick} aria-label="Toggle sidebar">
-          <MenuIcon />
+        <MenuBtn
+          onClick={onClick}
+          aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+          title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+        >
+          <SidebarToggleIcon open={sidebarOpen} />
         </MenuBtn>
       )}
       <Link href="/home">
         <Logo>
-          <img src="/google-logo.png" alt="Drive" />
+          <DiskDriveLogo size={32} />
           <span>Disk Drive</span>
         </Logo>
       </Link>
@@ -41,14 +46,11 @@ const MenuBtn = styled.button`
   border-radius: 50%;
   color: var(--text-2);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 
   &:hover {
     background: var(--surface-3);
-  }
-
-  svg {
-    font-size: 22px;
+    color: var(--primary);
   }
 
   /* Sidebar hidden on mobile — bottom nav handles navigation */
@@ -69,9 +71,11 @@ const Logo = styled.div`
     background: var(--surface-3);
   }
 
-  img {
+  img,
+  svg {
     width: 32px;
     height: 32px;
+    flex-shrink: 0;
   }
 
   span {

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="brand" x1="8" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60A5FA"/>
+      <stop offset="0.55" stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#34D399"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="20" y1="16" x2="44" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#C7D2FE" stop-opacity="0.15"/>
+    </linearGradient>
+    <radialGradient id="core" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(32 33) rotate(90) scale(14)">
+      <stop stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#3B82F6"/>
+    </radialGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="15" fill="#0F172A"/>
+  <rect x="4.75" y="4.75" width="54.5" height="54.5" rx="14.25" stroke="url(#brand)" stroke-width="1.5" opacity="0.9"/>
+  <circle cx="32" cy="33" r="15.5" stroke="url(#brand)" stroke-width="4.5" stroke-linecap="round"/>
+  <circle cx="32" cy="33" r="10.5" fill="url(#core)"/>
+  <ellipse cx="28" cy="28.5" rx="5" ry="3.2" fill="url(#shine)" transform="rotate(-18 28 28.5)"/>
+  <circle cx="32" cy="33" r="3.6" fill="#0F172A"/>
+  <circle cx="32" cy="33" r="2.2" fill="#F8FAFC" fill-opacity="0.92"/>
+  <path d="M44 17.5H50.5V24" stroke="#34D399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M50.5 17.5L42.5 25.5" stroke="#60A5FA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

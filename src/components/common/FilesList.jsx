@@ -6,11 +6,10 @@ import FileIcons from "./FileIcons";
 import { changeBytes } from "./common";
 import SecureFileLink from "./SecureFileLink";
 import {
-  handleDeleteFromTrash,
   handleRestoreFromTrash,
-  handleMoveToTrash,
   handleStarred,
 } from "./firebaseApi";
+import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import {
   DeleteIcon,
   StarBorderIcon,
@@ -54,18 +53,19 @@ const item = {
 
 const FilesList = ({ data, page = null, imagePath, text1, text2, compact = false }) => {
   const driveMenu = useDriveGridMenuState();
+  const { confirmMoveToTrash, confirmPermanentDelete } = useFileTrashActions();
   const isDrivePage = page === "drive";
 
   if (data.length === 0) {
     return <LottieImage imagePath={imagePath} text1={text1} text2={text2} />;
   }
 
-  const handleDelete = (id, fileData) => {
+  const handleDelete = async (id, fileData) => {
     if (page === "trash") {
-      handleDeleteFromTrash(id, fileData);
+      await confirmPermanentDelete(id, fileData);
       return;
     }
-    handleMoveToTrash(id, fileData);
+    await confirmMoveToTrash(id, fileData);
   };
 
   return (
@@ -176,9 +176,9 @@ const FilesList = ({ data, page = null, imagePath, text1, text2, compact = false
                 </ActionBtn>
                 <ActionBtn
                   $danger
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    handleDeleteFromTrash(file.id, file.data);
+                    await confirmPermanentDelete(file.id, file.data);
                   }}
                   title="Delete forever"
                 >
