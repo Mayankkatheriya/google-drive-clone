@@ -16,18 +16,18 @@ export default function HomeLayout({ children }) {
     <FilesProvider>
       <FilePreviewProvider>
         <FileUploadProvider>
-          <AppShell>
-            <Header />
-            <ShellBody>
-              <ProtectedRoute>
+          <ProtectedRoute>
+            <AppShell>
+              <Header />
+              <ShellBody>
                 <HomeContainer>
                   <Sidebar />
                   <MainContent>{children}</MainContent>
                 </HomeContainer>
                 <MobileBottomNav />
-              </ProtectedRoute>
-            </ShellBody>
-          </AppShell>
+              </ShellBody>
+            </AppShell>
+          </ProtectedRoute>
           <DropZone />
           <FilePreviewModal />
         </FileUploadProvider>

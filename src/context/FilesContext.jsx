@@ -4,27 +4,39 @@ import { createContext, useContext } from "react";
 import { useUserFiles } from "@/hooks/useUserFiles";
 import { useTrashAutoPurge } from "@/hooks/useTrashAutoPurge";
 
-const FilesContext = createContext([]);
-const TrashFilesContext = createContext([]);
+const FilesStateContext = createContext({
+  myFiles: [],
+  myFilesLoading: true,
+  trashFiles: [],
+  trashLoading: true,
+});
 
 export function FilesProvider({ children }) {
-  const files = useUserFiles("myfiles");
-  const trashFiles = useUserFiles("trash");
+  const { files: myFiles, loading: myFilesLoading } = useUserFiles("myfiles");
+  const { files: trashFiles, loading: trashLoading } = useUserFiles("trash");
   useTrashAutoPurge();
 
   return (
-    <FilesContext.Provider value={files}>
-      <TrashFilesContext.Provider value={trashFiles}>
-        {children}
-      </TrashFilesContext.Provider>
-    </FilesContext.Provider>
+    <FilesStateContext.Provider
+      value={{ myFiles, myFilesLoading, trashFiles, trashLoading }}
+    >
+      {children}
+    </FilesStateContext.Provider>
   );
 }
 
 export function useMyFiles() {
-  return useContext(FilesContext);
+  return useContext(FilesStateContext).myFiles;
+}
+
+export function useMyFilesLoading() {
+  return useContext(FilesStateContext).myFilesLoading;
 }
 
 export function useTrashFiles() {
-  return useContext(TrashFilesContext);
+  return useContext(FilesStateContext).trashFiles;
+}
+
+export function useTrashFilesLoading() {
+  return useContext(FilesStateContext).trashLoading;
 }

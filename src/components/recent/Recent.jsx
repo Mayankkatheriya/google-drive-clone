@@ -3,12 +3,11 @@
 import React, { Suspense, lazy, useMemo } from "react";
 import PageHeader from "../common/PageHeader";
 import { Page } from "../common/PageShell";
-import { useMyFiles } from "@/context/FilesContext";
+import { useMyFiles, useMyFilesLoading } from "@/context/FilesContext";
 import LoaderContainer from "../loaders/LoaderContainer";
-import { delayInRender } from "../common/common";
 import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
 
-const FilesList = lazy(() => delayInRender(import("../common/FilesList")));
+const FilesList = lazy(() => import("../common/FilesList"));
 
 function getActivityTime(file) {
   return (
@@ -20,6 +19,7 @@ function getActivityTime(file) {
 
 const Recent = () => {
   const files = useMyFiles();
+  const filesLoading = useMyFilesLoading();
   const recentFiles = useMemo(
     () =>
       [...files]
@@ -34,14 +34,18 @@ const Recent = () => {
         pageTitle="Recents"
         subtitle={PAGE_SUBTITLES.recent.subtitle}
       />
-      <Suspense fallback={<LoaderContainer />}>
-        <FilesList
-          data={recentFiles}
-          imagePath={"/recent.svg"}
-          text1={"No recent files"}
-          text2={"See all the files you've recently edited or added"}
-        />
-      </Suspense>
+      {filesLoading ? (
+        <LoaderContainer grid />
+      ) : (
+        <Suspense fallback={<LoaderContainer grid />}>
+          <FilesList
+            data={recentFiles}
+            imagePath={"/recent.svg"}
+            text1={"No recent files"}
+            text2={"See all the files you've recently edited or added"}
+          />
+        </Suspense>
+      )}
     </Page>
   );
 };

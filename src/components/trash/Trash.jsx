@@ -3,15 +3,15 @@
 import React, { Suspense, lazy } from "react";
 import PageHeader from "../common/PageHeader";
 import { Page } from "../common/PageShell";
-import { useTrashFiles } from "@/context/FilesContext";
+import { useTrashFiles, useTrashFilesLoading } from "@/context/FilesContext";
 import LoaderContainer from "../loaders/LoaderContainer";
-import { delayInRender } from "../common/common";
 import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
 import { getTrashRetentionLabel } from "@/lib/trashRetention";
-const FilesList = lazy(() => delayInRender(import("../common/FilesList")));
+const FilesList = lazy(() => import("../common/FilesList"));
 
 const Trash = () => {
   const files = useTrashFiles();
+  const filesLoading = useTrashFilesLoading();
 
   return (
     <Page>
@@ -19,15 +19,19 @@ const Trash = () => {
         pageTitle="Trash"
         subtitle={PAGE_SUBTITLES.trash.subtitle}
       />
-      <Suspense fallback={<LoaderContainer />}>
-        <FilesList
-          data={files}
-          page={"trash"}
-          imagePath={"/trash.svg"}
-          text1={"Nothing in trash"}
-          text2={`Move items you don't need to trash. They are permanently deleted after ${getTrashRetentionLabel()}.`}
-        />
-      </Suspense>
+      {filesLoading ? (
+        <LoaderContainer grid />
+      ) : (
+        <Suspense fallback={<LoaderContainer grid />}>
+          <FilesList
+            data={files}
+            page={"trash"}
+            imagePath={"/trash.svg"}
+            text1={"Nothing in trash"}
+            text2={`Move items you don't need to trash. They are permanently deleted after ${getTrashRetentionLabel()}.`}
+          />
+        </Suspense>
+      )}
     </Page>
   );
 };

@@ -7,6 +7,7 @@ import { getFilesForUser, getTrashFiles } from "@/components/common/firebaseApi"
 
 export function useUserFiles(collection) {
   const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let unsubscribeFiles;
@@ -18,12 +19,19 @@ export function useUserFiles(collection) {
       }
 
       if (user) {
+        setLoading(true);
+        const onFilesUpdate = (updater) => {
+          setFiles(updater);
+          setLoading(false);
+        };
+
         unsubscribeFiles =
           collection === "trash"
-            ? getTrashFiles(user.uid, setFiles)
-            : getFilesForUser(user.uid, setFiles);
+            ? getTrashFiles(user.uid, onFilesUpdate)
+            : getFilesForUser(user.uid, onFilesUpdate);
       } else {
         setFiles([]);
+        setLoading(false);
       }
     });
 
@@ -35,5 +43,5 @@ export function useUserFiles(collection) {
     };
   }, [collection]);
 
-  return files;
+  return { files, loading };
 }

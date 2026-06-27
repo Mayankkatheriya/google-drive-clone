@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { auth, provider } from "../../firebase";
-import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import { signInWithPopup, signOut } from "firebase/auth";
 import { useDispatch, useSelector } from "react-redux";
 import {
   selectUserName,
@@ -13,30 +13,20 @@ import {
 } from "../../store/UserSlice";
 import { selectSidebarBool, setSidebarBool } from "../../store/BoolSlice";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthProvider";
 import LogoWrapperComponent from "./LogoWrapper";
 import SearchBar from "./SearchBar";
 import LeftIcons from "./LeftIcons";
 import ProfileSection from "./ProfileSection";
-import NewUploadButton from "../common/NewUploadButton";
-import { useFileUploadContext } from "@/context/FileUploadContext";
 
 const Header = () => {
   const dispatch = useDispatch();
+  const { authReady } = useAuth();
   const userName = useSelector(selectUserName);
   const userPhoto = useSelector(selectUserPhoto);
   const sidebarBool = useSelector(selectSidebarBool);
   const [showSearch, setShowSearch] = useState(false);
   const router = useRouter();
-  const upload = useFileUploadContext();
-
-  useEffect(() => {
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUser(user);
-        router.push("/home");
-      }
-    });
-  }, [userName]);
 
   const handleAuth = async () => {
     if (!userName) {
@@ -76,16 +66,10 @@ const Header = () => {
             userName={userName}
             sidebarOpen={sidebarBool}
           />
-          {userName && !sidebarBool && (
-            <NewUploadButton
-              variant="header"
-              onClick={() => upload.setOpen(true)}
-            />
-          )}
         </Left>
 
         {/* Center — hidden on mobile */}
-        {userName && (
+        {authReady && userName && (
           <Center>
             <SearchBar />
           </Center>
@@ -93,7 +77,7 @@ const Header = () => {
 
         {/* Right */}
         <Right>
-          {!userName ? (
+          {!authReady ? null : !userName ? (
             <LoginBtn onClick={handleAuth}>Sign in</LoginBtn>
           ) : (
             <>

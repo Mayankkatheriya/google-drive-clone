@@ -10,11 +10,13 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
 import { auth, provider } from "../../firebase";
-import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
-import { useDispatch } from "react-redux";
-import { setUserLoginDetails } from "../../store/UserSlice";
+import { signInWithPopup } from "firebase/auth";
+import { useDispatch, useSelector } from "react-redux";
+import { setUserLoginDetails, selectUserName } from "../../store/UserSlice";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthProvider";
+import AuthSplash from "../common/AuthSplash";
 import DiskDriveLogo from "../common/DiskDriveLogo";
 
 const GoogleG = () => (
@@ -56,6 +58,8 @@ const SIGNIN_POINTS = [
 const Login = () => {
   const dispatch = useDispatch();
   const router = useRouter();
+  const { authReady } = useAuth();
+  const userName = useSelector(selectUserName);
   const [loading, setLoading] = useState(false);
 
   const setUser = (user) => {
@@ -69,14 +73,10 @@ const Login = () => {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
-        router.push("/home");
-      }
-    });
-    return unsubscribe;
-  }, [router]);
+    if (authReady && userName) {
+      router.replace("/home");
+    }
+  }, [authReady, userName, router]);
 
   const handleAuth = async () => {
     if (loading) return;
@@ -90,6 +90,10 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  if (!authReady || userName) {
+    return <AuthSplash variant="login" />;
+  }
 
   return (
     <Page>

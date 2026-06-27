@@ -2,23 +2,23 @@
 
 import styled from "styled-components";
 import { useState, useEffect, Suspense, lazy } from "react";
-import { useMyFiles } from "@/context/FilesContext";
+import { useMyFiles, useMyFilesLoading } from "@/context/FilesContext";
 import { getQuickAccessFiles } from "@/lib/quickAccess";
 import RecentDataGrid from "./RecentDataGrid";
 import MainData from "./MainData";
 import PageHeader from "../common/PageHeader";
 import { Page } from "../common/PageShell";
 import LoaderContainer from "../loaders/LoaderContainer";
-import { delayInRender } from "../common/common";
 import { getUploadHelpText } from "@/lib/uploadLimits";
 import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
 
-const FilesList = lazy(() => delayInRender(import("../common/FilesList")));
+const FilesList = lazy(() => import("../common/FilesList"));
 
 const VIEW_STORAGE_KEY = "driveViewMode";
 
 const Data = () => {
   const files = useMyFiles();
+  const filesLoading = useMyFilesLoading();
   const [viewMode, setViewMode] = useState("list");
   const quickAccessFiles = getQuickAccessFiles(files);
 
@@ -53,8 +53,10 @@ const Data = () => {
 
       <Section>
         {files.length > 0 && <SectionLabel>All Files</SectionLabel>}
-        {viewMode === "grid" ? (
-          <Suspense fallback={<LoaderContainer />}>
+        {filesLoading ? (
+          <LoaderContainer grid={viewMode === "grid"} compact={viewMode === "grid"} />
+        ) : viewMode === "grid" ? (
+          <Suspense fallback={<LoaderContainer grid compact />}>
             <FilesList
               data={files}
               page="drive"
