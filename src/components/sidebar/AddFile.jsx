@@ -6,7 +6,7 @@ import NewUploadButton from "../common/NewUploadButton";
 
 const AddFile = ({ onClick }) => {
   return (
-    <Wrap>
+    <Wrap data-tour="upload">
       <NewUploadButton variant="sidebar" onClick={onClick} />
     </Wrap>
   );

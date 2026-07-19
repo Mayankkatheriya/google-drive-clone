@@ -10,8 +10,8 @@ import {
 import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import { toast } from "react-toastify";
 import LottieImage from "../common/LottieImage";
-import { getFileDownloadUrl } from "../../lib/fileAccess";
-import { createAndCopyShareLink } from "@/lib/shareLink";
+import { getFileDownloadUrl, copyFileLinkWithToast } from "../../lib/fileAccess";
+import { createAndCopyShareLinkWithToast } from "@/lib/shareLink";
 import { useFilePreview } from "@/context/FilePreviewContext";
 import { useCompare } from "@/context/CompareContext";
 import { getUploadHelpText } from "@/lib/uploadLimits";
@@ -131,21 +131,18 @@ const MainData = ({ files, focusMode = false }) => {
 
   const handleCopyLink = useCallback(async (fileData) => {
     try {
-      const url = await getFileDownloadUrl(fileData);
-      await navigator.clipboard.writeText(url);
-      toast.success("Link Copied");
+      await copyFileLinkWithToast(fileData);
     } catch {
-      toast.error("Unable to copy link");
+      // toast handled inside copyFileLinkWithToast
     }
   }, []);
 
   const handleOneTimeLink = useCallback(async (fileId) => {
+    setOptionsVisible(null);
     try {
-      await createAndCopyShareLink(fileId);
-      toast.success("One-time link copied — expires after first open");
-      setOptionsVisible(null);
+      await createAndCopyShareLinkWithToast(fileId);
     } catch {
-      toast.error("Unable to create one-time link");
+      // toast handled inside createAndCopyShareLinkWithToast
     }
   }, []);
 

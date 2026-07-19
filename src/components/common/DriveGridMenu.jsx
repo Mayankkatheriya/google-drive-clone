@@ -14,14 +14,24 @@ import {
   StarFilledIcon,
   OneTimeLinkIcon,
 } from "./SvgIcons";
+import AutoDeleteIcon from "@mui/icons-material/AutoDeleteOutlined";
 import { changeBytes, convertDates } from "./common";
-import { downloadFile, getFileDownloadUrl } from "../../lib/fileAccess";
+import {
+  downloadFileWithToast,
+  getFileDownloadUrl,
+  copyFileLinkWithToast,
+} from "../../lib/fileAccess";
 import { handleRenameFile, handleStarred } from "./firebaseApi";
 import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import { useMenuPlacement } from "@/hooks/useMenuPlacement";
 import { toast } from "react-toastify";
 import ShareButtons from "./ShareButtons";
-import { createAndCopyShareLink } from "@/lib/shareLink";
+import { createAndCopyShareLinkWithToast } from "@/lib/shareLink";
+import {
+  hasSelfDestruct,
+  getSelfDestructRemainingLabel,
+} from "@/lib/selfDestruct";
+import { useSelfDestruct } from "@/context/SelfDestructProvider";
 import Tooltip from "./Tooltip";
 
 export function DriveGridMenu({
@@ -35,31 +45,30 @@ export function DriveGridMenu({
   menuRef,
 }) {
   const { confirmMoveToTrash } = useFileTrashActions();
+  const openSelfDestruct = useSelfDestruct();
   const triggerRef = useRef(null);
   const { top, right, flip, ready } = useMenuPlacement(
     triggerRef,
     menuRef,
     isOpen,
   );
+  const sdActive = hasSelfDestruct(file.data);
 
   const handleCopyLink = async () => {
+    onToggle(null);
     try {
-      const url = await getFileDownloadUrl(file.data);
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copied");
-      onToggle(null);
+      await copyFileLinkWithToast(file.data);
     } catch {
-      toast.error("Unable to copy link");
+      // toast handled inside copyFileLinkWithToast
     }
   };
 
   const handleOneTimeLink = async () => {
+    onToggle(null);
     try {
-      await createAndCopyShareLink(file.id);
-      toast.success("One-time link copied — expires after first open");
-      onToggle(null);
+      await createAndCopyShareLinkWithToast(file.id);
     } catch {
-      toast.error("Unable to create one-time link");
+      // toast handled inside createAndCopyShareLinkWithToast
     }
   };
 
@@ -94,7 +103,7 @@ export function DriveGridMenu({
             style={{ top, right }}
             onClick={(event) => event.stopPropagation()}
           >
-            <MenuItem onClick={() => downloadFile(file.data)}>
+            <MenuItem onClick={() => downloadFileWithToast(file.data)}>
               <DownloadIcon /> Download
             </MenuItem>
             <MenuItem onClick={handleCopyLink}>
@@ -112,6 +121,7 @@ export function DriveGridMenu({
                 <ShareButtons
                   url={shareUrl}
                   filename={file.data.filename}
+                  fileData={file.data}
                   layout="expand"
                 />
               </ShareExpand>
@@ -119,6 +129,17 @@ export function DriveGridMenu({
             <MenuDivider />
             <MenuItem onClick={() => onRename(file.id, file.data.filename)}>
               <RenameIcon /> Rename
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                onToggle(null);
+                openSelfDestruct(file.id, file.data);
+              }}
+            >
+              <AutoDeleteIcon />{" "}
+              {sdActive
+                ? `Self-destruct · ${getSelfDestructRemainingLabel(file.data)}`
+                : "Self-destruct"}
             </MenuItem>
             <MenuItem onClick={() => handleStarred(file.id)}>
               {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}

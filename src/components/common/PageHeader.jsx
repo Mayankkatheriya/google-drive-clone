@@ -58,7 +58,7 @@ const PageHeader = ({
           )}
         </TitleBlock>
         {showViewToggle && (
-          <ViewActions>
+          <ViewActions data-tour="view">
             <Tooltip label="List view" iconOnly>
               <ActionBtn
                 $active={viewMode === "list"}
@@ -88,6 +88,7 @@ const PageHeader = ({
               $active={focusActive}
               onClick={handleFocusToggle}
               aria-pressed={focusActive}
+              data-tour="focus"
             >
               <CenterFocusStrongRoundedIcon />
               <span>{focusActive ? "Focusing" : "Focus"}</span>
@@ -99,6 +100,7 @@ const PageHeader = ({
               $active={compareActive}
               onClick={handleCompareToggle}
               aria-pressed={compareActive}
+              data-tour="compare"
             >
               <CompareArrowsRoundedIcon />
               <span>{compareActive ? "Comparing" : "Compare"}</span>

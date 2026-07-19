@@ -16,7 +16,8 @@ function fileEntryEqual(a, b) {
     da.userId === db.userId &&
     tsSeconds(da.timestamp) === tsSeconds(db.timestamp) &&
     tsSeconds(da.lastOpenedAt) === tsSeconds(db.lastOpenedAt) &&
-    tsSeconds(da.trashedAt) === tsSeconds(db.trashedAt)
+    tsSeconds(da.trashedAt) === tsSeconds(db.trashedAt) &&
+    tsSeconds(da.selfDestructAt) === tsSeconds(db.selfDestructAt)
   );
 }
 

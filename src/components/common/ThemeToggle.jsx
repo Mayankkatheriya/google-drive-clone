@@ -41,6 +41,7 @@ export function ThemeToggle({ size = "md" }) {
       <ToggleBtn
         type="button"
         role="switch"
+        data-tour="theme"
         aria-checked={isDark}
         aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
         onClick={toggleTheme}

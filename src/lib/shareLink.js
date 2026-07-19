@@ -1,4 +1,5 @@
 import { auth } from "@/firebase";
+import { toast } from "react-toastify";
 
 async function getAuthHeaders() {
   const user = auth.currentUser;
@@ -32,4 +33,28 @@ export async function createAndCopyShareLink(fileId) {
   const { url } = await createShareLink(fileId);
   await navigator.clipboard.writeText(url);
   return url;
+}
+
+export async function createAndCopyShareLinkWithToast(fileId) {
+  const toastId = toast.loading("Generating one-time link…");
+  try {
+    const url = await createAndCopyShareLink(fileId);
+    toast.update(toastId, {
+      render: "One-time link copied — expires after first open",
+      type: "success",
+      isLoading: false,
+      autoClose: 4000,
+      closeOnClick: true,
+    });
+    return url;
+  } catch (error) {
+    toast.update(toastId, {
+      render: "Unable to create one-time link",
+      type: "error",
+      isLoading: false,
+      autoClose: 4000,
+      closeOnClick: true,
+    });
+    throw error;
+  }
 }

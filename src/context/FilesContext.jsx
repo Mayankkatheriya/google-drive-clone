@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo } from "react";
 import { useUserFiles } from "@/hooks/useUserFiles";
 import { useTrashAutoPurge } from "@/hooks/useTrashAutoPurge";
+import { useSelfDestructPurge } from "@/hooks/useSelfDestructPurge";
 
 const MyFilesContext = createContext({ files: [], loading: true });
 const TrashFilesContext = createContext({ files: [], loading: true });
@@ -11,6 +12,7 @@ export function FilesProvider({ children }) {
   const { files: myFiles, loading: myFilesLoading } = useUserFiles("myfiles");
   const { files: trashFiles, loading: trashLoading } = useUserFiles("trash");
   useTrashAutoPurge();
+  useSelfDestructPurge(myFiles);
 
   const myFilesValue = useMemo(
     () => ({ files: myFiles, loading: myFilesLoading }),

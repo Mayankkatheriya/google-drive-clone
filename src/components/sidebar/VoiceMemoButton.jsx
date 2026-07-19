@@ -5,7 +5,7 @@ import MicRoundedIcon from "@mui/icons-material/MicRounded";
 
 export default function VoiceMemoButton({ onClick }) {
   return (
-    <Btn type="button" onClick={onClick}>
+    <Btn type="button" onClick={onClick} data-tour="voice-memo">
       <MicRoundedIcon />
       <span>Voice memo</span>
     </Btn>

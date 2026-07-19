@@ -27,7 +27,7 @@ const MobileBottomNav = () => {
 
   return (
     <>
-      <NavBar aria-label="Main navigation">
+      <NavBar aria-label="Main navigation" data-tour="mobile-nav">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (
@@ -45,6 +45,7 @@ const MobileBottomNav = () => {
         <Fab
           onClick={() => upload.setOpen(true)}
           aria-label="Upload new file"
+          data-tour="upload-fab"
         >
           <AddIcon />
         </Fab>

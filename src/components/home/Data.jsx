@@ -76,7 +76,7 @@ const Data = () => {
         </QuickSection>
       )}
 
-      <Section $focus={focusActive}>
+      <Section $focus={focusActive} data-tour="files">
         {visibleFiles.length > 0 && (
           <SectionLabel>
             {focusActive ? "Your files" : "All Files"}

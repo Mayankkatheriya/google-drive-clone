@@ -10,6 +10,8 @@ import {
   where,
   addDoc,
   serverTimestamp,
+  Timestamp,
+  deleteField,
 } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { deleteFileFromS3 } from "../../lib/fileAccess";
@@ -75,17 +77,48 @@ const handleRestoreFromTrash = async (id, fileData) => {
   }
 };
 
-const moveToTrash = async (id, fileData) => {
+const moveToTrash = async (id, fileData, { silent = false } = {}) => {
   try {
+    const { selfDestructAt, ...rest } = fileData || {};
     await addDoc(collection(db, "trash"), {
-      ...fileData,
+      ...rest,
       trashedAt: serverTimestamp(),
     });
     await deleteDoc(doc(db, "myfiles", id));
-    toast.warn("File moved to trash");
+    if (!silent) toast.warn("File moved to trash");
+    return true;
   } catch (error) {
     console.error("Error moving file to trash: ", error);
-    toast.error("Failed to move file to trash");
+    if (!silent) toast.error("Failed to move file to trash");
+    return false;
+  }
+};
+
+const setSelfDestruct = async (id, expiresAtMs) => {
+  try {
+    await updateDoc(doc(db, "myfiles", id), {
+      selfDestructAt: Timestamp.fromMillis(expiresAtMs),
+    });
+    toast.success("Self-destruct timer set");
+    return true;
+  } catch (error) {
+    console.error("Error setting self-destruct timer: ", error);
+    toast.error("Failed to set self-destruct timer");
+    return false;
+  }
+};
+
+const clearSelfDestruct = async (id) => {
+  try {
+    await updateDoc(doc(db, "myfiles", id), {
+      selfDestructAt: deleteField(),
+    });
+    toast.success("Self-destruct timer removed");
+    return true;
+  } catch (error) {
+    console.error("Error removing self-destruct timer: ", error);
+    toast.error("Failed to remove self-destruct timer");
+    return false;
   }
 };
 
@@ -192,4 +225,6 @@ export {
   handleRestoreFromTrash,
   handleRenameFile,
   markFileOpened,
+  setSelfDestruct,
+  clearSelfDestruct,
 };

@@ -74,7 +74,7 @@ export async function createPresignedUploadUrl(s3Key, contentType) {
 
 export async function createPresignedDownloadUrl(
   s3Key,
-  { disposition = "inline", filename } = {}
+  { disposition = "inline", filename, expiresIn = 900 } = {}
 ) {
   const command = new GetObjectCommand({
     Bucket: getRequiredEnv("S3_BUCKET_NAME"),
@@ -84,7 +84,7 @@ export async function createPresignedDownloadUrl(
     }),
   });
 
-  return getSignedUrl(getS3Client(), command, { expiresIn: 900 });
+  return getSignedUrl(getS3Client(), command, { expiresIn });
 }
 
 export async function deleteObject(s3Key) {

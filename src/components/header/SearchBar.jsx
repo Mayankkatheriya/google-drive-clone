@@ -101,7 +101,11 @@ const SearchBar = ({ variant = "desktop", onClose }) => {
   const showDropdown = open && debouncedQuery.trim().length > 0;
 
   return (
-    <Wrap ref={wrapRef} $variant={variant}>
+    <Wrap
+      ref={wrapRef}
+      $variant={variant}
+      data-tour={variant === "mobile" ? undefined : "search"}
+    >
       <InputShell $focused={open}>
         <SearchOutlinedIcon className="search-icon" />
         <input

@@ -40,7 +40,7 @@ const SidebarTabs = () => {
 
   return (
     <Wrap>
-      <Nav>
+      <Nav data-tour="nav">
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <NavItem $active={pathname === item.href}>
@@ -70,7 +70,7 @@ const SidebarTabs = () => {
       </Nav>
 
       {/* Storage bar */}
-      <StorageSection onClick={() => setOpenStorageModal(true)}>
+      <StorageSection data-tour="storage" onClick={() => setOpenStorageModal(true)}>
         <StorageHeader>
           <HardDriveOutlinedIcon style={{ fontSize: 14, color: "var(--text-3)" }} />
           <StorageLabel>{storage} <span>/ {storageLimitLabel}</span></StorageLabel>

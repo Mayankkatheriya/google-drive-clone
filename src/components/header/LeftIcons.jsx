@@ -24,6 +24,7 @@ const LeftIcons = () => {
         <IconBtn
           onClick={() => dispatch(setHelpModal(true))}
           aria-label="Help"
+          data-tour="help"
         >
           <HelpIcon />
         </IconBtn>

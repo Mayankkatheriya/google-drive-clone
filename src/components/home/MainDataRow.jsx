@@ -14,14 +14,20 @@ import {
   RenameIcon,
   OneTimeLinkIcon,
 } from "../common/SvgIcons";
+import AutoDeleteIcon from "@mui/icons-material/AutoDeleteOutlined";
 import { changeBytes, convertDates } from "../common/common";
 import FileIcons from "../common/FileIcons";
 import SecureFileLink from "../common/SecureFileLink";
 import ShareButtons from "../common/ShareButtons";
-import { downloadFile } from "../../lib/fileAccess";
+import { downloadFileWithToast } from "../../lib/fileAccess";
 import { useMenuPlacement } from "@/hooks/useMenuPlacement";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
 import { canCompareFile } from "@/lib/compareFiles";
+import {
+  hasSelfDestruct,
+  getSelfDestructRemainingLabel,
+} from "@/lib/selfDestruct";
+import { useSelfDestruct } from "@/context/SelfDestructProvider";
 import CompareSelectMark from "../common/CompareSelectMark";
 import Tooltip from "../common/Tooltip";
 
@@ -39,11 +45,13 @@ function FileRowOptionsMenu({
   menuRef,
 }) {
   const triggerRef = useRef(null);
+  const openSelfDestruct = useSelfDestruct();
   const { top, right, flip, ready } = useMenuPlacement(
     triggerRef,
     menuRef,
     isOpen,
   );
+  const sdActive = hasSelfDestruct(file.data);
 
   return (
     <>
@@ -67,7 +75,7 @@ function FileRowOptionsMenu({
             $flip={flip}
             style={{ top, right }}
           >
-            <MenuItem onClick={() => downloadFile(file.data)}>
+            <MenuItem onClick={() => downloadFileWithToast(file.data)}>
               <DownloadIcon /> Download
             </MenuItem>
             <MenuItem onClick={() => onCopyLink(file.data)}>
@@ -88,6 +96,7 @@ function FileRowOptionsMenu({
                 <ShareButtons
                   url={shareUrl}
                   filename={file.data.filename}
+                  fileData={file.data}
                   layout="expand"
                 />
               </ShareExpand>
@@ -95,6 +104,17 @@ function FileRowOptionsMenu({
             <MenuDivider />
             <MenuItem onClick={() => onRename(file.id, file.data.filename)}>
               <RenameIcon /> Rename
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                onToggle();
+                openSelfDestruct(file.id, file.data);
+              }}
+            >
+              <AutoDeleteIcon />{" "}
+              {sdActive
+                ? `Self-destruct · ${getSelfDestructRemainingLabel(file.data)}`
+                : "Self-destruct"}
             </MenuItem>
             <MenuDivider />
             <MenuItem $danger onClick={() => onDelete(file.id, file.data)}>
@@ -149,6 +169,8 @@ function MainDataRow({
     file.data.filename,
   );
   const comparable = canCompareFile(file.data.contentType);
+  const openSelfDestruct = useSelfDestruct();
+  const sdActive = hasSelfDestruct(file.data);
 
   return (
     <Row
@@ -230,6 +252,14 @@ function MainDataRow({
                 </FileName>
               </Tooltip>
             )}
+            {hasSelfDestruct(file.data) && (
+              <Tooltip label="Auto-deletes to Trash">
+                <SelfDestructPill>
+                  <AutoDeleteIcon />
+                  {getSelfDestructRemainingLabel(file.data)}
+                </SelfDestructPill>
+              </Tooltip>
+            )}
             <MobileMeta>
               {changeBytes(file.data.size)} ·{" "}
               {convertDates(file.data.timestamp?.seconds)}
@@ -258,7 +288,7 @@ function MainDataRow({
       <ActionsCol>
         <HoverActions className="hover-actions">
           <Tooltip label="Download" iconOnly>
-            <QuickBtn onClick={() => downloadFile(file.data)}>
+            <QuickBtn onClick={() => downloadFileWithToast(file.data)}>
               <DownloadIcon />
             </QuickBtn>
           </Tooltip>
@@ -284,13 +314,32 @@ function MainDataRow({
             </Tooltip>
             {isShareOpen && shareUrl && (
               <ShareBar className="share-popover">
-                <ShareButtons url={shareUrl} filename={file.data.filename} />
+                <ShareButtons
+                  url={shareUrl}
+                  filename={file.data.filename}
+                  fileData={file.data}
+                />
               </ShareBar>
             )}
           </ShareWrap>
           <Tooltip label="Rename" iconOnly>
             <QuickBtn onClick={onRenameStart}>
               <RenameIcon />
+            </QuickBtn>
+          </Tooltip>
+          <Tooltip
+            label={
+              sdActive
+                ? `Self-destruct · ${getSelfDestructRemainingLabel(file.data)}`
+                : "Self-destruct"
+            }
+            iconOnly
+          >
+            <QuickBtn
+              $active={sdActive}
+              onClick={() => openSelfDestruct(file.id, file.data)}
+            >
+              <AutoDeleteIcon />
             </QuickBtn>
           </Tooltip>
           <Tooltip label="Delete" iconOnly>
@@ -572,6 +621,25 @@ const RenameInput = styled.input`
   font-weight: 500;
   outline: none;
   box-shadow: 0 0 0 3px var(--primary-subtle);
+`;
+
+const SelfDestructPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  margin-top: 3px;
+  padding: 1px 7px 1px 5px;
+  border-radius: var(--radius-full);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.6;
+
+  svg {
+    font-size: 13px;
+  }
 `;
 
 const MobileMeta = styled.span`

@@ -9,8 +9,11 @@ import { FilePreviewProvider } from "@/context/FilePreviewContext";
 import { CompareProvider } from "@/context/CompareContext";
 import { FocusProvider } from "@/context/FocusContext";
 import { FileUploadProvider } from "@/context/FileUploadContext";
+import { SelfDestructProvider } from "@/context/SelfDestructProvider";
+import { TourProvider } from "@/context/TourProvider";
 import FilePreviewModal from "@/components/common/FilePreviewModal";
 import CompareModal from "@/components/common/CompareModal";
+import CommandPalette from "@/components/common/CommandPalette";
 import FocusLayoutGate from "@/components/common/FocusLayoutGate";
 import SidebarPlaceholder from "@/components/sidebar/SidebarPlaceholder";
 
@@ -35,6 +38,8 @@ export default function HomeLayout({ children }) {
         <CompareProvider>
           <FocusProvider>
             <FileUploadProvider>
+              <TourProvider>
+              <SelfDestructProvider>
               <ProtectedRoute>
                 <AppShell>
                   <Header />
@@ -54,6 +59,9 @@ export default function HomeLayout({ children }) {
               <DropZone />
               <FilePreviewModal />
               <CompareModal />
+              <CommandPalette />
+              </SelfDestructProvider>
+              </TourProvider>
             </FileUploadProvider>
           </FocusProvider>
         </CompareProvider>

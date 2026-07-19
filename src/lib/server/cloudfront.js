@@ -22,7 +22,11 @@ function getCloudFrontConfig() {
   return { domain, keyPairId, privateKey };
 }
 
-function createCloudFrontSignedUrl(s3Key, config, { disposition, filename } = {}) {
+function createCloudFrontSignedUrl(
+  s3Key,
+  config,
+  { disposition, filename, expiresIn = URL_EXPIRY_SECONDS } = {}
+) {
   const params = new URLSearchParams();
 
   if (filename) {
@@ -39,13 +43,13 @@ function createCloudFrontSignedUrl(s3Key, config, { disposition, filename } = {}
     url,
     keyPairId: config.keyPairId,
     privateKey: config.privateKey,
-    dateLessThan: new Date(Date.now() + URL_EXPIRY_SECONDS * 1000).toISOString(),
+    dateLessThan: new Date(Date.now() + expiresIn * 1000).toISOString(),
   });
 }
 
 export async function createDownloadUrl(
   s3Key,
-  { disposition = "inline", filename } = {}
+  { disposition = "inline", filename, expiresIn = URL_EXPIRY_SECONDS } = {}
 ) {
   const cloudFrontConfig = getCloudFrontConfig();
 
@@ -54,11 +58,12 @@ export async function createDownloadUrl(
       return createCloudFrontSignedUrl(s3Key, cloudFrontConfig, {
         disposition,
         filename,
+        expiresIn,
       });
     } catch (error) {
       console.error("CloudFront signing failed, falling back to S3:", error.message);
     }
   }
 
-  return createPresignedDownloadUrl(s3Key, { disposition, filename });
+  return createPresignedDownloadUrl(s3Key, { disposition, filename, expiresIn });
 }

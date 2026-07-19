@@ -11,6 +11,8 @@ import StorageModal from "../common/StorageModal";
 import { useStorageInfo } from "@/hooks/useStorageInfo";
 import { useTheme } from "@/context/ThemeContext";
 import { ThemeToggle } from "../common/ThemeToggle";
+import { useTour } from "@/context/TourProvider";
+import ExploreOutlinedIcon from "@mui/icons-material/ExploreOutlined";
 
 const ProfileSection = ({
   userPhoto,
@@ -26,6 +28,7 @@ const ProfileSection = ({
   const openHelp = useSelector(selectHelpModal);
   const { isDark } = useTheme();
   const { storage, storageLimitLabel, storagePercent } = useStorageInfo();
+  const startTour = useTour();
 
   useEffect(() => {
     const handler = (e) => {
@@ -56,11 +59,12 @@ const ProfileSection = ({
         onClick={setShowSearch}
         aria-label="Toggle search"
         className="mobile-only"
+        data-tour="mobile-search"
       >
         {showSearch ? <CloseIcon /> : <SearchIcons />}
       </IconBtn>
 
-      <AvatarWrap ref={ref}>
+      <AvatarWrap ref={ref} data-tour="profile">
         <AvatarBtn onClick={() => setOpen((p) => !p)} aria-label="Account menu">
           {showPhoto ? (
             <Avatar
@@ -95,7 +99,7 @@ const ProfileSection = ({
               </UserMeta>
             </UserRow>
 
-            <MobileMenuItems>
+            <MenuItems>
               <MenuBtn
                 onClick={() => {
                   closeMenu();
@@ -127,16 +131,35 @@ const ProfileSection = ({
                 </MenuIconWrap>
                 <MenuBtnBody>
                   <MenuBtnLabel>Help &amp; Support</MenuBtnLabel>
+                  <MenuBtnSub>Guides, tips &amp; contact</MenuBtnSub>
                 </MenuBtnBody>
               </MenuBtn>
 
-              <ThemeRow>
-                <ThemeRowLabel>
-                  <MenuBtnLabel>{isDark ? "Dark mode" : "Light mode"}</MenuBtnLabel>
-                </ThemeRowLabel>
-                <ThemeToggle size="sm" />
-              </ThemeRow>
-            </MobileMenuItems>
+              <MenuBtn
+                onClick={() => {
+                  closeMenu();
+                  startTour();
+                }}
+              >
+                <MenuIconWrap $accent>
+                  <ExploreOutlinedIcon style={{ fontSize: 18 }} />
+                </MenuIconWrap>
+                <MenuBtnBody>
+                  <MenuBtnLabel>Take a tour</MenuBtnLabel>
+                  <MenuBtnSub>Replay the quick walkthrough</MenuBtnSub>
+                </MenuBtnBody>
+              </MenuBtn>
+
+              <MobileOnly>
+                <ThemeRow>
+                  <ThemeRowLabel>
+                    <MenuBtnLabel>{isDark ? "Dark mode" : "Light mode"}</MenuBtnLabel>
+                    <MenuBtnSub>Tap to switch theme</MenuBtnSub>
+                  </ThemeRowLabel>
+                  <ThemeToggle size="sm" />
+                </ThemeRow>
+              </MobileOnly>
+            </MenuItems>
 
             <Divider />
             <SignOutBtn
@@ -309,14 +332,18 @@ const UserSub = styled.p`
   margin-top: 1px;
 `;
 
-const MobileMenuItems = styled.div`
-  display: none;
+const MenuItems = styled.div`
+  display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 4px 0 8px;
+`;
 
-  @media (max-width: 768px) {
-    display: flex;
+const MobileOnly = styled.div`
+  display: contents;
+
+  @media (min-width: 769px) {
+    display: none;
   }
 `;
 
@@ -345,8 +372,8 @@ const MenuIconWrap = styled.div`
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background: var(--surface-2);
-  color: var(--text-2);
+  background: ${(p) => (p.$accent ? "var(--primary-light)" : "var(--surface-2)")};
+  color: ${(p) => (p.$accent ? "var(--primary)" : "var(--text-2)")};
   flex-shrink: 0;
 
   svg {
@@ -410,6 +437,7 @@ const Divider = styled.div`
   background: var(--border-light);
   margin: 4px 0 8px;
 `;
+
 
 const SignOutBtn = styled.button`
   width: 100%;

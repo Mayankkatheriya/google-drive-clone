@@ -13,9 +13,14 @@ import {
   DownloadIcon,
   RestoreIcon,
 } from "./SvgIcons";
-import { downloadFile } from "../../lib/fileAccess";
+import AutoDeleteIcon from "@mui/icons-material/AutoDeleteOutlined";
+import { downloadFileWithToast } from "../../lib/fileAccess";
 import { DriveGridMenu } from "./DriveGridMenu";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
+import {
+  hasSelfDestruct,
+  getSelfDestructRemainingLabel,
+} from "@/lib/selfDestruct";
 import { useCompare } from "@/context/CompareContext";
 import { useFilePreview } from "@/context/FilePreviewContext";
 import { markFileOpened } from "./firebaseApi";
@@ -143,6 +148,12 @@ function FileGridCard({
             <CardMeta>
               <TypeTag>{label}</TypeTag>
               <span>{changeBytes(file.data.size)}</span>
+              {hasSelfDestruct(file.data) && (
+                <SelfDestructTag>
+                  <AutoDeleteIcon />
+                  {getSelfDestructRemainingLabel(file.data)}
+                </SelfDestructTag>
+              )}
             </CardMeta>
           </CardBody>
         </FileLink>
@@ -202,7 +213,7 @@ function FileGridCard({
             <ActionBtn
               onClick={(e) => {
                 e.stopPropagation();
-                downloadFile(file.data);
+                downloadFileWithToast(file.data);
               }}
             >
               <DownloadIcon />
@@ -486,6 +497,23 @@ const TypeTag = styled.span`
   background: var(--surface-3);
   color: var(--text-2);
   flex-shrink: 0;
+`;
+
+const SelfDestructTag = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  padding: 2px 6px 2px 4px;
+  border-radius: 4px;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.65rem;
+  font-weight: 700;
+
+  svg {
+    font-size: 12px;
+  }
 `;
 
 const CardActions = styled.div`

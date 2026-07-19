@@ -1,4 +1,5 @@
 import { auth } from "@/firebase";
+import { toast } from "react-toastify";
 
 async function getAuthHeaders() {
   const user = auth.currentUser;
@@ -13,7 +14,10 @@ async function getAuthHeaders() {
   };
 }
 
-export async function getFileDownloadUrl(fileData, { download = false } = {}) {
+export async function getFileDownloadUrl(
+  fileData,
+  { download = false, expiresIn } = {},
+) {
   const s3Key = fileData?.s3Key;
   if (!s3Key) {
     throw new Error("File not available");
@@ -26,6 +30,7 @@ export async function getFileDownloadUrl(fileData, { download = false } = {}) {
       s3Key,
       filename: fileData.filename,
       disposition: download ? "attachment" : "inline",
+      ...(expiresIn && { expiresIn }),
     }),
   });
 
@@ -36,6 +41,31 @@ export async function getFileDownloadUrl(fileData, { download = false } = {}) {
 
   const { downloadUrl } = await response.json();
   return downloadUrl;
+}
+
+export async function copyFileLinkWithToast(fileData) {
+  const toastId = toast.loading("Copying link…");
+  try {
+    const url = await getFileDownloadUrl(fileData);
+    await navigator.clipboard.writeText(url);
+    toast.update(toastId, {
+      render: "Link copied",
+      type: "success",
+      isLoading: false,
+      autoClose: 4000,
+      closeOnClick: true,
+    });
+    return url;
+  } catch (error) {
+    toast.update(toastId, {
+      render: "Unable to copy link",
+      type: "error",
+      isLoading: false,
+      autoClose: 4000,
+      closeOnClick: true,
+    });
+    throw error;
+  }
 }
 
 export async function downloadFile(fileData) {
@@ -67,6 +97,29 @@ export async function downloadFile(fileData) {
   link.click();
   link.remove();
   URL.revokeObjectURL(blobUrl);
+}
+
+export async function downloadFileWithToast(fileData) {
+  const toastId = toast.loading("Preparing download…");
+  try {
+    await downloadFile(fileData);
+    toast.update(toastId, {
+      render: "Download started",
+      type: "success",
+      isLoading: false,
+      autoClose: 3000,
+      closeOnClick: true,
+    });
+  } catch (error) {
+    toast.update(toastId, {
+      render: "Unable to download file",
+      type: "error",
+      isLoading: false,
+      autoClose: 4000,
+      closeOnClick: true,
+    });
+    throw error;
+  }
 }
 
 export async function purgeExpiredTrash() {
