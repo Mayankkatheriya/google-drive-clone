@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo } from "react";
+import React, { memo, useEffect, useRef } from "react";
 import styled from "styled-components";
 import FileIcons from "./FileIcons";
 import { changeBytes } from "./common";
@@ -22,9 +22,11 @@ import {
   getSelfDestructRemainingLabel,
 } from "@/lib/selfDestruct";
 import { useCompare } from "@/context/CompareContext";
+import { useSelection } from "@/context/SelectionContext";
 import { useFilePreview } from "@/context/FilePreviewContext";
 import { markFileOpened } from "./firebaseApi";
 import { canCompareFile } from "@/lib/compareFiles";
+import { isFolder, getFolderSizeBytes } from "@/lib/folders";
 import CompareSelectMark from "./CompareSelectMark";
 import Tooltip from "./Tooltip";
 
@@ -43,6 +45,10 @@ function FileGridCard({
   onToggleMenu,
   onRename,
   onShareClick,
+  onMove,
+  onShareLink,
+  onVersionHistory,
+  onOpenFolder,
   onRenameValueChange,
   onRenameSubmit,
   onRenameCancel,
@@ -51,69 +57,196 @@ function FileGridCard({
   focusMode = false,
 }) {
   const { active: compareMode, toggleFile, isSelected } = useCompare();
+  const {
+    active: selectMode,
+    toggleItem,
+    isSelected: isSelectSelected,
+  } = useSelection();
   const { open: openPreview } = useFilePreview();
+  const folder = isFolder(file);
   const { bgVar, colorVar, label } = getFileTypeTokens(
     file.data.contentType,
     file.data.filename,
+    folder ? "folder" : file.data.type,
   );
   const driveCompare = isDrivePage && compareMode;
+  const driveSelect = isDrivePage && selectMode;
   const driveFocus = isDrivePage && focusMode;
   const compareSelected = driveCompare && isSelected(file.id);
-  const comparable = canCompareFile(file.data.contentType);
+  const selectSelected = driveSelect && isSelectSelected(file.id);
+  const comparable = !folder && canCompareFile(file.data.contentType);
+  const pickMode = driveCompare || driveSelect;
+  const nameClickTimerRef = useRef(null);
+
+  useEffect(
+    () => () => {
+      if (nameClickTimerRef.current) clearTimeout(nameClickTimerRef.current);
+    },
+    [],
+  );
 
   const openFilePreview = () => {
+    if (folder) {
+      onOpenFolder?.(file.id);
+      return;
+    }
     markFileOpened(file.id);
     openPreview(
       file.data,
-      data.map((item) => item.data),
+      data.filter((item) => !isFolder(item)).map((item) => item.data),
     );
   };
 
+  const handleNameClick = (event) => {
+    if (!isDrivePage || pickMode || driveFocus) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (nameClickTimerRef.current) clearTimeout(nameClickTimerRef.current);
+    nameClickTimerRef.current = setTimeout(() => {
+      openFilePreview();
+      nameClickTimerRef.current = null;
+    }, 300);
+  };
+
+  const handleNameDoubleClick = (event) => {
+    if (!isDrivePage || pickMode || driveFocus) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (nameClickTimerRef.current) {
+      clearTimeout(nameClickTimerRef.current);
+      nameClickTimerRef.current = null;
+    }
+    onRename?.(file.id, file.data.filename);
+  };
+
   const handleCardClick = (event) => {
+    if (
+      event.target.closest(".card-actions") ||
+      event.target.closest(".drive-grid-menu") ||
+      event.target.closest(".drive-grid-menu-trigger") ||
+      event.target.closest("[data-file-name]")
+    ) {
+      return;
+    }
     if (driveFocus) {
       openFilePreview();
       return;
     }
-    if (!driveCompare) return;
-    if (
-      event.target.closest(".card-actions") ||
-      event.target.closest(".drive-grid-menu") ||
-      event.target.closest(".drive-grid-menu-trigger")
-    ) {
+    if (driveSelect) {
+      toggleItem(file);
       return;
     }
+    if (!driveCompare) return;
     if (!comparable) return;
     toggleFile(file);
   };
 
   const iconTile = (
     <IconTile $bgVar={bgVar} $colorVar={colorVar}>
-      <FileIcons type={file.data.contentType} />
+      <FileIcons
+        type={folder ? "folder" : file.data.contentType}
+        itemType={folder ? "folder" : undefined}
+      />
     </IconTile>
+  );
+
+  const bodyContent = (
+    <CardBody>
+      {isDrivePage && isRenaming ? (
+        <RenameInput
+          ref={renameInputRef}
+          value={renameValue}
+          onChange={onRenameValueChange}
+          onBlur={onRenameSubmit}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              onRenameSubmit();
+            }
+            if (event.key === "Escape") {
+              event.preventDefault();
+              onRenameCancel();
+            }
+          }}
+          onClick={(event) => event.stopPropagation()}
+        />
+      ) : (
+        <Tooltip label={file.data.filename} onlyIfTruncated>
+          <CardName
+            data-file-name
+            onClick={handleNameClick}
+            onDoubleClick={handleNameDoubleClick}
+          >
+            {file.data.filename}
+          </CardName>
+        </Tooltip>
+      )}
+      <CardMeta>
+        <TypeTag>{label}</TypeTag>
+        <span>
+          {folder
+            ? changeBytes(getFolderSizeBytes(data, file.id))
+            : changeBytes(file.data.size)}
+        </span>
+        {!folder && hasSelfDestruct(file.data) && (
+          <SelfDestructTag>
+            <AutoDeleteIcon />
+            {getSelfDestructRemainingLabel(file.data)}
+          </SelfDestructTag>
+        )}
+      </CardMeta>
+    </CardBody>
   );
 
   return (
     <Card
       $menuOpen={isMenuOpen}
-      $compareMode={driveCompare}
-      $compareSelected={compareSelected}
+      $compareMode={pickMode}
+      $compareSelected={driveCompare ? compareSelected : selectSelected}
       $compareDisabled={driveCompare && !comparable}
       $focusMode={driveFocus}
-      onClick={driveFocus || driveCompare ? handleCardClick : undefined}
+      onClick={
+        driveFocus || pickMode
+          ? handleCardClick
+          : folder
+            ? (event) => {
+                if (
+                  event.target.closest(".card-actions") ||
+                  event.target.closest(".drive-grid-menu") ||
+                  event.target.closest(".drive-grid-menu-trigger") ||
+                  event.target.closest("[data-file-name]")
+                ) {
+                  return;
+                }
+                onOpenFolder?.(file.id);
+              }
+            : undefined
+      }
     >
-      {driveCompare && (
+      {pickMode && (
         <CompareMarkWrap>
           <CompareSelectMark
-            selected={compareSelected}
-            disabled={!comparable}
+            selected={driveCompare ? compareSelected : selectSelected}
+            disabled={driveCompare && !comparable}
             size="sm"
           />
         </CompareMarkWrap>
       )}
-      {driveCompare ? (
-        <CompareLink>{iconTile}</CompareLink>
+      {pickMode ? (
+        <CompareLink>
+          {iconTile}
+          {bodyContent}
+        </CompareLink>
       ) : driveFocus ? (
-        <FocusLink>{iconTile}</FocusLink>
+        <>
+          <FocusLink>{iconTile}</FocusLink>
+          {bodyContent}
+        </>
+      ) : folder ? (
+        <FolderHit>
+          {iconTile}
+          {bodyContent}
+        </FolderHit>
       ) : (
         <FileLink
           fileData={file.data}
@@ -121,66 +254,8 @@ function FileGridCard({
           files={data}
         >
           {iconTile}
-          <CardBody>
-            {isDrivePage && isRenaming ? (
-              <RenameInput
-                ref={renameInputRef}
-                value={renameValue}
-                onChange={onRenameValueChange}
-                onBlur={onRenameSubmit}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    onRenameSubmit();
-                  }
-                  if (event.key === "Escape") {
-                    event.preventDefault();
-                    onRenameCancel();
-                  }
-                }}
-                onClick={(event) => event.stopPropagation()}
-              />
-            ) : (
-              <Tooltip label={file.data.filename} onlyIfTruncated>
-                <CardName>{file.data.filename}</CardName>
-              </Tooltip>
-            )}
-            <CardMeta>
-              <TypeTag>{label}</TypeTag>
-              <span>{changeBytes(file.data.size)}</span>
-              {hasSelfDestruct(file.data) && (
-                <SelfDestructTag>
-                  <AutoDeleteIcon />
-                  {getSelfDestructRemainingLabel(file.data)}
-                </SelfDestructTag>
-              )}
-            </CardMeta>
-          </CardBody>
+          {bodyContent}
         </FileLink>
-      )}
-
-      {driveFocus && (
-        <CardBody>
-          <Tooltip label={file.data.filename} onlyIfTruncated>
-            <CardName>{file.data.filename}</CardName>
-          </Tooltip>
-          <CardMeta>
-            <TypeTag>{label}</TypeTag>
-            <span>{changeBytes(file.data.size)}</span>
-          </CardMeta>
-        </CardBody>
-      )}
-
-      {driveCompare && (
-        <CardBody>
-          <Tooltip label={file.data.filename} onlyIfTruncated>
-            <CardName>{file.data.filename}</CardName>
-          </Tooltip>
-          <CardMeta>
-            <TypeTag>{label}</TypeTag>
-            <span>{changeBytes(file.data.size)}</span>
-          </CardMeta>
-        </CardBody>
       )}
 
       {page === "starred" && !driveFocus && (
@@ -200,6 +275,9 @@ function FileGridCard({
           isOpen={isMenuOpen}
           onToggle={onToggleMenu}
           onRename={onRename}
+          onMove={onMove}
+          onShareLink={onShareLink}
+          onVersionHistory={onVersionHistory}
           shareOpen={shareOpen}
           shareUrl={shareUrl}
           onShareClick={onShareClick}
@@ -382,10 +460,15 @@ const CompareMarkWrap = styled.div`
 const CompareLink = styled.div`
   display: flex;
   align-items: center;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
+  gap: 12px;
 
   @media (min-width: 769px) {
+    flex-direction: column;
+    align-items: stretch;
     width: 100%;
+    gap: 0;
   }
 `;
 
@@ -396,6 +479,22 @@ const FocusLink = styled.div`
 
   @media (min-width: 769px) {
     width: 100%;
+  }
+`;
+
+const FolderHit = styled.div`
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  gap: 12px;
+
+  @media (min-width: 769px) {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0;
   }
 `;
 
@@ -445,6 +544,7 @@ const CardName = styled.p`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  cursor: pointer;
 
   @media (min-width: 769px) {
     font-size: 0.84rem;

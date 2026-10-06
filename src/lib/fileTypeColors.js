@@ -107,7 +107,15 @@ function resolveType(contentType = "") {
   );
 }
 
-export function getFileTypeTokens(contentType = "", filename = "") {
+export function getFileTypeTokens(contentType = "", filename = "", itemType) {
+  if (itemType === "folder" || contentType === "folder") {
+    return {
+      colorVar: "--primary",
+      bgVar: "--primary-light",
+      label: "FOLDER",
+    };
+  }
+
   const type = resolveType(contentType);
   const ext = filename?.split(".").pop()?.toUpperCase().slice(0, 4) || "";
   const label = type.useExtLabel ? ext || type.label : type.label;

@@ -11,10 +11,14 @@ import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import { toast } from "react-toastify";
 import LottieImage from "../common/LottieImage";
 import { getFileDownloadUrl, copyFileLinkWithToast } from "../../lib/fileAccess";
-import { createAndCopyShareLinkWithToast } from "@/lib/shareLink";
 import { useFilePreview } from "@/context/FilePreviewContext";
 import { useCompare } from "@/context/CompareContext";
+import { useSelection } from "@/context/SelectionContext";
 import { getUploadHelpText } from "@/lib/uploadLimits";
+import { isFolder } from "@/lib/folders";
+import MoveToFolderModal from "../common/MoveToFolderModal";
+import ShareLinkModal from "../common/ShareLinkModal";
+import VersionHistoryModal from "../common/VersionHistoryModal";
 import MainDataRow, {
   NameCol,
   SizeCol,
@@ -22,18 +26,32 @@ import MainDataRow, {
   ActionsCol,
 } from "./MainDataRow";
 
-const MainData = ({ files, focusMode = false }) => {
+const MainData = ({
+  files,
+  allFiles,
+  focusMode = false,
+  onOpenFolder,
+}) => {
+  const sizeSource = allFiles ?? files;
   const [showShareIcons, setShowShareIcons] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [shareFileId, setShareFileId] = useState(null);
   const [optionsVisible, setOptionsVisible] = useState(null);
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
+  const [moveTargetIds, setMoveTargetIds] = useState(null);
+  const [shareModalFile, setShareModalFile] = useState(null);
+  const [versionFile, setVersionFile] = useState(null);
   const optionsMenuRef = useRef(null);
   const renameInputRef = useRef(null);
   const nameClickTimerRef = useRef(null);
   const { open: openPreview } = useFilePreview();
   const { active: compareMode, toggleFile, isSelected } = useCompare();
+  const {
+    active: selectMode,
+    toggleItem,
+    isSelected: isSelectSelected,
+  } = useSelection();
   const { confirmMoveToTrash } = useFileTrashActions();
 
   useEffect(() => {
@@ -46,10 +64,11 @@ const MainData = ({ files, focusMode = false }) => {
 
   const openFilePreview = useCallback(
     (file) => {
+      if (isFolder(file)) return;
       markFileOpened(file.id);
       openPreview(
         file.data,
-        files.map((item) => item.data),
+        files.filter((item) => !isFolder(item)).map((item) => item.data),
       );
     },
     [files, openPreview],
@@ -68,8 +87,10 @@ const MainData = ({ files, focusMode = false }) => {
   }, []);
 
   const submitRename = useCallback(
-    async (id, currentFilename) => {
-      const success = await handleRenameFile(id, currentFilename, renameValue);
+    async (id, currentFilename, folder) => {
+      const success = await handleRenameFile(id, currentFilename, renameValue, {
+        folder,
+      });
       if (success) {
         cancelRename();
       }
@@ -137,13 +158,9 @@ const MainData = ({ files, focusMode = false }) => {
     }
   }, []);
 
-  const handleOneTimeLink = useCallback(async (fileId) => {
+  const handleShareLink = useCallback((file) => {
     setOptionsVisible(null);
-    try {
-      await createAndCopyShareLinkWithToast(fileId);
-    } catch {
-      // toast handled inside createAndCopyShareLinkWithToast
-    }
+    setShareModalFile(file);
   }, []);
 
   useEffect(() => {
@@ -198,88 +215,127 @@ const MainData = ({ files, focusMode = false }) => {
   }
 
   return (
-    <TableWrap $focus={focusMode}>
-      {!focusMode && (
-        <TableHead>
-          <NameCol>Name</NameCol>
-          <SizeCol className="hide-sm">Size</SizeCol>
-          <DateCol className="hide-md">Modified</DateCol>
-          <ActionsCol />
-        </TableHead>
-      )}
+    <>
+      <TableWrap $focus={focusMode}>
+        {!focusMode && (
+          <TableHead>
+            <NameCol>Name</NameCol>
+            <SizeCol className="hide-sm">Size</SizeCol>
+            <DateCol className="hide-md">Modified</DateCol>
+            <ActionsCol />
+          </TableHead>
+        )}
 
-      {files.map((file) => {
-        const isMenuOpen = optionsVisible === file.id;
-        const isRenaming = renamingId === file.id;
-        const isShareOpen = shareFileId === file.id;
+        {files.map((file) => {
+          const folder = isFolder(file);
+          const isMenuOpen = optionsVisible === file.id;
+          const isRenaming = renamingId === file.id;
+          const isShareOpen = shareFileId === file.id;
+          const modeActive = compareMode || selectMode;
 
-        return (
-          <MainDataRow
-            key={file.id}
-            file={file}
-            files={files}
-            isMenuOpen={isMenuOpen}
-            isRenaming={isRenaming}
-            renameValue={isRenaming ? renameValue : ""}
-            renameInputRef={isRenaming ? renameInputRef : undefined}
-            isShareOpen={isShareOpen}
-            shareUrl={isShareOpen || isMenuOpen ? shareUrl : ""}
-            showShareIcons={isMenuOpen && showShareIcons}
-            optionsMenuRef={isMenuOpen ? optionsMenuRef : undefined}
-            onStar={() => handleStarred(file.id)}
-            compareMode={compareMode}
-            compareSelected={isSelected(file.id)}
-            focusMode={focusMode}
-            onCompareToggle={() => toggleFile(file)}
-            onFocusOpen={() => openFilePreview(file)}
-            onNameClick={(event) => {
-              if (compareMode || focusMode) {
+          return (
+            <MainDataRow
+              key={file.id}
+              file={file}
+              files={sizeSource}
+              isFolder={folder}
+              isMenuOpen={isMenuOpen}
+              isRenaming={isRenaming}
+              renameValue={isRenaming ? renameValue : ""}
+              renameInputRef={isRenaming ? renameInputRef : undefined}
+              isShareOpen={isShareOpen}
+              shareUrl={isShareOpen || isMenuOpen ? shareUrl : ""}
+              showShareIcons={isMenuOpen && showShareIcons}
+              optionsMenuRef={isMenuOpen ? optionsMenuRef : undefined}
+              onStar={() => handleStarred(file.id)}
+              compareMode={compareMode}
+              compareSelected={isSelected(file.id)}
+              selectMode={selectMode}
+              selectSelected={isSelectSelected(file.id)}
+              focusMode={focusMode}
+              onCompareToggle={() => toggleFile(file)}
+              onSelectToggle={() => toggleItem(file)}
+              onFocusOpen={() => {
+                if (folder) onOpenFolder?.(file.id);
+                else openFilePreview(file);
+              }}
+              onNameClick={(event) => {
+                if (modeActive || focusMode) {
+                  event.preventDefault();
+                  return;
+                }
+                event.stopPropagation();
+                // Delay open so a double-click can rename instead.
+                if (nameClickTimerRef.current) {
+                  clearTimeout(nameClickTimerRef.current);
+                }
+                nameClickTimerRef.current = setTimeout(() => {
+                  if (folder) onOpenFolder?.(file.id);
+                  else openFilePreview(file);
+                  nameClickTimerRef.current = null;
+                }, 300);
+              }}
+              onNameDoubleClick={(event) => {
+                if (modeActive || focusMode) return;
                 event.preventDefault();
-                return;
+                event.stopPropagation();
+                if (nameClickTimerRef.current) {
+                  clearTimeout(nameClickTimerRef.current);
+                  nameClickTimerRef.current = null;
+                }
+                startRename(file.id, file.data.filename);
+              }}
+              onRenameChange={(event) => setRenameValue(event.target.value)}
+              onRenameBlur={() =>
+                submitRename(file.id, file.data.filename, folder)
               }
-              event.stopPropagation();
-              if (nameClickTimerRef.current) {
-                clearTimeout(nameClickTimerRef.current);
-              }
-              nameClickTimerRef.current = setTimeout(() => {
-                openFilePreview(file);
-                nameClickTimerRef.current = null;
-              }, 250);
-            }}
-            onNameDoubleClick={(event) => {
-              if (compareMode || focusMode) return;
-              event.preventDefault();
-              event.stopPropagation();
-              if (nameClickTimerRef.current) {
-                clearTimeout(nameClickTimerRef.current);
-                nameClickTimerRef.current = null;
-              }
-              startRename(file.id, file.data.filename);
-            }}
-            onRenameChange={(event) => setRenameValue(event.target.value)}
-            onRenameBlur={() => submitRename(file.id, file.data.filename)}
-            onRenameKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                submitRename(file.id, file.data.filename);
-              }
-              if (event.key === "Escape") {
-                event.preventDefault();
-                cancelRename();
-              }
-            }}
-            onCopyLink={handleCopyLink}
-            onOneTimeLink={handleOneTimeLink}
-            onQuickShare={() => handleQuickShare(file)}
-            onRenameStart={() => startRename(file.id, file.data.filename)}
-            onRename={startRename}
-            onDelete={() => handleDelete(file.id, file.data)}
-            onOptionsToggle={() => handleOptionsClick(file.id)}
-            onShareClick={handleShareClick}
-          />
-        );
-      })}
-    </TableWrap>
+              onRenameKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  submitRename(file.id, file.data.filename, folder);
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  cancelRename();
+                }
+              }}
+              onCopyLink={handleCopyLink}
+              onShareLink={() => handleShareLink(file)}
+              onQuickShare={() => handleQuickShare(file)}
+              onRenameStart={() => startRename(file.id, file.data.filename)}
+              onRename={startRename}
+              onDelete={() => handleDelete(file.id, file.data)}
+              onMove={() => {
+                setOptionsVisible(null);
+                setMoveTargetIds([file.id]);
+              }}
+              onVersionHistory={() => {
+                setOptionsVisible(null);
+                setVersionFile(file);
+              }}
+              onOptionsToggle={() => handleOptionsClick(file.id)}
+              onShareClick={handleShareClick}
+            />
+          );
+        })}
+      </TableWrap>
+
+      <MoveToFolderModal
+        open={Boolean(moveTargetIds)}
+        onClose={() => setMoveTargetIds(null)}
+        itemIds={moveTargetIds || []}
+      />
+      <ShareLinkModal
+        open={Boolean(shareModalFile)}
+        onClose={() => setShareModalFile(null)}
+        file={shareModalFile}
+      />
+      <VersionHistoryModal
+        open={Boolean(versionFile)}
+        onClose={() => setVersionFile(null)}
+        file={versionFile}
+      />
+    </>
   );
 };
 

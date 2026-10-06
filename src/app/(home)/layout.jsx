@@ -7,8 +7,10 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { FilesProvider } from "@/context/FilesContext";
 import { FilePreviewProvider } from "@/context/FilePreviewContext";
 import { CompareProvider } from "@/context/CompareContext";
+import { SelectionProvider } from "@/context/SelectionContext";
 import { FocusProvider } from "@/context/FocusContext";
 import { FileUploadProvider } from "@/context/FileUploadContext";
+import { CurrentFolderProvider } from "@/context/CurrentFolderContext";
 import { SelfDestructProvider } from "@/context/SelfDestructProvider";
 import { TourProvider } from "@/context/TourProvider";
 import FilePreviewModal from "@/components/common/FilePreviewModal";
@@ -34,8 +36,10 @@ const MobileBottomNav = dynamic(
 export default function HomeLayout({ children }) {
   return (
     <FilesProvider>
+      <CurrentFolderProvider>
       <FilePreviewProvider>
         <CompareProvider>
+          <SelectionProvider>
           <FocusProvider>
             <FileUploadProvider>
               <TourProvider>
@@ -64,8 +68,10 @@ export default function HomeLayout({ children }) {
               </TourProvider>
             </FileUploadProvider>
           </FocusProvider>
+          </SelectionProvider>
         </CompareProvider>
       </FilePreviewProvider>
+      </CurrentFolderProvider>
     </FilesProvider>
   );
 }

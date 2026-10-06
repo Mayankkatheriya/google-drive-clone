@@ -2,10 +2,17 @@
 
 import styled from "styled-components";
 
-export default function ShareSecureImage({ token, alt }) {
+function contentUrl(token, unlockToken) {
+  const base = `/api/share-link/${token}/content`;
+  return unlockToken
+    ? `${base}?unlock=${encodeURIComponent(unlockToken)}`
+    : base;
+}
+
+export default function ShareSecureImage({ token, unlockToken, alt }) {
   return (
     <Image
-      src={`/api/share-link/${token}/content`}
+      src={contentUrl(token, unlockToken)}
       alt={alt}
       draggable={false}
       onContextMenu={(event) => event.preventDefault()}

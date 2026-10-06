@@ -6,16 +6,23 @@ import FileGridCard from "./FileGridCard";
 import LottieImage from "./LottieImage";
 import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import { useDriveGridMenuState } from "./DriveGridMenu";
+import MoveToFolderModal from "./MoveToFolderModal";
+import ShareLinkModal from "./ShareLinkModal";
+import VersionHistoryModal from "./VersionHistoryModal";
+import { isFolder } from "@/lib/folders";
 
 const FilesList = ({
   data,
+  allFiles,
   page = null,
   imagePath,
   text1,
   text2,
   compact = false,
   focusMode = false,
+  onOpenFolder,
 }) => {
+  const sizeSource = allFiles ?? data;
   const driveMenu = useDriveGridMenuState();
   const { confirmMoveToTrash, confirmPermanentDelete } = useFileTrashActions();
   const isDrivePage = page === "drive";
@@ -36,48 +43,71 @@ const FilesList = ({
   }
 
   return (
-    <List $compact={compact} $focus={focusMode}>
-      {data.map((file) => {
-        const isMenuOpen = driveMenu.openMenuId === file.id;
-        const isRenaming = isDrivePage && driveMenu.renamingId === file.id;
+    <>
+      <List $compact={compact} $focus={focusMode}>
+        {data.map((file) => {
+          const isMenuOpen = driveMenu.openMenuId === file.id;
+          const isRenaming = isDrivePage && driveMenu.renamingId === file.id;
+          const folder = isFolder(file);
 
-        return (
-          <FileGridCard
-            key={file.id}
-            file={file}
-            data={data}
-            page={page}
-            isDrivePage={isDrivePage}
-            focusMode={isDrivePage && focusMode}
-            isMenuOpen={isMenuOpen}
-            isRenaming={isRenaming}
-            renameValue={isRenaming ? driveMenu.renameValue : ""}
-            renameInputRef={isRenaming ? driveMenu.renameInputRef : undefined}
-            shareOpen={driveMenu.shareMenuId === file.id}
-            shareUrl={
-              driveMenu.shareMenuId === file.id || isMenuOpen
-                ? driveMenu.shareUrl
-                : ""
-            }
-            menuRef={isMenuOpen ? driveMenu.menuRef : undefined}
-            onToggleMenu={driveMenu.setOpenMenuId}
-            onRename={driveMenu.startRename}
-            onShareClick={(fileData) =>
-              driveMenu.handleShareClick(fileData, file.id)
-            }
-            onRenameValueChange={(event) =>
-              driveMenu.setRenameValue(event.target.value)
-            }
-            onRenameSubmit={() =>
-              driveMenu.submitRename(file.id, file.data.filename)
-            }
-            onRenameCancel={driveMenu.cancelRename}
-            onDelete={() => handleDelete(file.id, file.data)}
-            onPermanentDelete={() => confirmPermanentDelete(file.id, file.data)}
-          />
-        );
-      })}
-    </List>
+          return (
+            <FileGridCard
+              key={file.id}
+              file={file}
+              data={sizeSource}
+              page={page}
+              isDrivePage={isDrivePage}
+              focusMode={isDrivePage && focusMode}
+              isMenuOpen={isMenuOpen}
+              isRenaming={isRenaming}
+              renameValue={isRenaming ? driveMenu.renameValue : ""}
+              renameInputRef={isRenaming ? driveMenu.renameInputRef : undefined}
+              shareOpen={driveMenu.shareMenuId === file.id}
+              shareUrl={
+                driveMenu.shareMenuId === file.id || isMenuOpen
+                  ? driveMenu.shareUrl
+                  : ""
+              }
+              menuRef={isMenuOpen ? driveMenu.menuRef : undefined}
+              onToggleMenu={driveMenu.setOpenMenuId}
+              onRename={driveMenu.startRename}
+              onShareClick={(fileData) =>
+                driveMenu.handleShareClick(fileData, file.id)
+              }
+              onMove={() => driveMenu.setMoveFile(file)}
+              onShareLink={() => driveMenu.setShareLinkFile(file)}
+              onVersionHistory={() => driveMenu.setVersionFile(file)}
+              onOpenFolder={onOpenFolder}
+              onRenameValueChange={(event) =>
+                driveMenu.setRenameValue(event.target.value)
+              }
+              onRenameSubmit={() =>
+                driveMenu.submitRename(file.id, file.data.filename, folder)
+              }
+              onRenameCancel={driveMenu.cancelRename}
+              onDelete={() => handleDelete(file.id, file.data)}
+              onPermanentDelete={() => confirmPermanentDelete(file.id, file.data)}
+            />
+          );
+        })}
+      </List>
+
+      <MoveToFolderModal
+        open={Boolean(driveMenu.moveFile)}
+        onClose={() => driveMenu.setMoveFile(null)}
+        itemIds={driveMenu.moveFile ? [driveMenu.moveFile.id] : []}
+      />
+      <ShareLinkModal
+        open={Boolean(driveMenu.shareLinkFile)}
+        onClose={() => driveMenu.setShareLinkFile(null)}
+        file={driveMenu.shareLinkFile}
+      />
+      <VersionHistoryModal
+        open={Boolean(driveMenu.versionFile)}
+        onClose={() => driveMenu.setVersionFile(null)}
+        file={driveMenu.versionFile}
+      />
+    </>
   );
 };
 

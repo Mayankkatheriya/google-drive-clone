@@ -1,6 +1,6 @@
 
-
 import React from "react";
+import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import {
   FileIcon,
   PdfIcon,
@@ -8,14 +8,20 @@ import {
   AudioIcon,
   VideoIcon,
 } from "./SvgIcons";
-const FileIcons = ({ type }) => {
-  return type.includes("pdf") ? (
+
+const FileIcons = ({ type, itemType }) => {
+  if (itemType === "folder" || type === "folder") {
+    return <FolderOutlinedIcon />;
+  }
+
+  const ct = type || "";
+  return ct.includes("pdf") ? (
     <PdfIcon />
-  ) : type.includes("image") ? (
+  ) : ct.includes("image") ? (
     <PermMediaIcon />
-  ) : type.includes("video") ? (
+  ) : ct.includes("video") ? (
     <VideoIcon />
-  ) : type.includes("audio") ? (
+  ) : ct.includes("audio") ? (
     <AudioIcon />
   ) : (
     <FileIcon />

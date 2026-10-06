@@ -2,7 +2,8 @@
 
 import { useLayoutEffect, useState } from "react";
 
-const MENU_FALLBACK_HEIGHT = 260;
+const MENU_FALLBACK_HEIGHT = 280;
+const MENU_MAX_HEIGHT = 320;
 const VIEWPORT_PADDING = 8;
 const MOBILE_BREAKPOINT = 768;
 
@@ -39,22 +40,36 @@ export function useMenuPlacement(triggerRef, menuRef, isOpen) {
       if (!trigger) return;
 
       const menuEl = menuRef.current;
-      const menuHeight = menuEl?.offsetHeight || MENU_FALLBACK_HEIGHT;
-      const gap = 6;
       const bottomOffset = getBottomOffset();
+      const availableHeight = Math.max(
+        160,
+        Math.min(
+          MENU_MAX_HEIGHT,
+          window.innerHeight - VIEWPORT_PADDING - bottomOffset,
+        ),
+      );
+
+      if (menuEl) {
+        menuEl.style.maxHeight = `${availableHeight}px`;
+      }
+
+      const menuHeight = Math.min(
+        menuEl?.offsetHeight || MENU_FALLBACK_HEIGHT,
+        availableHeight,
+      );
+      const gap = 6;
 
       const spaceBelow = window.innerHeight - trigger.bottom - bottomOffset;
-      const flip = spaceBelow < menuHeight + gap;
+      const spaceAbove = trigger.top - VIEWPORT_PADDING;
+      const flip =
+        spaceBelow < menuHeight + gap && spaceAbove > spaceBelow;
 
       let top = flip
         ? trigger.top - menuHeight - gap
         : trigger.bottom + gap;
 
-      top = Math.max(VIEWPORT_PADDING, top);
-
-      if (!flip) {
-        top = Math.min(top, window.innerHeight - menuHeight - bottomOffset);
-      }
+      const maxTop = window.innerHeight - menuHeight - bottomOffset;
+      top = Math.min(Math.max(VIEWPORT_PADDING, top), Math.max(VIEWPORT_PADDING, maxTop));
 
       const right = Math.max(
         VIEWPORT_PADDING,

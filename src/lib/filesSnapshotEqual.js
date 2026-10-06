@@ -2,6 +2,10 @@ function tsSeconds(ts) {
   return ts?.seconds ?? null;
 }
 
+function normalizeParentId(parentId) {
+  return parentId == null || parentId === "" ? null : parentId;
+}
+
 function fileEntryEqual(a, b) {
   if (a.id !== b.id) return false;
   const da = a.data;
@@ -14,6 +18,9 @@ function fileEntryEqual(a, b) {
     da.contentType === db.contentType &&
     da.s3Key === db.s3Key &&
     da.userId === db.userId &&
+    (da.type || "file") === (db.type || "file") &&
+    normalizeParentId(da.parentId) === normalizeParentId(db.parentId) &&
+    (da.versionsBytes || 0) === (db.versionsBytes || 0) &&
     tsSeconds(da.timestamp) === tsSeconds(db.timestamp) &&
     tsSeconds(da.lastOpenedAt) === tsSeconds(db.lastOpenedAt) &&
     tsSeconds(da.trashedAt) === tsSeconds(db.trashedAt) &&

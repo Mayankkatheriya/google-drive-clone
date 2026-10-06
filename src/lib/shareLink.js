@@ -14,11 +14,11 @@ async function getAuthHeaders() {
   };
 }
 
-export async function createShareLink(fileId) {
+export async function createShareLink(fileId, options = {}) {
   const response = await fetch("/api/share-link/create", {
     method: "POST",
     headers: await getAuthHeaders(),
-    body: JSON.stringify({ fileId }),
+    body: JSON.stringify({ fileId, ...options }),
   });
 
   const data = await response.json().catch(() => ({}));
@@ -29,18 +29,70 @@ export async function createShareLink(fileId) {
   return data;
 }
 
-export async function createAndCopyShareLink(fileId) {
-  const { url } = await createShareLink(fileId);
+export async function listShareLinks(fileId) {
+  const response = await fetch(
+    `/api/share-link/list?fileId=${encodeURIComponent(fileId)}`,
+    { headers: await getAuthHeaders() },
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to list share links");
+  }
+  return data.links || [];
+}
+
+export async function listAllShareLinks() {
+  const response = await fetch("/api/share-link/list", {
+    headers: await getAuthHeaders(),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to list share links");
+  }
+  return data.links || [];
+}
+
+export async function revokeShareLink(token) {
+  const response = await fetch("/api/share-link/revoke", {
+    method: "POST",
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({ token }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to revoke link");
+  }
+  return data;
+}
+
+export async function deleteShareLink(token) {
+  const response = await fetch("/api/share-link/delete", {
+    method: "POST",
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({ token }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to delete link");
+  }
+  return data;
+}
+
+export async function createAndCopyShareLink(fileId, options = {}) {
+  const { url } = await createShareLink(fileId, options);
   await navigator.clipboard.writeText(url);
   return url;
 }
 
-export async function createAndCopyShareLinkWithToast(fileId) {
-  const toastId = toast.loading("Generating one-time link…");
+export async function createAndCopyShareLinkWithToast(fileId, options = {}) {
+  const toastId = toast.loading("Generating share link…");
   try {
-    const url = await createAndCopyShareLink(fileId);
+    const url = await createAndCopyShareLink(fileId, {
+      maxViews: 1,
+      ...options,
+    });
     toast.update(toastId, {
-      render: "One-time link copied — expires after first open",
+      render: "Share link copied",
       type: "success",
       isLoading: false,
       autoClose: 4000,
@@ -49,7 +101,7 @@ export async function createAndCopyShareLinkWithToast(fileId) {
     return url;
   } catch (error) {
     toast.update(toastId, {
-      render: "Unable to create one-time link",
+      render: "Unable to create share link",
       type: "error",
       isLoading: false,
       autoClose: 4000,

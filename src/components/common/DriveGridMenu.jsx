@@ -12,10 +12,11 @@ import {
   DeleteIcon,
   StarBorderIcon,
   StarFilledIcon,
-  OneTimeLinkIcon,
 } from "./SvgIcons";
 import AutoDeleteIcon from "@mui/icons-material/AutoDeleteOutlined";
-import { changeBytes, convertDates } from "./common";
+import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
+import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
+import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
 import {
   downloadFileWithToast,
   getFileDownloadUrl,
@@ -26,12 +27,12 @@ import { useFileTrashActions } from "@/hooks/useFileTrashActions";
 import { useMenuPlacement } from "@/hooks/useMenuPlacement";
 import { toast } from "react-toastify";
 import ShareButtons from "./ShareButtons";
-import { createAndCopyShareLinkWithToast } from "@/lib/shareLink";
 import {
   hasSelfDestruct,
   getSelfDestructRemainingLabel,
 } from "@/lib/selfDestruct";
 import { useSelfDestruct } from "@/context/SelfDestructProvider";
+import { isFolder } from "@/lib/folders";
 import Tooltip from "./Tooltip";
 
 export function DriveGridMenu({
@@ -39,6 +40,9 @@ export function DriveGridMenu({
   isOpen,
   onToggle,
   onRename,
+  onMove,
+  onShareLink,
+  onVersionHistory,
   shareOpen,
   shareUrl,
   onShareClick,
@@ -52,6 +56,7 @@ export function DriveGridMenu({
     menuRef,
     isOpen,
   );
+  const folder = isFolder(file);
   const sdActive = hasSelfDestruct(file.data);
 
   const handleCopyLink = async () => {
@@ -60,15 +65,6 @@ export function DriveGridMenu({
       await copyFileLinkWithToast(file.data);
     } catch {
       // toast handled inside copyFileLinkWithToast
-    }
-  };
-
-  const handleOneTimeLink = async () => {
-    onToggle(null);
-    try {
-      await createAndCopyShareLinkWithToast(file.id);
-    } catch {
-      // toast handled inside createAndCopyShareLinkWithToast
     }
   };
 
@@ -103,44 +99,73 @@ export function DriveGridMenu({
             style={{ top, right }}
             onClick={(event) => event.stopPropagation()}
           >
-            <MenuItem onClick={() => downloadFileWithToast(file.data)}>
-              <DownloadIcon /> Download
-            </MenuItem>
-            <MenuItem onClick={handleCopyLink}>
-              <CopyIcon /> Copy link
-            </MenuItem>
-            <MenuItem onClick={handleOneTimeLink}>
-              <OneTimeLinkIcon /> One-time link
-            </MenuItem>
-            <MenuItem
-              className="shareButton"
-              onClick={() => onShareClick(file.data)}
-            >
-              <ShareIcon /> Share
-              <ShareExpand className={shareOpen ? "show" : ""} $flip={flip}>
-                <ShareButtons
-                  url={shareUrl}
-                  filename={file.data.filename}
-                  fileData={file.data}
-                  layout="expand"
-                />
-              </ShareExpand>
-            </MenuItem>
-            <MenuDivider />
+            {!folder && (
+              <>
+                <MenuItem onClick={() => downloadFileWithToast(file.data)}>
+                  <DownloadIcon /> Download
+                </MenuItem>
+                <MenuItem onClick={handleCopyLink}>
+                  <CopyIcon /> Copy link
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    onToggle(null);
+                    onShareLink?.(file);
+                  }}
+                >
+                  <LinkRoundedIcon /> Share link
+                </MenuItem>
+                <MenuItem
+                  className="shareButton"
+                  onClick={() => onShareClick(file.data)}
+                >
+                  <ShareIcon /> Share
+                  <ShareExpand className={shareOpen ? "show" : ""} $flip={flip}>
+                    <ShareButtons
+                      url={shareUrl}
+                      filename={file.data.filename}
+                      fileData={file.data}
+                      layout="expand"
+                    />
+                  </ShareExpand>
+                </MenuItem>
+                <MenuDivider />
+              </>
+            )}
             <MenuItem onClick={() => onRename(file.id, file.data.filename)}>
               <RenameIcon /> Rename
             </MenuItem>
             <MenuItem
               onClick={() => {
                 onToggle(null);
-                openSelfDestruct(file.id, file.data);
+                onMove?.(file);
               }}
             >
-              <AutoDeleteIcon />{" "}
-              {sdActive
-                ? `Self-destruct · ${getSelfDestructRemainingLabel(file.data)}`
-                : "Self-destruct"}
+              <DriveFileMoveOutlinedIcon /> Move
             </MenuItem>
+            {!folder && (
+              <MenuItem
+                onClick={() => {
+                  onToggle(null);
+                  onVersionHistory?.(file);
+                }}
+              >
+                <HistoryRoundedIcon /> Version history
+              </MenuItem>
+            )}
+            {!folder && (
+              <MenuItem
+                onClick={() => {
+                  onToggle(null);
+                  openSelfDestruct(file.id, file.data);
+                }}
+              >
+                <AutoDeleteIcon />{" "}
+                {sdActive
+                  ? `Self-destruct · ${getSelfDestructRemainingLabel(file.data)}`
+                  : "Self-destruct"}
+              </MenuItem>
+            )}
             <MenuItem onClick={() => handleStarred(file.id)}>
               {file.data.starred ? <StarFilledIcon /> : <StarBorderIcon />}
               {file.data.starred ? "Unstar" : "Star"}
@@ -149,12 +174,6 @@ export function DriveGridMenu({
             <MenuItem $danger onClick={handleDelete}>
               <DeleteIcon /> Delete
             </MenuItem>
-            <MenuFooter>
-              <FooterRow>{changeBytes(file.data.size)}</FooterRow>
-              <FooterRow>
-                {convertDates(file.data.timestamp?.seconds)}
-              </FooterRow>
-            </MenuFooter>
           </OptionsMenu>,
           document.body,
         )}
@@ -168,6 +187,9 @@ export function useDriveGridMenuState() {
   const [renameValue, setRenameValue] = useState("");
   const [shareMenuId, setShareMenuId] = useState(null);
   const [shareUrl, setShareUrl] = useState("");
+  const [moveFile, setMoveFile] = useState(null);
+  const [shareLinkFile, setShareLinkFile] = useState(null);
+  const [versionFile, setVersionFile] = useState(null);
   const menuRef = useRef(null);
   const renameInputRef = useRef(null);
 
@@ -188,8 +210,10 @@ export function useDriveGridMenuState() {
     setRenameValue("");
   };
 
-  const submitRename = async (id, currentFilename) => {
-    const success = await handleRenameFile(id, currentFilename, renameValue);
+  const submitRename = async (id, currentFilename, folder = false) => {
+    const success = await handleRenameFile(id, currentFilename, renameValue, {
+      folder,
+    });
     if (success) cancelRename();
   };
 
@@ -257,6 +281,12 @@ export function useDriveGridMenuState() {
     cancelRename,
     submitRename,
     handleShareClick,
+    moveFile,
+    setMoveFile,
+    shareLinkFile,
+    setShareLinkFile,
+    versionFile,
+    setVersionFile,
   };
 }
 
@@ -312,9 +342,15 @@ const OptionsMenu = styled.div`
   border-radius: 14px;
   box-shadow: var(--shadow-md);
   min-width: 186px;
+  max-width: min(260px, calc(100vw - 16px));
+  max-height: min(50vh, 320px);
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 6px;
   opacity: ${(props) => (props.$ready ? 1 : 0)};
   pointer-events: ${(props) => (props.$ready ? "auto" : "none")};
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 `;
 
 const MenuItem = styled.div`
@@ -344,18 +380,6 @@ const MenuDivider = styled.div`
   height: 1px;
   background: var(--border-light);
   margin: 4px 0;
-`;
-
-const MenuFooter = styled.div`
-  padding: 6px 12px 2px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-`;
-
-const FooterRow = styled.span`
-  font-size: 0.72rem;
-  color: var(--text-3);
 `;
 
 const ShareExpand = styled.div`

@@ -1,9 +1,11 @@
-export function getMoveToTrashConfirmOptions(filename) {
+export function getMoveToTrashConfirmOptions(filename, customMessage) {
   return {
     title: "Move to trash?",
-    message: filename
-      ? `"${filename}" will move to trash. You can restore it within 15 days.`
-      : "This file will move to trash. You can restore it within 15 days.",
+    message:
+      customMessage ||
+      (filename
+        ? `"${filename}" will move to trash. You can restore it within 15 days.`
+        : "This file will move to trash. You can restore it within 15 days."),
     confirmLabel: "Move to trash",
     cancelLabel: "Cancel",
     tone: "warning",

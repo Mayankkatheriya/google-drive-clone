@@ -4,43 +4,68 @@ import React from "react";
 import styled from "styled-components";
 import CompareArrowsRoundedIcon from "@mui/icons-material/CompareArrowsRounded";
 import CenterFocusStrongRoundedIcon from "@mui/icons-material/CenterFocusStrongRounded";
+import CheckBoxOutlinedIcon from "@mui/icons-material/CheckBoxOutlined";
 import { ListsIcon, GridIcon } from "./SvgIcons";
 import { useCompare } from "@/context/CompareContext";
 import { useFocus } from "@/context/FocusContext";
+import { useSelection } from "@/context/SelectionContext";
 import Tooltip from "./Tooltip";
 
 const PageHeader = ({
   pageTitle,
+  folderLabel,
   subtitle,
   subtitleMobile,
   viewMode,
   onViewModeChange,
+  breadcrumbs,
+  showSelect = true,
 }) => {
   const { active: compareActive, toggleMode: toggleCompare, exitMode: exitCompare } =
     useCompare();
   const { active: focusActive, toggleMode: toggleFocus, exitMode: exitFocus } =
     useFocus();
+  const {
+    active: selectActive,
+    toggleMode: toggleSelect,
+    exitMode: exitSelect,
+  } = useSelection();
 
   const isMyDrive = pageTitle === "My Drive";
   const showViewToggle = isMyDrive && viewMode && onViewModeChange && !focusActive;
   const showCompareToggle = isMyDrive && !focusActive;
   const showFocusToggle = isMyDrive;
+  const showSelectToggle = showSelect && isMyDrive && !focusActive;
 
   const handleCompareToggle = () => {
     if (focusActive) exitFocus();
+    if (selectActive) exitSelect();
     toggleCompare();
   };
 
   const handleFocusToggle = () => {
     if (compareActive) exitCompare();
+    if (selectActive) exitSelect();
     toggleFocus();
+  };
+
+  const handleSelectToggle = () => {
+    if (focusActive) exitFocus();
+    if (compareActive) exitCompare();
+    toggleSelect();
   };
 
   return (
     <Header $focus={focusActive}>
       <TopRow>
         <TitleBlock>
-          <Title>{focusActive ? "Focus" : pageTitle}</Title>
+          <Title>
+            {focusActive ? "Focus" : pageTitle}
+            {folderLabel && folderLabel !== "My Drive" && (
+              <FolderHint> / {folderLabel}</FolderHint>
+            )}
+          </Title>
+          {breadcrumbs}
           {focusActive ? (
             <>
               <Subtitle>Distraction-free browsing — sidebar and actions hidden</Subtitle>
@@ -80,7 +105,7 @@ const PageHeader = ({
           </ViewActions>
         )}
       </TopRow>
-      {(showCompareToggle || showFocusToggle) && (
+      {(showCompareToggle || showFocusToggle || showSelectToggle) && (
         <ModeActions>
           {showFocusToggle && (
             <ModeToggleBtn
@@ -92,6 +117,17 @@ const PageHeader = ({
             >
               <CenterFocusStrongRoundedIcon />
               <span>{focusActive ? "Focusing" : "Focus"}</span>
+            </ModeToggleBtn>
+          )}
+          {showSelectToggle && (
+            <ModeToggleBtn
+              type="button"
+              $active={selectActive}
+              onClick={handleSelectToggle}
+              aria-pressed={selectActive}
+            >
+              <CheckBoxOutlinedIcon />
+              <span>{selectActive ? "Selecting" : "Select"}</span>
             </ModeToggleBtn>
           )}
           {showCompareToggle && (
@@ -160,6 +196,11 @@ const Title = styled.h1`
   @media (max-width: 768px) {
     font-size: 1.25rem;
   }
+`;
+
+const FolderHint = styled.span`
+  font-weight: 600;
+  color: var(--text-2);
 `;
 
 const Subtitle = styled.p`
@@ -238,10 +279,6 @@ const ModeToggleBtn = styled.button`
     border-color var(--transition),
     color var(--transition);
 
-  &:only-child {
-    max-width: 220px;
-  }
-
   &:hover {
     background: ${(props) =>
       props.$active ? "var(--primary-light)" : "var(--surface-3)"};
@@ -256,8 +293,8 @@ const ModeToggleBtn = styled.button`
 
   @media (max-width: 768px) {
     height: 38px;
-    padding: 0 12px;
-    font-size: 0.8rem;
+    padding: 0 10px;
+    font-size: 0.76rem;
 
     svg {
       font-size: 17px;

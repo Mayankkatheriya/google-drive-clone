@@ -2,10 +2,17 @@
 
 import styled from "styled-components";
 
-export default function ShareSecureAudio({ token, title }) {
+function contentUrl(token, unlockToken) {
+  const base = `/api/share-link/${token}/content`;
+  return unlockToken
+    ? `${base}?unlock=${encodeURIComponent(unlockToken)}`
+    : base;
+}
+
+export default function ShareSecureAudio({ token, unlockToken, title }) {
   return (
     <Audio
-      src={`/api/share-link/${token}/content`}
+      src={contentUrl(token, unlockToken)}
       controls
       preload="metadata"
       controlsList="nodownload noplaybackrate noremoteplayback"

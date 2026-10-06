@@ -6,7 +6,14 @@ import { streamShareLinkContent } from "@/lib/server/shareLinks";
 export async function GET(request, { params }) {
   try {
     const range = request.headers.get("range") || undefined;
-    const result = await streamShareLinkContent(params.token, { range });
+    const unlockToken =
+      request.headers.get("x-share-unlock") ||
+      new URL(request.url).searchParams.get("unlock") ||
+      undefined;
+    const result = await streamShareLinkContent(params.token, {
+      range,
+      unlockToken,
+    });
 
     const headers = new Headers({
       "Content-Type": result.contentType,

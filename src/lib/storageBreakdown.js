@@ -14,7 +14,10 @@ function getCategoryId(contentType = "") {
 }
 
 function sumFileSizes(files = []) {
-  return files.reduce((total, file) => total + (file.data?.size || 0), 0);
+  return files.reduce((total, file) => {
+    if (file.data?.type === "folder") return total;
+    return total + (file.data?.size || 0) + (file.data?.versionsBytes || 0);
+  }, 0);
 }
 
 export function computeStorageBreakdown(myFiles = [], trashFiles = []) {
@@ -31,7 +34,8 @@ export function computeStorageBreakdown(myFiles = [], trashFiles = []) {
 
   const ingest = (files) => {
     for (const file of files) {
-      const size = file.data?.size || 0;
+      if (file.data?.type === "folder") continue;
+      const size = (file.data?.size || 0) + (file.data?.versionsBytes || 0);
       const catId = getCategoryId(file.data?.contentType);
       categoryMap[catId].bytes += size;
       categoryMap[catId].count += 1;
@@ -49,10 +53,11 @@ export function computeStorageBreakdown(myFiles = [], trashFiles = []) {
   })).filter((cat) => cat.bytes > 0);
 
   const topFiles = [...myFiles, ...trashFiles]
+    .filter((file) => file.data?.type !== "folder")
     .map((file) => ({
       id: file.id,
       filename: file.data?.filename ?? "Untitled",
-      size: file.data?.size || 0,
+      size: (file.data?.size || 0) + (file.data?.versionsBytes || 0),
       contentType: file.data?.contentType ?? "",
       location: trashFiles.some((t) => t.id === file.id) ? "trash" : "drive",
       data: file.data,

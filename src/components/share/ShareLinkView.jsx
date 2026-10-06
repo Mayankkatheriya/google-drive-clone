@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import Link from "next/link";
 import { OneTimeLinkIcon } from "@/components/common/SvgIcons";
@@ -23,19 +23,111 @@ function getPreviewKind(contentType = "") {
   return "other";
 }
 
-export default function ShareLinkView({ state }) {
+export default function ShareLinkView({ state: initial }) {
+  const [state, setState] = useState(initial);
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setState(initial);
+  }, [initial]);
+
   useEffect(() => {
     const blockContextMenu = (event) => event.preventDefault();
     document.addEventListener("contextmenu", blockContextMenu);
     return () => document.removeEventListener("contextmenu", blockContextMenu);
   }, []);
 
+  useEffect(() => {
+    if (state.status !== "gate" || state.requiresPassword) return;
+
+    let cancelled = false;
+    (async () => {
+      setBusy(true);
+      try {
+        const res = await fetch(`/api/share-link/${state.token}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        if (!res.ok) {
+          setState({
+            status: res.status === 410 ? "used" : "error",
+            message: data.error || "Unable to open this link",
+          });
+          return;
+        }
+        setState({ status: "ready", ...data });
+      } catch {
+        if (!cancelled) {
+          setState({ status: "error", message: "Unable to open this link" });
+        }
+      } finally {
+        if (!cancelled) setBusy(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [state.status, state.requiresPassword, state.token]);
+
+  const openWithPassword = async (event) => {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const unlockRes = await fetch(`/api/share-link/${state.token}/unlock`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const unlockData = await unlockRes.json().catch(() => ({}));
+      if (!unlockRes.ok) {
+        setError(unlockData.error || "Incorrect password");
+        setBusy(false);
+        return;
+      }
+
+      const res = await fetch(`/api/share-link/${state.token}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unlockToken: unlockData.unlockToken }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setState({
+          status: res.status === 410 ? "used" : "error",
+          message: data.error || "Unable to open this link",
+        });
+        return;
+      }
+      setState({
+        status: "ready",
+        ...data,
+        unlockToken: unlockData.unlockToken,
+      });
+    } catch {
+      setError("Unable to open this link");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const kind =
     state.status === "ready" ? getPreviewKind(state.contentType) : null;
   const tokens =
-    state.status === "ready"
+    state.status === "ready" || state.status === "gate" || state.status === "preview"
       ? getFileTypeTokens(state.contentType, state.filename)
       : null;
+
+  const badgeLabel =
+    state.maxViews === 1 || state.status === "preview"
+      ? "Secure link"
+      : "Shared file";
 
   return (
     <Page onContextMenu={(event) => event.preventDefault()}>
@@ -45,9 +137,43 @@ export default function ShareLinkView({ state }) {
           <BrandText>Disk Drive</BrandText>
           <Badge>
             <OneTimeLinkIcon />
-            One-time link
+            {badgeLabel}
           </Badge>
         </BrandRow>
+
+        {state.status === "gate" && state.requiresPassword && (
+          <Card as="form" onSubmit={openWithPassword}>
+            <FileHead>
+              <IconWrap $bgVar={tokens.bgVar} $colorVar={tokens.colorVar}>
+                <FileIcons type={state.contentType} />
+              </IconWrap>
+              <FileMeta>
+                <CardTitle>{state.filename}</CardTitle>
+                <CardSub>
+                  {changeBytes(state.size)} · Password protected
+                </CardSub>
+              </FileMeta>
+            </FileHead>
+            <PasswordInput
+              type="password"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoFocus
+              disabled={busy}
+            />
+            {error && <ErrorText>{error}</ErrorText>}
+            <PrimaryBtn type="submit" disabled={busy || !password}>
+              {busy ? "Opening…" : "Open file"}
+            </PrimaryBtn>
+          </Card>
+        )}
+
+        {state.status === "gate" && !state.requiresPassword && busy && (
+          <Card $muted>
+            <CardTitle>Opening secure link…</CardTitle>
+          </Card>
+        )}
 
         {state.status === "ready" && (
           <Card>
@@ -58,23 +184,39 @@ export default function ShareLinkView({ state }) {
               <FileMeta>
                 <CardTitle>{state.filename}</CardTitle>
                 <CardSub>
-                  {changeBytes(state.size)} · Shared securely · Single use
+                  {changeBytes(state.size)} · Shared securely
                 </CardSub>
               </FileMeta>
             </FileHead>
 
             <PreviewWrap onContextMenu={(event) => event.preventDefault()}>
               {kind === "image" && (
-                <ShareSecureImage token={state.token} alt={state.filename} />
+                <ShareSecureImage
+                  token={state.token}
+                  unlockToken={state.unlockToken}
+                  alt={state.filename}
+                />
               )}
               {kind === "pdf" && (
-                <ShareSecurePdf token={state.token} title={state.filename} />
+                <ShareSecurePdf
+                  token={state.token}
+                  unlockToken={state.unlockToken}
+                  title={state.filename}
+                />
               )}
               {kind === "video" && (
-                <ShareSecureVideo token={state.token} title={state.filename} />
+                <ShareSecureVideo
+                  token={state.token}
+                  unlockToken={state.unlockToken}
+                  title={state.filename}
+                />
               )}
               {kind === "audio" && (
-                <ShareSecureAudio token={state.token} title={state.filename} />
+                <ShareSecureAudio
+                  token={state.token}
+                  unlockToken={state.unlockToken}
+                  title={state.filename}
+                />
               )}
               {kind === "other" && (
                 <OtherPreview>
@@ -84,35 +226,31 @@ export default function ShareLinkView({ state }) {
               )}
             </PreviewWrap>
 
-            <Notice>
-              This link has now been used and cannot be opened again.
-            </Notice>
+            {state.allowDownload !== false && state.downloadUrl && (
+              <DownloadLink href={state.downloadUrl} download={state.filename}>
+                Download
+              </DownloadLink>
+            )}
+            {state.allowDownload === false && (
+              <Notice>Downloads are disabled for this link.</Notice>
+            )}
           </Card>
         )}
 
         {state.status === "preview" && (
           <Card>
             <FileHead>
-              <IconWrap
-                $bgVar={
-                  getFileTypeTokens(state.contentType, state.filename).bgVar
-                }
-                $colorVar={
-                  getFileTypeTokens(state.contentType, state.filename).colorVar
-                }
-              >
+              <IconWrap $bgVar={tokens.bgVar} $colorVar={tokens.colorVar}>
                 <FileIcons type={state.contentType} />
               </IconWrap>
               <FileMeta>
                 <CardTitle>{state.filename}</CardTitle>
                 <CardSub>
-                  {changeBytes(state.size)} · One-time secure file link
+                  {changeBytes(state.size)} · Secure file link
                 </CardSub>
               </FileMeta>
             </FileHead>
-            <Notice>
-              Open this link in your browser to view the file once.
-            </Notice>
+            <Notice>Open this link in your browser to view the file.</Notice>
           </Card>
         )}
 
@@ -123,13 +261,13 @@ export default function ShareLinkView({ state }) {
             </StatusIcon>
             <CardTitle>
               {state.status === "used"
-                ? "Link already used"
+                ? "Link unavailable"
                 : "Link not found"}
             </CardTitle>
             <CardSub>
               {state.message ||
                 (state.status === "used"
-                  ? "One-time links expire after the first open."
+                  ? "This link can no longer be opened."
                   : "This share link may be invalid or removed.")}
             </CardSub>
             <HomeLink href="/">Go to Disk Drive</HomeLink>
@@ -287,6 +425,59 @@ const Notice = styled.p`
   text-align: center;
 `;
 
+const PasswordInput = styled.input`
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-1);
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+`;
+
+const PrimaryBtn = styled.button`
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const ErrorText = styled.p`
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  color: var(--danger);
+`;
+
+const DownloadLink = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+`;
+
 const StatusIcon = styled.div`
   width: 52px;
   height: 52px;
@@ -318,14 +509,9 @@ const HomeLink = styled(Link)`
   font-size: 0.84rem;
   font-weight: 600;
   text-decoration: none;
-  transition:
-    background var(--transition),
-    border-color var(--transition),
-    color var(--transition);
 
   &:hover {
     background: var(--surface-3);
-    border-color: var(--border);
     color: var(--text-1);
   }
 `;

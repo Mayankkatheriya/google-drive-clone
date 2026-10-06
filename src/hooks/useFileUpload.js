@@ -14,6 +14,8 @@ import {
   isFileWithinUploadLimit,
 } from "../lib/uploadLimits";
 import { resolveDisplayFilename } from "../lib/fileNames";
+import { useCurrentFolder } from "@/context/CurrentFolderContext";
+import { applyNewFileVersion } from "@/lib/fileVersions";
 
 export function useFileUpload() {
   const [open, setOpen] = useState(false);
@@ -22,8 +24,10 @@ export function useFileUpload() {
   const [file, setFile] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileName, setFileName] = useState("");
+  const [replaceFileId, setReplaceFileId] = useState(null);
   const myFiles = useMyFiles();
   const trashFiles = useTrashFiles();
+  const { folderId } = useCurrentFolder();
 
   const currentStorageBytes = getTotalStorageBytes(myFiles, trashFiles);
 
@@ -114,18 +118,36 @@ export function useFileUpload() {
           finalName,
         );
 
-        await addDoc(collection(db, "myfiles"), {
-          userId: auth.currentUser.uid,
-          timestamp: serverTimestamp(),
-          filename: finalName,
-          s3Key,
-          size,
-          contentType,
-          starred: false,
-        });
+        if (replaceFileId) {
+          const existing = myFiles.find((f) => f.id === replaceFileId);
+          if (!existing) {
+            throw new Error("File not found for new version");
+          }
+          await applyNewFileVersion(replaceFileId, existing.data, {
+            s3Key,
+            size,
+            contentType,
+            filename: finalName,
+          });
+          toast.success("New version uploaded");
+        } else {
+          await addDoc(collection(db, "myfiles"), {
+            userId: auth.currentUser.uid,
+            timestamp: serverTimestamp(),
+            filename: finalName,
+            s3Key,
+            size,
+            contentType,
+            starred: false,
+            type: "file",
+            parentId: folderId || null,
+            versionsBytes: 0,
+          });
+          toast.success("File Uploaded Successfully");
+        }
 
-        toast.success("File Uploaded Successfully");
         setProgress(0);
+        setReplaceFileId(null);
         return true;
       } catch (error) {
         console.error("Error uploading file:", error);
@@ -135,7 +157,7 @@ export function useFileUpload() {
         setUploading(false);
       }
     },
-    [rejectIfStorageFull],
+    [rejectIfStorageFull, folderId, replaceFileId, myFiles],
   );
 
   const handleUpload = useCallback(
@@ -162,10 +184,21 @@ export function useFileUpload() {
     [file, fileName, uploadFileDirect, resetFileSelection],
   );
 
+  const openReplaceUpload = useCallback((fileId) => {
+    setReplaceFileId(fileId || null);
+    resetFileSelection();
+    setOpen(true);
+  }, [resetFileSelection]);
+
+  const setOpenSafe = useCallback((value) => {
+    setOpen(value);
+    if (!value) setReplaceFileId(null);
+  }, []);
+
   return useMemo(
     () => ({
       open,
-      setOpen,
+      setOpen: setOpenSafe,
       uploading,
       progress,
       selectedFile,
@@ -175,9 +208,13 @@ export function useFileUpload() {
       stageFile,
       handleUpload,
       uploadFileDirect,
+      replaceFileId,
+      setReplaceFileId,
+      openReplaceUpload,
     }),
     [
       open,
+      setOpenSafe,
       uploading,
       progress,
       selectedFile,
@@ -186,6 +223,8 @@ export function useFileUpload() {
       stageFile,
       handleUpload,
       uploadFileDirect,
+      replaceFileId,
+      openReplaceUpload,
     ],
   );
 }

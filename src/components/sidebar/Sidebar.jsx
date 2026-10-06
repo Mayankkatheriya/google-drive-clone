@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { useSelector } from "react-redux";
 import { selectSidebarBool } from "../../store/BoolSlice";
@@ -8,16 +8,25 @@ import { useFileUploadContext } from "@/context/FileUploadContext";
 import AddFile from "./AddFile";
 import VoiceMemoButton from "./VoiceMemoButton";
 import SidebarTabs from "./SidebarTabs";
+import CreateFolderModal from "../common/CreateFolderModal";
 
 const Sidebar = () => {
   const sidebarBool = useSelector(selectSidebarBool);
   const upload = useFileUploadContext();
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
 
   return (
     <SidebarContainer $open={sidebarBool}>
-      <AddFile onClick={() => upload.setOpen(true)} />
+      <AddFile
+        onClick={() => upload.setOpen(true)}
+        onCreateFolder={() => setCreateFolderOpen(true)}
+      />
       <VoiceMemoButton onClick={() => upload.openVoiceMemo()} />
       <SidebarTabs />
+      <CreateFolderModal
+        open={createFolderOpen}
+        onClose={() => setCreateFolderOpen(false)}
+      />
     </SidebarContainer>
   );
 };

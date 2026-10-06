@@ -1,20 +1,32 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { Modal } from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import StorageRoundedIcon from "@mui/icons-material/StorageRounded";
+import AutoFixHighRoundedIcon from "@mui/icons-material/AutoFixHighRounded";
 import { useStorageInfo } from "@/hooks/useStorageInfo";
 import { useMyFiles, useTrashFiles } from "@/context/FilesContext";
 import { useFileTrashActions } from "@/hooks/useFileTrashActions";
+import { useConfirm } from "@/context/ConfirmDialogProvider";
 import { changeBytes } from "./common";
 import { computeStorageBreakdown } from "@/lib/storageBreakdown";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
 import { MAX_USER_STORAGE_BYTES } from "@/lib/uploadLimits";
+import { buildCleanupRecommendations } from "@/lib/cleanupAssistant";
+import {
+  deleteShareLink,
+  listAllShareLinks,
+} from "@/lib/shareLink";
+import {
+  moveToTrash,
+  permanentDeleteFromTrash,
+} from "./firebaseApi";
 import FileIcons from "./FileIcons";
 import Tooltip from "./Tooltip";
+import { toast } from "react-toastify";
 
 const RING_R = 52;
 const RING_C = 2 * Math.PI * RING_R;
@@ -83,11 +95,35 @@ const StorageModal = ({ open, onClose }) => {
   const myFiles = useMyFiles();
   const trashFiles = useTrashFiles();
   const { confirmMoveToTrash, confirmPermanentDelete } = useFileTrashActions();
+  const confirm = useConfirm();
+  const [tab, setTab] = useState("overview");
+  const [shareLinks, setShareLinks] = useState([]);
+  const [selectedCleanup, setSelectedCleanup] = useState(() => new Set());
+  const [cleaning, setCleaning] = useState(false);
 
   const breakdown = useMemo(
     () => computeStorageBreakdown(myFiles, trashFiles),
     [myFiles, trashFiles],
   );
+
+  const recommendations = useMemo(
+    () =>
+      buildCleanupRecommendations({
+        myFiles,
+        trashFiles,
+        shareLinks,
+      }),
+    [myFiles, trashFiles, shareLinks],
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    setTab("overview");
+    setSelectedCleanup(new Set());
+    listAllShareLinks()
+      .then(setShareLinks)
+      .catch(() => setShareLinks([]));
+  }, [open]);
 
   const usedFraction = storagePercent / 100;
   const freeBytes = Math.max(0, MAX_USER_STORAGE_BYTES - breakdown.totalBytes);
@@ -98,6 +134,58 @@ const StorageModal = ({ open, onClose }) => {
       return;
     }
     await confirmMoveToTrash(file.id, file.data);
+  };
+
+  const toggleCleanup = (id) => {
+    setSelectedCleanup((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const runCleanup = async () => {
+    const chosen = recommendations.filter((r) => selectedCleanup.has(r.id));
+    if (chosen.length === 0) return;
+    const ok = await confirm({
+      title: "Run cleanup?",
+      message: `${chosen.length} recommendation${chosen.length === 1 ? "" : "s"} will be applied. This cannot be undone for permanent deletes.`,
+      confirmLabel: "Clean selected",
+      cancelLabel: "Cancel",
+      tone: "warning",
+    });
+    if (!ok) return;
+
+    setCleaning(true);
+    let done = 0;
+    try {
+      for (const rec of chosen) {
+        if (rec.action === "trash" && rec.item) {
+          const success = await moveToTrash(rec.item.id, rec.item.data, {
+            silent: true,
+          });
+          if (success) done += 1;
+        } else if (rec.action === "permanentDelete" && rec.item) {
+          await permanentDeleteFromTrash(rec.item.id, rec.item.data);
+          done += 1;
+        } else if (rec.action === "deleteLink" && rec.link) {
+          await deleteShareLink(rec.link.token);
+          done += 1;
+        }
+      }
+      toast.success(
+        done > 0 ? `Cleaned ${done} item${done === 1 ? "" : "s"}` : "Nothing cleaned",
+      );
+      setSelectedCleanup(new Set());
+      const nextLinks = await listAllShareLinks().catch(() => []);
+      setShareLinks(nextLinks);
+    } catch (error) {
+      console.error(error);
+      toast.error("Cleanup failed");
+    } finally {
+      setCleaning(false);
+    }
   };
 
   return (
@@ -118,6 +206,70 @@ const StorageModal = ({ open, onClose }) => {
           </CloseBtn>
         </ModalHeader>
 
+        <TabRow>
+          <TabBtn type="button" $active={tab === "overview"} onClick={() => setTab("overview")}>
+            Overview
+          </TabBtn>
+          <TabBtn type="button" $active={tab === "cleanup"} onClick={() => setTab("cleanup")}>
+            <AutoFixHighRoundedIcon style={{ fontSize: 16 }} />
+            Cleanup
+            {recommendations.length > 0 && (
+              <TabCount>{recommendations.length}</TabCount>
+            )}
+          </TabBtn>
+        </TabRow>
+
+        {tab === "cleanup" ? (
+          <CleanupPane>
+            {recommendations.length === 0 ? (
+              <CleanupEmpty>No cleanup suggestions right now.</CleanupEmpty>
+            ) : (
+              <>
+                <CleanupHint>
+                  Review recommendations, then clean selected items. Nothing runs
+                  automatically.
+                </CleanupHint>
+                <CleanupList>
+                  {recommendations.map((rec) => (
+                    <CleanupRow key={rec.id}>
+                      <input
+                        type="checkbox"
+                        checked={selectedCleanup.has(rec.id)}
+                        onChange={() => toggleCleanup(rec.id)}
+                      />
+                      <CleanupMeta>
+                        <strong>{rec.title}</strong>
+                        <span>
+                          {rec.detail}
+                          {rec.bytes > 0 ? ` · ${changeBytes(rec.bytes)}` : ""}
+                        </span>
+                      </CleanupMeta>
+                      <CleanupKind>{rec.kind}</CleanupKind>
+                    </CleanupRow>
+                  ))}
+                </CleanupList>
+                <CleanupActions>
+                  <SecondaryBtn
+                    type="button"
+                    onClick={() =>
+                      setSelectedCleanup(new Set(recommendations.map((r) => r.id)))
+                    }
+                  >
+                    Select all
+                  </SecondaryBtn>
+                  <PrimaryBtn
+                    type="button"
+                    disabled={cleaning || selectedCleanup.size === 0}
+                    onClick={runCleanup}
+                  >
+                    {cleaning ? "Cleaning…" : `Clean selected (${selectedCleanup.size})`}
+                  </PrimaryBtn>
+                </CleanupActions>
+              </>
+            )}
+          </CleanupPane>
+        ) : (
+          <>
         <HeroBlock>
           <StorageRing
             percent={storagePercent}
@@ -237,6 +389,8 @@ const StorageModal = ({ open, onClose }) => {
             )}
           </>
         )}
+          </>
+        )}
 
         <Footnote>
           5 MB max per file · 100 MB total per account
@@ -245,6 +399,152 @@ const StorageModal = ({ open, onClose }) => {
     </Modal>
   );
 };
+
+const TabRow = styled.div`
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+`;
+
+const TabBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid
+    ${(p) => (p.$active ? "var(--primary)" : "var(--border-light)")};
+  background: ${(p) => (p.$active ? "var(--primary-light)" : "var(--surface-2)")};
+  color: ${(p) => (p.$active ? "var(--primary)" : "var(--text-2)")};
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+`;
+
+const TabCount = styled.span`
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.68rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const CleanupPane = styled.div`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+`;
+
+const CleanupHint = styled.p`
+  font-size: 0.76rem;
+  color: var(--text-3);
+  line-height: 1.4;
+`;
+
+const CleanupEmpty = styled.p`
+  font-size: 0.84rem;
+  color: var(--text-3);
+  text-align: center;
+  padding: 28px 8px;
+`;
+
+const CleanupList = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+`;
+
+const CleanupRow = styled.label`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-light);
+  background: var(--surface-2);
+  cursor: pointer;
+
+  input {
+    margin-top: 3px;
+  }
+`;
+
+const CleanupMeta = styled.div`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-size: 0.82rem;
+    color: var(--text-1);
+    word-break: break-word;
+  }
+
+  span {
+    font-size: 0.72rem;
+    color: var(--text-3);
+  }
+`;
+
+const CleanupKind = styled.span`
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--primary);
+  flex-shrink: 0;
+`;
+
+const CleanupActions = styled.div`
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+`;
+
+const SecondaryBtn = styled.button`
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-light);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+`;
+
+const PrimaryBtn = styled.button`
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
 
 const StorageModalBox = styled.div`
   position: absolute;

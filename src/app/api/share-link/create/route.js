@@ -5,7 +5,8 @@ import { createShareLink } from "@/lib/server/shareLinks";
 export async function POST(request) {
   try {
     const decoded = await requireAuth(request.headers.get("authorization"));
-    const { fileId } = (await request.json()) ?? {};
+    const body = (await request.json()) ?? {};
+    const { fileId, expiresInHours, password, maxViews, allowDownload } = body;
 
     if (!fileId) {
       return NextResponse.json({ error: "fileId is required" }, { status: 400 });
@@ -20,6 +21,10 @@ export async function POST(request) {
       fileId,
       userId: decoded.uid,
       origin,
+      expiresInHours,
+      password,
+      maxViews,
+      allowDownload,
     });
 
     return NextResponse.json(result);

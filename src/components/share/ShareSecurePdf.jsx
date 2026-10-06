@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
-export default function ShareSecurePdf({ token, title }) {
+export default function ShareSecurePdf({ token, unlockToken, title }) {
   const wrapRef = useRef(null);
   const pagesRef = useRef(null);
   const [loading, setLoading] = useState(true);
@@ -20,9 +20,11 @@ export default function ShareSecurePdf({ token, title }) {
         const pdfjs = await import("pdfjs-dist");
         pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
-        const pdf = await pdfjs.getDocument({
-          url: `/api/share-link/${token}/content`,
-        }).promise;
+        const url = unlockToken
+          ? `/api/share-link/${token}/content?unlock=${encodeURIComponent(unlockToken)}`
+          : `/api/share-link/${token}/content`;
+
+        const pdf = await pdfjs.getDocument({ url }).promise;
 
         if (cancelled || !wrapRef.current || !pagesRef.current) return;
 
@@ -71,7 +73,7 @@ export default function ShareSecurePdf({ token, title }) {
     return () => {
       cancelled = true;
     };
-  }, [token, title]);
+  }, [token, unlockToken, title]);
 
   if (error) {
     return <StateText>Unable to load PDF preview.</StateText>;

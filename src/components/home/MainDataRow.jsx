@@ -12,9 +12,11 @@ import {
   DeleteIcon,
   ShareIcon,
   RenameIcon,
-  OneTimeLinkIcon,
 } from "../common/SvgIcons";
 import AutoDeleteIcon from "@mui/icons-material/AutoDeleteOutlined";
+import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
+import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
+import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
 import { changeBytes, convertDates } from "../common/common";
 import FileIcons from "../common/FileIcons";
 import SecureFileLink from "../common/SecureFileLink";
@@ -22,6 +24,7 @@ import ShareButtons from "../common/ShareButtons";
 import { downloadFileWithToast } from "../../lib/fileAccess";
 import { useMenuPlacement } from "@/hooks/useMenuPlacement";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
+import { getFolderSizeBytes } from "@/lib/folders";
 import { canCompareFile } from "@/lib/compareFiles";
 import {
   hasSelfDestruct,
@@ -33,15 +36,18 @@ import Tooltip from "../common/Tooltip";
 
 function FileRowOptionsMenu({
   file,
+  isFolder: folder,
   isOpen,
   showShareIcons,
   shareUrl,
   onToggle,
   onShareClick,
   onCopyLink,
-  onOneTimeLink,
+  onShareLink,
   onRename,
   onDelete,
+  onMove,
+  onVersionHistory,
   menuRef,
 }) {
   const triggerRef = useRef(null);
@@ -75,57 +81,65 @@ function FileRowOptionsMenu({
             $flip={flip}
             style={{ top, right }}
           >
-            <MenuItem onClick={() => downloadFileWithToast(file.data)}>
-              <DownloadIcon /> Download
-            </MenuItem>
-            <MenuItem onClick={() => onCopyLink(file.data)}>
-              <CopyIcon /> Copy Link
-            </MenuItem>
-            <MenuItem onClick={() => onOneTimeLink(file.id)}>
-              <OneTimeLinkIcon /> One-time link
-            </MenuItem>
-            <MenuItem
-              className="shareButton"
-              onClick={() => onShareClick(file.data)}
-            >
-              <ShareIcon /> Share
-              <ShareExpand
-                className={showShareIcons ? "show" : ""}
-                $flip={flip}
-              >
-                <ShareButtons
-                  url={shareUrl}
-                  filename={file.data.filename}
-                  fileData={file.data}
-                  layout="expand"
-                />
-              </ShareExpand>
-            </MenuItem>
-            <MenuDivider />
+            {!folder && (
+              <>
+                <MenuItem onClick={() => downloadFileWithToast(file.data)}>
+                  <DownloadIcon /> Download
+                </MenuItem>
+                <MenuItem onClick={() => onCopyLink(file.data)}>
+                  <CopyIcon /> Copy Link
+                </MenuItem>
+                <MenuItem onClick={onShareLink}>
+                  <LinkRoundedIcon /> Share link
+                </MenuItem>
+                <MenuItem
+                  className="shareButton"
+                  onClick={() => onShareClick(file.data)}
+                >
+                  <ShareIcon /> Share
+                  <ShareExpand
+                    className={showShareIcons ? "show" : ""}
+                    $flip={flip}
+                  >
+                    <ShareButtons
+                      url={shareUrl}
+                      filename={file.data.filename}
+                      fileData={file.data}
+                      layout="expand"
+                    />
+                  </ShareExpand>
+                </MenuItem>
+                <MenuDivider />
+              </>
+            )}
             <MenuItem onClick={() => onRename(file.id, file.data.filename)}>
               <RenameIcon /> Rename
             </MenuItem>
-            <MenuItem
-              onClick={() => {
-                onToggle();
-                openSelfDestruct(file.id, file.data);
-              }}
-            >
-              <AutoDeleteIcon />{" "}
-              {sdActive
-                ? `Self-destruct · ${getSelfDestructRemainingLabel(file.data)}`
-                : "Self-destruct"}
+            <MenuItem onClick={onMove}>
+              <DriveFileMoveOutlinedIcon /> Move
             </MenuItem>
+            {!folder && (
+              <MenuItem onClick={onVersionHistory}>
+                <HistoryRoundedIcon /> Version history
+              </MenuItem>
+            )}
+            {!folder && (
+              <MenuItem
+                onClick={() => {
+                  onToggle();
+                  openSelfDestruct(file.id, file.data);
+                }}
+              >
+                <AutoDeleteIcon />{" "}
+                {sdActive
+                  ? `Self-destruct · ${getSelfDestructRemainingLabel(file.data)}`
+                  : "Self-destruct"}
+              </MenuItem>
+            )}
             <MenuDivider />
             <MenuItem $danger onClick={() => onDelete(file.id, file.data)}>
               <DeleteIcon /> Delete
             </MenuItem>
-            <MenuFooter>
-              <FooterRow>{changeBytes(file.data.size)}</FooterRow>
-              <FooterRow>
-                {convertDates(file.data.timestamp?.seconds)}
-              </FooterRow>
-            </MenuFooter>
           </OptionsMenu>,
           document.body,
         )}
@@ -136,6 +150,7 @@ function FileRowOptionsMenu({
 function MainDataRow({
   file,
   files,
+  isFolder: folder = false,
   isMenuOpen,
   isRenaming,
   renameValue,
@@ -151,38 +166,60 @@ function MainDataRow({
   onRenameBlur,
   onRenameKeyDown,
   onCopyLink,
-  onOneTimeLink,
+  onShareLink,
   onQuickShare,
   onRenameStart,
   onRename,
   onDelete,
+  onMove,
+  onVersionHistory,
   onOptionsToggle,
   onShareClick,
   compareMode = false,
   compareSelected = false,
   onCompareToggle,
+  selectMode = false,
+  selectSelected = false,
+  onSelectToggle,
   focusMode = false,
   onFocusOpen,
 }) {
   const { bgVar, colorVar } = getFileTypeTokens(
     file.data.contentType,
     file.data.filename,
+    folder ? "folder" : file.data.type,
   );
-  const comparable = canCompareFile(file.data.contentType);
+  const comparable = !folder && canCompareFile(file.data.contentType);
   const openSelfDestruct = useSelfDestruct();
   const sdActive = hasSelfDestruct(file.data);
+  const pickMode = compareMode || selectMode;
+  const sizeLabel = folder
+    ? changeBytes(getFolderSizeBytes(files, file.id))
+    : changeBytes(file.data.size);
 
   return (
     <Row
       $active={isMenuOpen}
-      $compareMode={compareMode}
-      $compareSelected={compareSelected}
+      $compareMode={pickMode}
+      $compareSelected={compareMode ? compareSelected : selectSelected}
       $compareDisabled={compareMode && !comparable}
       $focusMode={focusMode}
       data-share-open={isShareOpen || undefined}
       onClick={
         focusMode
           ? () => onFocusOpen?.()
+          : selectMode
+          ? (event) => {
+              if (
+                event.target.closest(".optionsContainer") ||
+                event.target.closest(".hover-actions") ||
+                event.target.closest(".share-popover") ||
+                event.target.closest(".share-trigger")
+              ) {
+                return;
+              }
+              onSelectToggle?.();
+            }
           : compareMode
           ? (event) => {
               if (
@@ -200,11 +237,11 @@ function MainDataRow({
       }
     >
       <NameCol>
-        {compareMode && (
+        {(compareMode || selectMode) && (
           <CompareSelectWrap>
             <CompareSelectMark
-              selected={compareSelected}
-              disabled={!comparable}
+              selected={compareMode ? compareSelected : selectSelected}
+              disabled={compareMode && !comparable}
             />
           </CompareSelectWrap>
         )}
@@ -223,9 +260,24 @@ function MainDataRow({
         )}
 
         <FileInfo>
-          {compareMode || focusMode ? (
-            <FileIconWrap $bgVar={bgVar} $colorVar={colorVar}>
-              <FileIcons type={file.data.contentType} />
+          {pickMode || focusMode || folder ? (
+            <FileIconWrap
+              $bgVar={bgVar}
+              $colorVar={colorVar}
+              onClick={
+                folder && !pickMode && !focusMode
+                  ? (e) => {
+                      e.stopPropagation();
+                      onNameClick?.(e);
+                    }
+                  : undefined
+              }
+              style={folder && !pickMode ? { cursor: "pointer" } : undefined}
+            >
+              <FileIcons
+                type={folder ? "folder" : file.data.contentType}
+                itemType={folder ? "folder" : undefined}
+              />
             </FileIconWrap>
           ) : (
             <SecureFileLink fileData={file.data} fileId={file.id} files={files}>
@@ -252,7 +304,7 @@ function MainDataRow({
                 </FileName>
               </Tooltip>
             )}
-            {hasSelfDestruct(file.data) && (
+            {!folder && hasSelfDestruct(file.data) && (
               <Tooltip label="Auto-deletes to Trash">
                 <SelfDestructPill>
                   <AutoDeleteIcon />
@@ -261,12 +313,12 @@ function MainDataRow({
               </Tooltip>
             )}
             <MobileMeta>
-              {changeBytes(file.data.size)} ·{" "}
+              {folder ? `Folder · ${sizeLabel}` : sizeLabel} ·{" "}
               {convertDates(file.data.timestamp?.seconds)}
             </MobileMeta>
             {focusMode && (
               <FocusMeta className="hide-sm">
-                {changeBytes(file.data.size)} ·{" "}
+                {folder ? `Folder · ${sizeLabel}` : sizeLabel} ·{" "}
                 {convertDates(file.data.timestamp?.seconds)}
               </FocusMeta>
             )}
@@ -275,7 +327,7 @@ function MainDataRow({
       </NameCol>
 
       <SizeCol className="hide-sm">
-        {!focusMode && <MetaText>{changeBytes(file.data.size)}</MetaText>}
+        {!focusMode && <MetaText>{sizeLabel}</MetaText>}
       </SizeCol>
 
       <DateCol className="hide-md">
@@ -287,61 +339,79 @@ function MainDataRow({
       {!focusMode && (
       <ActionsCol>
         <HoverActions className="hover-actions">
-          <Tooltip label="Download" iconOnly>
-            <QuickBtn onClick={() => downloadFileWithToast(file.data)}>
-              <DownloadIcon />
-            </QuickBtn>
-          </Tooltip>
-          <Tooltip label="Copy link" iconOnly>
-            <QuickBtn onClick={() => onCopyLink(file.data)}>
-              <CopyIcon />
-            </QuickBtn>
-          </Tooltip>
-          <Tooltip label="One-time link — expires after first open" iconOnly>
-            <QuickBtn onClick={() => onOneTimeLink(file.id)}>
-              <OneTimeLinkIcon />
-            </QuickBtn>
-          </Tooltip>
-          <ShareWrap>
-            <Tooltip label="Share" iconOnly>
-              <QuickBtn
-                className="share-trigger"
-                onClick={onQuickShare}
-                $active={isShareOpen}
-              >
-                <ShareIcon />
-              </QuickBtn>
-            </Tooltip>
-            {isShareOpen && shareUrl && (
-              <ShareBar className="share-popover">
-                <ShareButtons
-                  url={shareUrl}
-                  filename={file.data.filename}
-                  fileData={file.data}
-                />
-              </ShareBar>
-            )}
-          </ShareWrap>
+          {!folder && (
+            <>
+              <Tooltip label="Download" iconOnly>
+                <QuickBtn onClick={() => downloadFileWithToast(file.data)}>
+                  <DownloadIcon />
+                </QuickBtn>
+              </Tooltip>
+              <Tooltip label="Copy link" iconOnly>
+                <QuickBtn onClick={() => onCopyLink(file.data)}>
+                  <CopyIcon />
+                </QuickBtn>
+              </Tooltip>
+              <Tooltip label="Share link" iconOnly>
+                <QuickBtn onClick={onShareLink}>
+                  <LinkRoundedIcon />
+                </QuickBtn>
+              </Tooltip>
+              <ShareWrap>
+                <Tooltip label="Share" iconOnly>
+                  <QuickBtn
+                    className="share-trigger"
+                    onClick={onQuickShare}
+                    $active={isShareOpen}
+                  >
+                    <ShareIcon />
+                  </QuickBtn>
+                </Tooltip>
+                {isShareOpen && shareUrl && (
+                  <ShareBar className="share-popover">
+                    <ShareButtons
+                      url={shareUrl}
+                      filename={file.data.filename}
+                      fileData={file.data}
+                    />
+                  </ShareBar>
+                )}
+              </ShareWrap>
+            </>
+          )}
           <Tooltip label="Rename" iconOnly>
             <QuickBtn onClick={onRenameStart}>
               <RenameIcon />
             </QuickBtn>
           </Tooltip>
-          <Tooltip
-            label={
-              sdActive
-                ? `Self-destruct · ${getSelfDestructRemainingLabel(file.data)}`
-                : "Self-destruct"
-            }
-            iconOnly
-          >
-            <QuickBtn
-              $active={sdActive}
-              onClick={() => openSelfDestruct(file.id, file.data)}
-            >
-              <AutoDeleteIcon />
+          <Tooltip label="Move" iconOnly>
+            <QuickBtn onClick={onMove}>
+              <DriveFileMoveOutlinedIcon />
             </QuickBtn>
           </Tooltip>
+          {!folder && (
+            <Tooltip label="Version history" iconOnly>
+              <QuickBtn onClick={onVersionHistory}>
+                <HistoryRoundedIcon />
+              </QuickBtn>
+            </Tooltip>
+          )}
+          {!folder && (
+            <Tooltip
+              label={
+                sdActive
+                  ? `Self-destruct · ${getSelfDestructRemainingLabel(file.data)}`
+                  : "Self-destruct"
+              }
+              iconOnly
+            >
+              <QuickBtn
+                $active={sdActive}
+                onClick={() => openSelfDestruct(file.id, file.data)}
+              >
+                <AutoDeleteIcon />
+              </QuickBtn>
+            </Tooltip>
+          )}
           <Tooltip label="Delete" iconOnly>
             <QuickBtn $danger onClick={onDelete}>
               <DeleteIcon />
@@ -353,15 +423,18 @@ function MainDataRow({
           {isMenuOpen ? (
             <FileRowOptionsMenu
               file={file}
+              isFolder={folder}
               isOpen={isMenuOpen}
               showShareIcons={showShareIcons}
               shareUrl={shareUrl}
               onToggle={onOptionsToggle}
               onShareClick={onShareClick}
               onCopyLink={onCopyLink}
-              onOneTimeLink={onOneTimeLink}
+              onShareLink={onShareLink}
               onRename={onRename}
               onDelete={onDelete}
+              onMove={onMove}
+              onVersionHistory={onVersionHistory}
               menuRef={optionsMenuRef}
             />
           ) : (
@@ -396,7 +469,10 @@ export default memo(
     prev.renameValue === next.renameValue &&
     prev.compareMode === next.compareMode &&
     prev.compareSelected === next.compareSelected &&
-    prev.focusMode === next.focusMode,
+    prev.selectMode === next.selectMode &&
+    prev.selectSelected === next.selectSelected &&
+    prev.focusMode === next.focusMode &&
+    prev.isFolder === next.isFolder,
 );
 
 const NameCol = styled.div`
@@ -420,7 +496,7 @@ const DateCol = styled.div`
 `;
 
 const ActionsCol = styled.div`
-  flex: 0 0 220px;
+  flex: 0 0 252px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -779,8 +855,14 @@ const OptionsMenu = styled.div`
   border-radius: 14px;
   box-shadow: var(--shadow-md);
   min-width: 186px;
+  max-width: min(260px, calc(100vw - 16px));
+  max-height: min(50vh, 320px);
+  overflow-x: hidden;
+  overflow-y: auto;
   z-index: 50;
   padding: 6px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 
   ${(props) =>
     props.$fixed &&
@@ -821,18 +903,6 @@ const MenuDivider = styled.div`
   height: 1px;
   background: var(--border-light);
   margin: 4px 0;
-`;
-
-const MenuFooter = styled.div`
-  padding: 6px 12px 2px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-`;
-
-const FooterRow = styled.span`
-  font-size: 0.72rem;
-  color: var(--text-3);
 `;
 
 const ShareExpand = styled.div`

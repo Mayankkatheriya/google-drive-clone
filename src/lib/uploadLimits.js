@@ -15,7 +15,12 @@ export function getUserStorageLimitLabel() {
 
 export function getTotalStorageBytes(myFiles = [], trashFiles = []) {
   const sumSizes = (files) =>
-    files.reduce((total, file) => total + (file.data?.size || 0), 0);
+    files.reduce((total, file) => {
+      if (file.data?.type === "folder") return total;
+      const current = file.data?.size || 0;
+      const versions = file.data?.versionsBytes || 0;
+      return total + current + versions;
+    }, 0);
 
   return sumSizes(myFiles) + sumSizes(trashFiles);
 }
@@ -33,7 +38,7 @@ export function getUploadHelpText() {
 }
 
 export function getUploadHelpTextMobile() {
-  return `Tap New to upload files. Max ${getUploadLimitLabel()} per file.`;
+  return `Tap + to upload or create a folder. Max ${getUploadLimitLabel()} per file.`;
 }
 
 export function getUploadModalHint() {
