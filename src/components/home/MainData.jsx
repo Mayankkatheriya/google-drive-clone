@@ -265,18 +265,21 @@ const MainData = ({
                   return;
                 }
                 event.stopPropagation();
+                if (folder) {
+                  onOpenFolder?.(file.id);
+                  return;
+                }
                 // Delay open so a double-click can rename instead.
                 if (nameClickTimerRef.current) {
                   clearTimeout(nameClickTimerRef.current);
                 }
                 nameClickTimerRef.current = setTimeout(() => {
-                  if (folder) onOpenFolder?.(file.id);
-                  else openFilePreview(file);
+                  openFilePreview(file);
                   nameClickTimerRef.current = null;
                 }, 300);
               }}
               onNameDoubleClick={(event) => {
-                if (modeActive || focusMode) return;
+                if (modeActive || focusMode || folder) return;
                 event.preventDefault();
                 event.stopPropagation();
                 if (nameClickTimerRef.current) {

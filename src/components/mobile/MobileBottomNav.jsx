@@ -15,6 +15,8 @@ import {
   DeleteOutlineIcon,
 } from "../common/SvgIcons";
 import { useFileUploadContext } from "@/context/FileUploadContext";
+import { useSelection } from "@/context/SelectionContext";
+import { useCompare } from "@/context/CompareContext";
 import CreateFolderModal from "../common/CreateFolderModal";
 
 const navItems = [
@@ -27,9 +29,16 @@ const navItems = [
 const MobileBottomNav = () => {
   const pathname = usePathname();
   const upload = useFileUploadContext();
+  const { active: selectActive } = useSelection();
+  const { active: compareActive } = useCompare();
   const [menuOpen, setMenuOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const fabWrapRef = useRef(null);
+  const hideFab = selectActive || compareActive;
+
+  useEffect(() => {
+    if (hideFab) setMenuOpen(false);
+  }, [hideFab]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -60,45 +69,47 @@ const MobileBottomNav = () => {
         })}
       </NavBar>
 
-      <FabWrap ref={fabWrapRef}>
-        {menuOpen && (
-          <FabMenu role="menu" aria-label="Create">
-            <FabMenuItem
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setMenuOpen(false);
-                upload.setOpen(true);
-              }}
-            >
-              <UploadFileOutlinedIcon />
-              File upload
-            </FabMenuItem>
-            <FabMenuItem
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setMenuOpen(false);
-                setCreateFolderOpen(true);
-              }}
-            >
-              <CreateNewFolderOutlinedIcon />
-              New folder
-            </FabMenuItem>
-          </FabMenu>
-        )}
-        <Fab
-          type="button"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-label={menuOpen ? "Close create menu" : "New"}
-          aria-expanded={menuOpen}
-          aria-haspopup="menu"
-          data-tour="upload-fab"
-          $open={menuOpen}
-        >
-          {menuOpen ? <CloseRoundedIcon /> : <AddIcon />}
-        </Fab>
-      </FabWrap>
+      {!hideFab && (
+        <FabWrap ref={fabWrapRef}>
+          {menuOpen && (
+            <FabMenu role="menu" aria-label="Create">
+              <FabMenuItem
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  upload.setOpen(true);
+                }}
+              >
+                <UploadFileOutlinedIcon />
+                File upload
+              </FabMenuItem>
+              <FabMenuItem
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setCreateFolderOpen(true);
+                }}
+              >
+                <CreateNewFolderOutlinedIcon />
+                New folder
+              </FabMenuItem>
+            </FabMenu>
+          )}
+          <Fab
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label={menuOpen ? "Close create menu" : "New"}
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+            data-tour="upload-fab"
+            $open={menuOpen}
+          >
+            {menuOpen ? <CloseRoundedIcon /> : <AddIcon />}
+          </Fab>
+        </FabWrap>
+      )}
 
       <CreateFolderModal
         open={createFolderOpen}

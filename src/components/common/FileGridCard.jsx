@@ -14,7 +14,10 @@ import {
   RestoreIcon,
 } from "./SvgIcons";
 import AutoDeleteIcon from "@mui/icons-material/AutoDeleteOutlined";
-import { downloadFileWithToast } from "../../lib/fileAccess";
+import {
+  downloadFileWithToast,
+  downloadSelectionAsZipWithToast,
+} from "../../lib/fileAccess";
 import { DriveGridMenu } from "./DriveGridMenu";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
 import {
@@ -24,6 +27,7 @@ import {
 import { useCompare } from "@/context/CompareContext";
 import { useSelection } from "@/context/SelectionContext";
 import { useFilePreview } from "@/context/FilePreviewContext";
+import { useMyFiles } from "@/context/FilesContext";
 import { markFileOpened } from "./firebaseApi";
 import { canCompareFile } from "@/lib/compareFiles";
 import { isFolder, getFolderSizeBytes } from "@/lib/folders";
@@ -63,6 +67,7 @@ function FileGridCard({
     isSelected: isSelectSelected,
   } = useSelection();
   const { open: openPreview } = useFilePreview();
+  const allFiles = useMyFiles();
   const folder = isFolder(file);
   const { bgVar, colorVar, label } = getFileTypeTokens(
     file.data.contentType,
@@ -101,6 +106,10 @@ function FileGridCard({
     if (!isDrivePage || pickMode || driveFocus) return;
     event.preventDefault();
     event.stopPropagation();
+    if (folder) {
+      openFilePreview();
+      return;
+    }
     if (nameClickTimerRef.current) clearTimeout(nameClickTimerRef.current);
     nameClickTimerRef.current = setTimeout(() => {
       openFilePreview();
@@ -109,7 +118,7 @@ function FileGridCard({
   };
 
   const handleNameDoubleClick = (event) => {
-    if (!isDrivePage || pickMode || driveFocus) return;
+    if (!isDrivePage || pickMode || driveFocus || folder) return;
     event.preventDefault();
     event.stopPropagation();
     if (nameClickTimerRef.current) {
@@ -287,11 +296,15 @@ function FileGridCard({
 
       {page !== "trash" && page !== "starred" && !isDrivePage && (
         <CardActions className="card-actions">
-          <Tooltip label="Download" iconOnly>
+          <Tooltip label={folder ? "Download zip" : "Download"} iconOnly>
             <ActionBtn
               onClick={(e) => {
                 e.stopPropagation();
-                downloadFileWithToast(file.data);
+                if (folder) {
+                  downloadSelectionAsZipWithToast([file], data ?? allFiles);
+                } else {
+                  downloadFileWithToast(file.data);
+                }
               }}
             >
               <DownloadIcon />

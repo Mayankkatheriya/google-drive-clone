@@ -12,7 +12,6 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMyFiles, useMyFilesLoading } from "@/context/FilesContext";
-import { getQuickAccessFiles } from "@/lib/quickAccess";
 import {
   filterFilesForFocus,
   getFocusEmptyState,
@@ -25,7 +24,6 @@ import {
   isFolder,
   sortDriveItems,
 } from "@/lib/folders";
-import RecentDataGrid from "./RecentDataGrid";
 import PageHeader from "../common/PageHeader";
 import FolderBreadcrumbs from "../common/FolderBreadcrumbs";
 import { Page } from "../common/PageShell";
@@ -35,11 +33,13 @@ import { PAGE_SUBTITLES } from "@/lib/pageSubtitles";
 import CompareModeBar from "../common/CompareModeBar";
 import FocusFilterBar from "../common/FocusFilterBar";
 import SelectionModeBar from "../common/SelectionModeBar";
+import DriveTypeFilter from "./DriveTypeFilter";
 
 const MainData = dynamic(() => import("./MainData"), { ssr: false });
 const FilesList = lazy(() => import("../common/FilesList"));
 
 const VIEW_STORAGE_KEY = "driveViewMode";
+const TYPE_FILTER_KEY = "driveTypeFilter";
 
 function DataInner() {
   const files = useMyFiles();
@@ -49,6 +49,7 @@ function DataInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState("list");
+  const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
     const fromUrl = searchParams.get("folder");
@@ -67,15 +68,24 @@ function DataInner() {
     [router, setFolderId],
   );
 
-  const folderFiles = useMemo(() => {
+  const itemsInFolder = useMemo(() => {
     if (focusActive) return filterFilesForFocus(files, filter);
     return sortDriveItems(filterByFolder(files, folderId));
   }, [files, folderId, focusActive, filter]);
 
-  const quickAccess = useMemo(() => {
-    if (focusActive || folderId) return [];
-    return getQuickAccessFiles(files.filter((f) => !isFolder(f)));
-  }, [files, focusActive, folderId]);
+  const folderCount = useMemo(
+    () => itemsInFolder.filter((f) => isFolder(f)).length,
+    [itemsInFolder],
+  );
+  const fileCount = itemsInFolder.length - folderCount;
+
+  const visibleItems = useMemo(() => {
+    if (focusActive || typeFilter === "all") return itemsInFolder;
+    if (typeFilter === "folders") {
+      return itemsInFolder.filter((f) => isFolder(f));
+    }
+    return itemsInFolder.filter((f) => !isFolder(f));
+  }, [itemsInFolder, typeFilter, focusActive]);
 
   const crumbs = useMemo(
     () => getBreadcrumbPath(files, folderId),
@@ -87,9 +97,13 @@ function DataInner() {
     crumbs.length > 0 ? crumbs[crumbs.length - 1].name : "My Drive";
 
   useEffect(() => {
-    const saved = localStorage.getItem(VIEW_STORAGE_KEY);
-    if (saved === "grid" || saved === "list") {
-      setViewMode(saved);
+    const savedView = localStorage.getItem(VIEW_STORAGE_KEY);
+    if (savedView === "grid" || savedView === "list") {
+      setViewMode(savedView);
+    }
+    const savedType = localStorage.getItem(TYPE_FILTER_KEY);
+    if (savedType === "all" || savedType === "folders" || savedType === "files") {
+      setTypeFilter(savedType);
     }
   }, []);
 
@@ -97,6 +111,29 @@ function DataInner() {
     setViewMode(mode);
     localStorage.setItem(VIEW_STORAGE_KEY, mode);
   }, []);
+
+  const handleTypeFilterChange = useCallback((next) => {
+    setTypeFilter(next);
+    localStorage.setItem(TYPE_FILTER_KEY, next);
+  }, []);
+
+  const emptyTitle = focusActive
+    ? focusEmpty.text1
+    : typeFilter === "folders"
+      ? "No folders here"
+      : typeFilter === "files"
+        ? "No files here"
+        : folderId
+          ? "This folder is empty"
+          : "A place for all of your files";
+
+  const emptySubtitle = focusActive
+    ? focusEmpty.text2
+    : typeFilter === "folders"
+      ? "Create a folder with New → New folder."
+      : typeFilter === "files"
+        ? "Upload a file with New → File upload."
+        : getUploadHelpText();
 
   return (
     <Page>
@@ -115,55 +152,91 @@ function DataInner() {
       />
 
       {focusActive && (
-        <FocusFilterBar fileCount={folderFiles.length} totalCount={files.length} />
-      )}
-
-      {!focusActive && quickAccess.length > 0 && (
-        <QuickSection>
-          <SectionLabel>Quick Access</SectionLabel>
-          <RecentDataGrid files={quickAccess} allFiles={files} />
-        </QuickSection>
+        <FocusFilterBar
+          fileCount={visibleItems.length}
+          totalCount={files.length}
+        />
       )}
 
       <Section $focus={focusActive} data-tour="files">
-        {folderFiles.length > 0 && (
+        {!focusActive && (
+          <DriveTypeFilter
+            value={typeFilter}
+            onChange={handleTypeFilterChange}
+            folderCount={folderCount}
+            fileCount={fileCount}
+          />
+        )}
+
+        {visibleItems.length > 0 && (
           <SectionLabel>
-            {focusActive ? "Your files" : folderId ? "Files" : "All Files"}
+            {focusActive
+              ? "Your files"
+              : typeFilter === "folders"
+                ? "Folders"
+                : typeFilter === "files"
+                  ? "Files"
+                  : folderId
+                    ? "Files"
+                    : "All files"}
           </SectionLabel>
         )}
+
         {filesLoading ? (
-          <ContentSkeleton grid={viewMode === "grid"} compact={viewMode === "grid"} />
+          <ContentSkeleton
+            grid={viewMode === "grid"}
+            compact={viewMode === "grid"}
+          />
         ) : viewMode === "grid" ? (
-          <Suspense fallback={<ContentSkeleton grid compact />}>
+          <Suspense
+            fallback={
+              <ContentSkeleton grid compact />
+            }
+          >
             <FilesList
-              data={folderFiles}
+              data={visibleItems}
               allFiles={files}
               page="drive"
               focusMode={focusActive}
               onOpenFolder={navigateFolder}
               imagePath="/homePage.svg"
-              text1={
-                focusActive
-                  ? focusEmpty.text1
-                  : folderId
-                    ? "This folder is empty"
-                    : "A place for all of your files"
-              }
-              text2={focusActive ? focusEmpty.text2 : getUploadHelpText()}
+              text1={emptyTitle}
+              text2={emptySubtitle}
               compact
             />
           </Suspense>
-        ) : (
+        ) : visibleItems.length > 0 ? (
           <MainData
-            files={folderFiles}
+            files={visibleItems}
             allFiles={files}
             focusMode={focusActive}
             onOpenFolder={navigateFolder}
           />
+        ) : (
+          <Suspense
+            fallback={
+              <ContentSkeleton
+                grid={viewMode === "grid"}
+                compact={viewMode === "grid"}
+              />
+            }
+          >
+            <FilesList
+              data={[]}
+              allFiles={files}
+              page="drive"
+              focusMode={focusActive}
+              onOpenFolder={navigateFolder}
+              imagePath="/homePage.svg"
+              text1={emptyTitle}
+              text2={emptySubtitle}
+              compact
+            />
+          </Suspense>
         )}
       </Section>
       {!focusActive && <CompareModeBar />}
-      {!focusActive && <SelectionModeBar />}
+      {!focusActive && <SelectionModeBar items={visibleItems} />}
     </Page>
   );
 }
@@ -193,17 +266,6 @@ const Section = styled.div`
     &:last-child {
       padding-bottom: 0;
     }
-  }
-`;
-
-const QuickSection = styled(Section)`
-  padding-top: 4px;
-  padding-bottom: 20px;
-  margin-bottom: 8px;
-
-  @media (max-width: 768px) {
-    padding: 8px 0 16px;
-    margin-bottom: 4px;
   }
 `;
 

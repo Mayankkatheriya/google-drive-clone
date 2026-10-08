@@ -116,7 +116,7 @@ const Wrap = styled.div`
 
 const Nav = styled.nav`
   flex: 1;
-  padding: 8px 0 4px;
+  padding: 10px 0 4px;
   overflow-y: auto;
 
   a {

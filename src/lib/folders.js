@@ -74,6 +74,58 @@ export function getDescendantIds(files, folderId) {
   return ids;
 }
 
+function isUnderSelectedFolder(item, selectedIds, filesById) {
+  let parent = getParentId(item);
+  while (parent) {
+    if (selectedIds.has(parent)) return true;
+    parent = getParentId(filesById.get(parent));
+  }
+  return false;
+}
+
+function pushFolderIntoZip(files, folderId, prefix, entries) {
+  const children = files.filter((f) => getParentId(f) === folderId);
+  if (children.length === 0) {
+    entries.push({ path: prefix, emptyFolder: true });
+    return;
+  }
+  for (const child of children) {
+    const name = child.data?.filename || (isFolder(child) ? "Untitled" : "file");
+    if (isFolder(child)) {
+      pushFolderIntoZip(files, child.id, `${prefix}${name}/`, entries);
+    } else if (child.data?.s3Key) {
+      entries.push({ path: `${prefix}${name}`, data: child.data });
+    }
+  }
+}
+
+/**
+ * Build zip paths for a multi-select (or single folder) download.
+ * Nested picks under a selected folder are skipped to avoid duplicates.
+ * @returns {{ path: string, data?: object, emptyFolder?: boolean }[]}
+ */
+export function collectZipEntries(selected, allFiles) {
+  const items = selected || [];
+  const files = allFiles || [];
+  const selectedIds = new Set(items.map((s) => s.id));
+  const filesById = new Map(files.map((f) => [f.id, f]));
+
+  const roots = items.filter(
+    (item) => !isUnderSelectedFolder(item, selectedIds, filesById),
+  );
+
+  const entries = [];
+  for (const root of roots) {
+    const name = root.data?.filename || (isFolder(root) ? "Untitled" : "file");
+    if (isFolder(root)) {
+      pushFolderIntoZip(files, root.id, `${name}/`, entries);
+    } else if (root.data?.s3Key) {
+      entries.push({ path: name, data: root.data });
+    }
+  }
+  return entries;
+}
+
 /** Total size of all files nested under a folder (recursive). */
 export function getFolderSizeBytes(files, folderId) {
   if (!folderId || !Array.isArray(files)) return 0;

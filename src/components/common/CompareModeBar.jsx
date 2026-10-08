@@ -46,7 +46,7 @@ const Bar = styled.div`
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 900;
+  z-index: 920;
   width: min(520px, calc(100vw - 32px));
 
   @media (max-width: 768px) {

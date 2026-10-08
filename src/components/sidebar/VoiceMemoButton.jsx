@@ -16,9 +16,11 @@ const Btn = styled.button`
   display: flex;
   align-items: center;
   gap: 10px;
-  width: calc(100% - 8px);
-  margin: 0 4px;
-  padding: 10px 16px 10px 12px;
+  width: 100%;
+  height: 42px;
+  margin: 0;
+  padding: 0 16px 0 12px;
+  box-sizing: border-box;
   border: 1px solid var(--border-light);
   border-radius: 999px;
   background: var(--surface-2);

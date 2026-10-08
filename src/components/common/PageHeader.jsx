@@ -106,7 +106,7 @@ const PageHeader = ({
         )}
       </TopRow>
       {(showCompareToggle || showFocusToggle || showSelectToggle) && (
-        <ModeActions>
+        <ModeActions data-tour="mode-actions">
           {showFocusToggle && (
             <ModeToggleBtn
               type="button"
@@ -125,6 +125,7 @@ const PageHeader = ({
               $active={selectActive}
               onClick={handleSelectToggle}
               aria-pressed={selectActive}
+              data-tour="select"
             >
               <CheckBoxOutlinedIcon />
               <span>{selectActive ? "Selecting" : "Select"}</span>

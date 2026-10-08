@@ -21,7 +21,10 @@ import { changeBytes, convertDates } from "../common/common";
 import FileIcons from "../common/FileIcons";
 import SecureFileLink from "../common/SecureFileLink";
 import ShareButtons from "../common/ShareButtons";
-import { downloadFileWithToast } from "../../lib/fileAccess";
+import {
+  downloadFileWithToast,
+  downloadSelectionAsZipWithToast,
+} from "../../lib/fileAccess";
 import { useMenuPlacement } from "@/hooks/useMenuPlacement";
 import { getFileTypeTokens } from "@/lib/fileTypeColors";
 import { getFolderSizeBytes } from "@/lib/folders";
@@ -31,6 +34,7 @@ import {
   getSelfDestructRemainingLabel,
 } from "@/lib/selfDestruct";
 import { useSelfDestruct } from "@/context/SelfDestructProvider";
+import { useMyFiles } from "@/context/FilesContext";
 import CompareSelectMark from "../common/CompareSelectMark";
 import Tooltip from "../common/Tooltip";
 
@@ -52,6 +56,7 @@ function FileRowOptionsMenu({
 }) {
   const triggerRef = useRef(null);
   const openSelfDestruct = useSelfDestruct();
+  const allFiles = useMyFiles();
   const { top, right, flip, ready } = useMenuPlacement(
     triggerRef,
     menuRef,
@@ -81,11 +86,19 @@ function FileRowOptionsMenu({
             $flip={flip}
             style={{ top, right }}
           >
+            <MenuItem
+              onClick={() => {
+                if (folder) {
+                  downloadSelectionAsZipWithToast([file], allFiles);
+                } else {
+                  downloadFileWithToast(file.data);
+                }
+              }}
+            >
+              <DownloadIcon /> {folder ? "Download zip" : "Download"}
+            </MenuItem>
             {!folder && (
               <>
-                <MenuItem onClick={() => downloadFileWithToast(file.data)}>
-                  <DownloadIcon /> Download
-                </MenuItem>
                 <MenuItem onClick={() => onCopyLink(file.data)}>
                   <CopyIcon /> Copy Link
                 </MenuItem>
@@ -112,6 +125,7 @@ function FileRowOptionsMenu({
                 <MenuDivider />
               </>
             )}
+            {folder && <MenuDivider />}
             <MenuItem onClick={() => onRename(file.id, file.data.filename)}>
               <RenameIcon /> Rename
             </MenuItem>
@@ -299,7 +313,11 @@ function MainDataRow({
               />
             ) : (
               <Tooltip label={file.data.filename} onlyIfTruncated>
-                <FileName onClick={onNameClick} onDoubleClick={onNameDoubleClick}>
+                <FileName
+                  $folder={folder}
+                  onClick={onNameClick}
+                  onDoubleClick={folder ? undefined : onNameDoubleClick}
+                >
                   {file.data.filename}
                 </FileName>
               </Tooltip>
@@ -339,13 +357,21 @@ function MainDataRow({
       {!focusMode && (
       <ActionsCol>
         <HoverActions className="hover-actions">
+          <Tooltip label={folder ? "Download zip" : "Download"} iconOnly>
+            <QuickBtn
+              onClick={() => {
+                if (folder) {
+                  downloadSelectionAsZipWithToast([file], files);
+                } else {
+                  downloadFileWithToast(file.data);
+                }
+              }}
+            >
+              <DownloadIcon />
+            </QuickBtn>
+          </Tooltip>
           {!folder && (
             <>
-              <Tooltip label="Download" iconOnly>
-                <QuickBtn onClick={() => downloadFileWithToast(file.data)}>
-                  <DownloadIcon />
-                </QuickBtn>
-              </Tooltip>
               <Tooltip label="Copy link" iconOnly>
                 <QuickBtn onClick={() => onCopyLink(file.data)}>
                   <CopyIcon />
@@ -671,7 +697,7 @@ const FileName = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
-  cursor: text;
+  cursor: ${(p) => (p.$folder ? "pointer" : "text")};
 
   @media (max-width: 768px) {
     font-size: 0.9rem;

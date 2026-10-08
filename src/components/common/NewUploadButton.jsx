@@ -79,7 +79,8 @@ export default function NewUploadButton({
 
 const Wrap = styled.div`
   position: relative;
-  display: inline-flex;
+  display: block;
+  width: 100%;
 `;
 
 const Btn = styled.button`
@@ -87,21 +88,21 @@ const Btn = styled.button`
   align-items: center;
   gap: 10px;
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-light);
   border-radius: 999px;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
 
   svg {
-    font-size: 22px;
+    font-size: 20px;
     color: var(--primary);
     flex-shrink: 0;
   }
 
   span {
-    font-size: 0.9rem;
+    font-size: 0.86rem;
     font-weight: 600;
     color: var(--text-1);
   }
@@ -109,19 +110,20 @@ const Btn = styled.button`
   &:hover {
     border-color: var(--primary);
     background: var(--primary-light);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
   }
 
   &:active {
-    transform: translateY(0);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-xs);
   }
 
   ${(p) =>
     p.$variant === "sidebar" &&
     css`
-      padding: 11px 22px 11px 14px;
+      width: 100%;
+      height: 42px;
+      padding: 0 16px 0 12px;
+      box-sizing: border-box;
 
       @media (max-width: 768px) {
         padding: 12px;

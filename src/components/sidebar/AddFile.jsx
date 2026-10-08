@@ -17,10 +17,9 @@ const AddFile = ({ onClick, onCreateFolder }) => {
 };
 
 const Wrap = styled.div`
-  padding: 16px 14px 10px;
+  padding: 0;
 
   @media (max-width: 768px) {
-    padding: 12px 8px 8px;
     display: flex;
     justify-content: center;
   }

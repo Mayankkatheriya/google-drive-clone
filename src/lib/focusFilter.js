@@ -1,3 +1,5 @@
+import { isFolder } from "@/lib/folders";
+
 export const FOCUS_FILTERS = [
   { id: "all", label: "All files" },
   { id: "pdf", label: "PDFs" },
@@ -8,19 +10,21 @@ export const FOCUS_FILTERS = [
 export function filterFilesForFocus(files, filter = "all") {
   if (!Array.isArray(files)) return [];
 
+  const onlyFiles = files.filter((file) => !isFolder(file));
+
   switch (filter) {
     case "starred":
-      return files.filter((file) => file.data?.starred);
+      return onlyFiles.filter((file) => file.data?.starred);
     case "pdf":
-      return files.filter((file) =>
+      return onlyFiles.filter((file) =>
         file.data?.contentType?.toLowerCase().includes("pdf"),
       );
     case "image":
-      return files.filter((file) =>
+      return onlyFiles.filter((file) =>
         file.data?.contentType?.toLowerCase().includes("image"),
       );
     default:
-      return files;
+      return onlyFiles;
   }
 }
 

@@ -17,11 +17,14 @@ const Sidebar = () => {
 
   return (
     <SidebarContainer $open={sidebarBool}>
-      <AddFile
-        onClick={() => upload.setOpen(true)}
-        onCreateFolder={() => setCreateFolderOpen(true)}
-      />
-      <VoiceMemoButton onClick={() => upload.openVoiceMemo()} />
+      <ActionsBlock>
+        <AddFile
+          onClick={() => upload.setOpen(true)}
+          onCreateFolder={() => setCreateFolderOpen(true)}
+        />
+        <VoiceMemoButton onClick={() => upload.openVoiceMemo()} />
+      </ActionsBlock>
+      <ActionsDivider />
       <SidebarTabs />
       <CreateFolderModal
         open={createFolderOpen}
@@ -50,6 +53,21 @@ const SidebarContainer = styled.div`
   @media (max-width: 768px) {
     display: none;
   }
+`;
+
+const ActionsBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 14px 14px;
+  flex-shrink: 0;
+`;
+
+const ActionsDivider = styled.div`
+  height: 1px;
+  margin: 0 16px 6px;
+  background: var(--border-light);
+  flex-shrink: 0;
 `;
 
 export default Sidebar;

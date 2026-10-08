@@ -9,15 +9,15 @@ export const TOUR_STEPS = [
     popover: {
       title: "Welcome to Disk Drive 👋",
       description:
-        "Let's take a quick spin — under a minute — and unlock every trick this drive has. Hit <b>Next</b> to roll, or <b>Esc</b> to bail anytime. 😉",
+        "Quick spin through what's new — folders, filters, multi-select zip, share links, and more. Hit <b>Next</b>, or <b>Esc</b> anytime.",
     },
   },
   {
     elements: ['[data-tour="upload"]', '[data-tour="upload-fab"]'],
     popover: {
-      title: "📤 Upload files",
+      title: "📤 New — files & folders",
       description:
-        "Tap <b>New</b> (or the <b>+</b> button) to add a file — or just <b>drag &amp; drop</b> anything onto the page. Easy.",
+        "Tap <b>New</b> (or the <b>+</b> button) for <b>File upload</b> or <b>New folder</b>. You can also <b>drag &amp; drop</b> files onto the page.",
       side: "right",
       align: "start",
     },
@@ -27,7 +27,7 @@ export const TOUR_STEPS = [
     popover: {
       title: "🎙️ Voice memo",
       description:
-        "Hit record and talk — your memo saves straight to the drive. Perfect for ideas on the fly.",
+        "Hit record and talk — your memo saves straight into My Drive. Great for quick notes.",
       side: "right",
       align: "start",
     },
@@ -37,7 +37,7 @@ export const TOUR_STEPS = [
     popover: {
       title: "🧭 Get around",
       description:
-        "Hop between <b>My Drive</b>, <b>Recent</b>, <b>Starred</b>, and <b>Trash</b>. Deleted stuff chills in Trash for 15 days before it's gone.",
+        "Hop between <b>My Drive</b>, <b>Recent</b>, <b>Starred</b>, and <b>Trash</b>. Open folders from Recent to jump right in. Trash keeps items for 15 days.",
       side: "top",
       align: "center",
     },
@@ -45,9 +45,9 @@ export const TOUR_STEPS = [
   {
     element: '[data-tour="storage"]',
     popover: {
-      title: "📊 Storage meter",
+      title: "📊 Storage & cleanup",
       description:
-        "See how much space you've used at a glance — click for a full breakdown by file type.",
+        "See space used at a glance. Open Storage for a breakdown — and a cleanup assistant for expired share links and clutter.",
       side: "right",
       align: "center",
     },
@@ -57,7 +57,7 @@ export const TOUR_STEPS = [
     popover: {
       title: "🔎 Search anything",
       description:
-        "Find files by name, type, or extension — results pop up instantly as you type.",
+        "Find files and folders by name, type, or extension — results show up as you type.",
       side: "bottom",
       align: "center",
     },
@@ -66,9 +66,20 @@ export const TOUR_STEPS = [
     element: '[data-tour="view"]',
     popover: {
       title: "🔲 List or grid",
-      description: "Flip between a compact list and a visual grid — whatever feels right.",
+      description:
+        "Flip between a compact list and a visual grid. Folders and files live in one combined view.",
       side: "bottom",
       align: "end",
+    },
+  },
+  {
+    element: '[data-tour="type-filter"]',
+    popover: {
+      title: "📁 All · Folders · Files",
+      description:
+        "Filter My Drive to show <b>everything</b>, only <b>folders</b>, or only <b>files</b>. Counts update as you go.",
+      side: "bottom",
+      align: "start",
     },
   },
   {
@@ -76,9 +87,19 @@ export const TOUR_STEPS = [
     popover: {
       title: "🎯 Focus mode",
       description:
-        "Hide the clutter — sidebar and actions disappear so you can just read and browse.",
+        "Hide the clutter — sidebar and extra actions disappear so you can browse and open files cleanly. Esc exits on desktop.",
       side: "bottom",
       align: "end",
+    },
+  },
+  {
+    element: '[data-tour="select"]',
+    popover: {
+      title: "✅ Multi-select",
+      description:
+        "Turn on <b>Select</b>, tap items, then <b>Select all</b>, <b>Move</b>, <b>Star</b>, <b>Zip download</b> (files + folders), or <b>Delete</b>. Esc or <b>Done</b> exits — on mobile the + button hides so the bar stays clear.",
+      side: "bottom",
+      align: "center",
     },
   },
   {
@@ -86,7 +107,7 @@ export const TOUR_STEPS = [
     popover: {
       title: "🔀 Compare files",
       description:
-        "Pick two files and view them side-by-side — great for images, PDFs, and text.",
+        "Pick two files of the same type and view them side-by-side — images, PDFs, and more.",
       side: "bottom",
       align: "end",
     },
@@ -94,9 +115,9 @@ export const TOUR_STEPS = [
   {
     element: '[data-tour="files"]',
     popover: {
-      title: "✨ Files & superpowers",
+      title: "✨ Files, folders & share",
       description:
-        "Hover a file (or tap <b>⋮</b>) for the good stuff: <b>Download</b>, <b>Copy link</b>, <b>One-time link</b> 🔗 (dies after first open), <b>QR share</b> 📱, <b>Rename</b>, <b>Self-destruct</b> 💣 (auto-move to Trash), and <b>Delete</b>.",
+        "Open folders with a click. Hover or tap <b>⋮</b> for <b>Download</b> / <b>Download zip</b> (folders), <b>Share link</b> (create, copy, revoke all links), <b>Move</b>, <b>Rename</b>, <b>Version history</b>, <b>Self-destruct</b>, and more.",
       side: "top",
       align: "center",
     },
@@ -124,7 +145,7 @@ export const TOUR_STEPS = [
     popover: {
       title: "👤 Your account",
       description:
-        "Tap your avatar for <b>Storage</b>, <b>Help</b>, <b>theme</b>, and <b>Take a tour</b> to replay this — plus sign out.",
+        "Avatar menu: <b>Storage</b>, <b>Help</b>, <b>theme</b>, and <b>Take a tour</b> to replay this — plus sign out.",
       side: "bottom",
       align: "end",
     },
@@ -133,14 +154,14 @@ export const TOUR_STEPS = [
     desktopOnly: true,
     popover: {
       title: "⚡ Secret weapon",
-      description: `Press <b>${cmdKey}</b> anywhere to fly to any file, jump pages, upload, record a memo, switch theme, or replay this tour. Speed unlocked.`,
+      description: `Press <b>${cmdKey}</b> anywhere for the command palette — jump to pages, open files or folders, upload, voice memo, theme, or replay the tour. On <b>My Drive</b> you also get <b>New folder</b> and <b>Focus / Select / Compare</b>.`,
     },
   },
   {
     popover: {
-      title: "You're a pro now! 🎉",
+      title: "You're set! 🎉",
       description:
-        "That's everything. Replay the tour anytime from your <b>profile menu</b> or the command palette. Now go build something. 🚀",
+        "Replay anytime from your <b>profile menu</b> or the command palette. Folders, filters, select + zip, and share links are ready — go build. 🚀",
     },
   },
 ];
@@ -182,4 +203,3 @@ export function buildTourSteps() {
     return acc;
   }, []);
 }
-

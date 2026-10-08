@@ -259,7 +259,8 @@ export async function revokeShareLink({ token, userId }) {
     error.statusCode = 403;
     throw error;
   }
-  await ref.update({ revoked: true, revokedAt: FieldValue.serverTimestamp() });
+  // Hard-delete so the token stops working and disappears from all lists/cleanup.
+  await ref.delete();
   return { ok: true };
 }
 

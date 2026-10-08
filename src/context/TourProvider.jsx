@@ -12,7 +12,7 @@ import "driver.js/dist/driver.css";
 import { useAuth } from "@/context/AuthProvider";
 import { buildTourSteps } from "@/lib/tourSteps";
 
-const TOUR_SEEN_KEY = "disk-drive-tour-seen-v1";
+const TOUR_SEEN_KEY = "disk-drive-tour-seen-v2";
 
 const TourContext = createContext(() => {});
 

@@ -7,8 +7,9 @@ import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import StarBorderRoundedIcon from "@mui/icons-material/StarBorderRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
-import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
+import SelectAllRoundedIcon from "@mui/icons-material/SelectAllRounded";
+import DeselectRoundedIcon from "@mui/icons-material/DeselectRounded";
 import { useSelection } from "@/context/SelectionContext";
 import { useMyFiles } from "@/context/FilesContext";
 import { useConfirm } from "@/context/ConfirmDialogProvider";
@@ -16,22 +17,46 @@ import {
   batchMoveToTrash,
   batchStarFiles,
 } from "./firebaseApi";
-import { downloadFileWithToast } from "@/lib/fileAccess";
-import { createAndCopyShareLinkWithToast } from "@/lib/shareLink";
-import { isFolder } from "@/lib/folders";
+import { downloadSelectionAsZipWithToast } from "@/lib/fileAccess";
+import { collectZipEntries, isFolder } from "@/lib/folders";
 import { getMoveToTrashConfirmOptions } from "@/lib/confirmDialog";
 import MoveToFolderModal from "./MoveToFolderModal";
 import { toast } from "react-toastify";
 
-export default function SelectionModeBar() {
-  const { active, selected, selectedIds, exitMode, clear } = useSelection();
+export default function SelectionModeBar({ items = [] }) {
+  const {
+    active,
+    selected,
+    selectedIds,
+    exitMode,
+    clear,
+    selectAll,
+    maxSelection,
+  } = useSelection();
   const allFiles = useMyFiles();
   const confirm = useConfirm();
   const [moveOpen, setMoveOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const fileOnly = useMemo(
-    () => selected.filter((s) => !isFolder(s)),
+  const selectable = useMemo(
+    () => (items || []).filter((item) => item?.id).slice(0, maxSelection),
+    [items, maxSelection],
+  );
+
+  const allVisibleSelected = useMemo(() => {
+    if (selectable.length === 0) return false;
+    const idSet = new Set(selectedIds);
+    return selectable.every((item) => idSet.has(item.id));
+  }, [selectable, selectedIds]);
+
+  const canDownload = useMemo(() => {
+    if (selected.length === 0) return false;
+    const entries = collectZipEntries(selected, allFiles);
+    return entries.some((e) => e.data?.s3Key || e.emptyFolder);
+  }, [selected, allFiles]);
+
+  const downloadIsZip = useMemo(
+    () => selected.length > 1 || selected.some((s) => isFolder(s)),
     [selected],
   );
 
@@ -50,13 +75,40 @@ export default function SelectionModeBar() {
     }
   };
 
+  const handleSelectAllToggle = () => {
+    if (allVisibleSelected) {
+      clear();
+      return;
+    }
+    selectAll(selectable);
+    if ((items || []).length > maxSelection) {
+      toast.info(`Selected first ${maxSelection} items`);
+    }
+  };
+
   return (
     <>
       <Bar>
         <BarInner>
-          <BarText>
-            <strong>{selected.length}</strong> selected
-          </BarText>
+          <Lead>
+            <BarText>
+              <strong>{selected.length}</strong> selected
+              <DesktopHint> · Esc to exit</DesktopHint>
+            </BarText>
+            <SelectAllBtn
+              type="button"
+              disabled={busy || selectable.length === 0}
+              onClick={handleSelectAllToggle}
+              title={allVisibleSelected ? "Deselect all" : "Select all"}
+            >
+              {allVisibleSelected ? (
+                <DeselectRoundedIcon />
+              ) : (
+                <SelectAllRoundedIcon />
+              )}
+              <span>{allVisibleSelected ? "Deselect all" : "Select all"}</span>
+            </SelectAllBtn>
+          </Lead>
           <BarActions>
             <ActionBtn
               type="button"
@@ -83,41 +135,16 @@ export default function SelectionModeBar() {
             </ActionBtn>
             <ActionBtn
               type="button"
-              disabled={busy || fileOnly.length === 0}
+              disabled={busy || !canDownload}
               onClick={() =>
                 run(async () => {
-                  for (const item of fileOnly) {
-                    try {
-                      await createAndCopyShareLinkWithToast(item.id);
-                    } catch {
-                      /* toasted */
-                    }
-                  }
+                  await downloadSelectionAsZipWithToast(selected, allFiles);
                 })
               }
-              title="Share"
-            >
-              <ShareOutlinedIcon />
-              <span>Share</span>
-            </ActionBtn>
-            <ActionBtn
-              type="button"
-              disabled={busy || fileOnly.length === 0}
-              onClick={() =>
-                run(async () => {
-                  for (const item of fileOnly) {
-                    try {
-                      await downloadFileWithToast(item.data);
-                    } catch {
-                      toast.error("Download failed");
-                    }
-                  }
-                })
-              }
-              title="Download"
+              title={downloadIsZip ? "Download zip" : "Download"}
             >
               <DownloadRoundedIcon />
-              <span>Download</span>
+              <span>{downloadIsZip ? "Zip" : "Download"}</span>
             </ActionBtn>
             <ActionBtn
               type="button"
@@ -141,9 +168,10 @@ export default function SelectionModeBar() {
               <DeleteOutlineRoundedIcon />
               <span>Delete</span>
             </ActionBtn>
-            <CancelBtn type="button" onClick={exitMode} aria-label="Exit select">
+            <DoneBtn type="button" onClick={exitMode} aria-label="Done">
               <CloseRoundedIcon style={{ fontSize: 18 }} />
-            </CancelBtn>
+              <DoneLabel>Done</DoneLabel>
+            </DoneBtn>
           </BarActions>
         </BarInner>
       </Bar>
@@ -166,8 +194,8 @@ const Bar = styled.div`
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 900;
-  width: min(720px, calc(100vw - 32px));
+  z-index: 920;
+  width: min(780px, calc(100vw - 32px));
 
   @media (max-width: 768px) {
     bottom: calc(var(--bottom-nav-height) + 12px);
@@ -186,14 +214,72 @@ const BarInner = styled.div`
   border-radius: 14px;
   box-shadow: var(--shadow-md);
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    padding: 10px 10px 10px 12px;
+    gap: 8px;
+  }
+`;
+
+const Lead = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
 `;
 
 const BarText = styled.div`
   font-size: 0.82rem;
   color: var(--text-2);
+  white-space: nowrap;
 
   strong {
     color: var(--primary);
+  }
+`;
+
+const DesktopHint = styled.span`
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const SelectAllBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  svg {
+    font-size: 16px;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--primary-subtle);
+    color: var(--primary);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Keep label on mobile — primary way to select everything */
+  @media (max-width: 640px) {
+    padding: 0 8px;
+    span {
+      display: inline;
+    }
   }
 `;
 
@@ -202,6 +288,7 @@ const BarActions = styled.div`
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
+  margin-left: auto;
 `;
 
 const ActionBtn = styled.button`
@@ -240,20 +327,32 @@ const ActionBtn = styled.button`
   }
 `;
 
-const CancelBtn = styled.button`
-  width: 34px;
+const DoneBtn = styled.button`
   height: 34px;
-  display: flex;
+  padding: 0 10px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   border: 1px solid var(--border-light);
   border-radius: 10px;
   background: var(--surface-2);
   color: var(--text-2);
+  font-size: 0.75rem;
+  font-weight: 600;
   cursor: pointer;
+  flex-shrink: 0;
 
   &:hover {
     background: var(--surface-3);
     color: var(--text-1);
+  }
+`;
+
+const DoneLabel = styled.span`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: inline;
   }
 `;

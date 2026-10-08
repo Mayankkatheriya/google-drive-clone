@@ -19,6 +19,7 @@ import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
 import {
   downloadFileWithToast,
+  downloadSelectionAsZipWithToast,
   getFileDownloadUrl,
   copyFileLinkWithToast,
 } from "../../lib/fileAccess";
@@ -32,6 +33,7 @@ import {
   getSelfDestructRemainingLabel,
 } from "@/lib/selfDestruct";
 import { useSelfDestruct } from "@/context/SelfDestructProvider";
+import { useMyFiles } from "@/context/FilesContext";
 import { isFolder } from "@/lib/folders";
 import Tooltip from "./Tooltip";
 
@@ -50,6 +52,7 @@ export function DriveGridMenu({
 }) {
   const { confirmMoveToTrash } = useFileTrashActions();
   const openSelfDestruct = useSelfDestruct();
+  const allFiles = useMyFiles();
   const triggerRef = useRef(null);
   const { top, right, flip, ready } = useMenuPlacement(
     triggerRef,
@@ -99,11 +102,20 @@ export function DriveGridMenu({
             style={{ top, right }}
             onClick={(event) => event.stopPropagation()}
           >
+            <MenuItem
+              onClick={() => {
+                onToggle(null);
+                if (folder) {
+                  downloadSelectionAsZipWithToast([file], allFiles);
+                } else {
+                  downloadFileWithToast(file.data);
+                }
+              }}
+            >
+              <DownloadIcon /> {folder ? "Download zip" : "Download"}
+            </MenuItem>
             {!folder && (
               <>
-                <MenuItem onClick={() => downloadFileWithToast(file.data)}>
-                  <DownloadIcon /> Download
-                </MenuItem>
                 <MenuItem onClick={handleCopyLink}>
                   <CopyIcon /> Copy link
                 </MenuItem>
