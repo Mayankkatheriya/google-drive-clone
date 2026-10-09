@@ -1,6 +1,7 @@
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -62,11 +63,13 @@ export function buildContentDisposition(filename, disposition = "attachment") {
   return `${disposition}; filename="${asciiFallback}"; filename*=UTF-8''${encoded}`;
 }
 
-export async function createPresignedUploadUrl(s3Key, contentType) {
+export async function createPresignedUploadUrl(s3Key, contentType, contentLength) {
+  // ContentLength is signed, so S3 rejects a PUT whose body size differs.
   const command = new PutObjectCommand({
     Bucket: getRequiredEnv("S3_BUCKET_NAME"),
     Key: s3Key,
     ContentType: contentType,
+    ContentLength: contentLength,
   });
 
   return getSignedUrl(getS3Client(), command, { expiresIn: 900 });
@@ -85,6 +88,32 @@ export async function createPresignedDownloadUrl(
   });
 
   return getSignedUrl(getS3Client(), command, { expiresIn });
+}
+
+/** Total bytes stored under files/{userId}/ (current files, trash, and versions). */
+export async function getUserObjectsBytes(userId) {
+  const client = getS3Client();
+  const bucket = getRequiredEnv("S3_BUCKET_NAME");
+  let total = 0;
+  let continuationToken;
+
+  do {
+    const result = await client.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: `files/${userId}/`,
+        ContinuationToken: continuationToken,
+      })
+    );
+    for (const object of result.Contents ?? []) {
+      total += object.Size || 0;
+    }
+    continuationToken = result.IsTruncated
+      ? result.NextContinuationToken
+      : undefined;
+  } while (continuationToken);
+
+  return total;
 }
 
 export async function deleteObject(s3Key) {

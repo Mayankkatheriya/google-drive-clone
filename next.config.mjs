@@ -3,7 +3,28 @@ function clientEnv(nextName, viteName) {
   return process.env[nextName] || process.env[viteName] || "";
 }
 
+const securityHeaders = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), geolocation=(), microphone=(self)",
+  },
+];
+
 const nextConfig = {
+  poweredByHeader: false,
+  async headers() {
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Share tokens live in the URL; never leak them via Referer.
+      {
+        source: "/share/:path*",
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
+    ];
+  },
   compiler: {
     styledComponents: true,
   },

@@ -6,13 +6,13 @@ import { streamShareLinkContent } from "@/lib/server/shareLinks";
 export async function GET(request, { params }) {
   try {
     const range = request.headers.get("range") || undefined;
-    const unlockToken =
-      request.headers.get("x-share-unlock") ||
-      new URL(request.url).searchParams.get("unlock") ||
+    const accessToken =
+      request.headers.get("x-share-access") ||
+      new URL(request.url).searchParams.get("access") ||
       undefined;
     const result = await streamShareLinkContent(params.token, {
       range,
-      unlockToken,
+      accessToken,
     });
 
     const headers = new Headers({
@@ -23,6 +23,8 @@ export async function GET(request, { params }) {
       ),
       "Cache-Control": "no-store, no-cache, must-revalidate, private",
       "X-Content-Type-Options": "nosniff",
+      // Content type is uploader-controlled; block scripts if opened as a page (e.g. HTML/SVG).
+      "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; sandbox",
       "Accept-Ranges": result.acceptRanges,
     });
 

@@ -5,6 +5,8 @@ import {
   listShareLinksForUser,
 } from "@/lib/server/shareLinks";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request) {
   try {
     const decoded = await requireAuth(request.headers.get("authorization"));

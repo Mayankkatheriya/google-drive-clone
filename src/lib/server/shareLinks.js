@@ -1,10 +1,13 @@
-import { createHash, randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getAdminFirestore } from "./firestoreAdmin";
 import { createDownloadUrl } from "./cloudfront";
-import { getObjectStream } from "./s3";
+import { assertUserOwnsKey, getObjectStream } from "./s3";
 
 const COLLECTION = "shareLinks";
+const SIGNED_TOKEN_TTL_MS = 60 * 60 * 1000;
+const MAX_FAILED_UNLOCKS = 5;
+const UNLOCK_LOCKOUT_MS = 15 * 60 * 1000;
 
 function shareLinkRef(token) {
   return getAdminFirestore().collection(COLLECTION).doc(token);
@@ -35,35 +38,62 @@ function verifyPassword(password, stored) {
   }
 }
 
-function unlockSecret() {
-  return (
-    process.env.SHARE_LINK_UNLOCK_SECRET ||
-    process.env.FIREBASE_ADMIN_PRIVATE_KEY ||
-    "disk-drive-share-unlock"
-  );
+function signingSecret() {
+  const secret =
+    process.env.SHARE_LINK_UNLOCK_SECRET || process.env.FIREBASE_PRIVATE_KEY;
+  if (!secret) {
+    throw new Error("Missing SHARE_LINK_UNLOCK_SECRET");
+  }
+  return secret;
 }
 
-export function createUnlockToken(shareToken) {
-  const exp = Date.now() + 60 * 60 * 1000;
-  const sig = createHash("sha256")
-    .update(`${shareToken}:${exp}:${unlockSecret()}`)
+function signShareToken(purpose, shareToken, exp) {
+  return createHmac("sha256", signingSecret())
+    .update(`${purpose}:${shareToken}:${exp}`)
     .digest("hex");
-  return `${exp}.${sig}`;
 }
 
-export function verifyUnlockToken(shareToken, unlockToken) {
-  if (!unlockToken || typeof unlockToken !== "string") return false;
-  const [expStr, sig] = unlockToken.split(".");
+function createSignedToken(purpose, shareToken) {
+  const exp = Date.now() + SIGNED_TOKEN_TTL_MS;
+  return `${exp}.${signShareToken(purpose, shareToken, exp)}`;
+}
+
+function verifySignedToken(purpose, shareToken, signedToken) {
+  if (!signedToken || typeof signedToken !== "string") return false;
+  const [expStr, sig] = signedToken.split(".");
   const exp = Number(expStr);
   if (!exp || !sig || Date.now() > exp) return false;
-  const expected = createHash("sha256")
-    .update(`${shareToken}:${exp}:${unlockSecret()}`)
-    .digest("hex");
+  const expected = signShareToken(purpose, shareToken, exp);
   try {
-    return timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+    return timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(expected, "hex"));
   } catch {
     return false;
   }
+}
+
+/** Proves the password was entered; does not count a view. */
+export function createUnlockToken(shareToken) {
+  return createSignedToken("unlock", shareToken);
+}
+
+export function verifyUnlockToken(shareToken, unlockToken) {
+  return verifySignedToken("unlock", shareToken, unlockToken);
+}
+
+/** Issued only when a view is redeemed; required to stream content. */
+function createAccessToken(shareToken) {
+  return createSignedToken("access", shareToken);
+}
+
+function verifyAccessToken(shareToken, accessToken) {
+  return verifySignedToken("access", shareToken, accessToken);
+}
+
+function toMillis(value) {
+  if (!value) return null;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (value.seconds) return value.seconds * 1000;
+  return null;
 }
 
 function linkUnavailableReason(data) {
@@ -126,6 +156,9 @@ async function getOwnedFile(fileId, userId) {
     error.statusCode = 400;
     throw error;
   }
+
+  // File docs are client-written; never trust an s3Key outside the owner's prefix.
+  assertUserOwnsKey(userId, data.s3Key);
 
   return { id: snap.id, ...data };
 }
@@ -284,25 +317,60 @@ export async function deleteShareLink({ token, userId }) {
 
 export async function unlockShareLink(token, password) {
   assertValidToken(token);
-  const snap = await shareLinkRef(token).get();
-  if (!snap.exists) {
-    const error = new Error("Share link not found");
-    error.statusCode = 404;
-    throw error;
-  }
-  const data = snap.data();
-  const unavailable = linkUnavailableReason(data);
-  if (unavailable) {
-    const error = new Error(unavailable.message);
-    error.statusCode = unavailable.statusCode;
-    throw error;
-  }
-  if (!data.passwordHash) {
-    return { unlockToken: createUnlockToken(token) };
-  }
-  if (!verifyPassword(password, data.passwordHash)) {
-    const error = new Error("Incorrect password");
-    error.statusCode = 401;
+  const ref = shareLinkRef(token);
+  let failure = null;
+
+  await getAdminFirestore().runTransaction(async (tx) => {
+    failure = null;
+    const snap = await tx.get(ref);
+    if (!snap.exists) {
+      const error = new Error("Share link not found");
+      error.statusCode = 404;
+      throw error;
+    }
+    const data = snap.data();
+    const unavailable = linkUnavailableReason(data);
+    if (unavailable) {
+      const error = new Error(unavailable.message);
+      error.statusCode = unavailable.statusCode;
+      throw error;
+    }
+    if (!data.passwordHash) return;
+
+    const now = Date.now();
+    const lockedUntil = toMillis(data.unlockLockedUntil);
+    if (lockedUntil && now < lockedUntil) {
+      const error = new Error("Too many attempts. Try again later.");
+      error.statusCode = 429;
+      throw error;
+    }
+
+    if (verifyPassword(password, data.passwordHash)) {
+      if (data.failedUnlocks) {
+        tx.update(ref, {
+          failedUnlocks: 0,
+          unlockLockedUntil: FieldValue.delete(),
+        });
+      }
+      return;
+    }
+
+    const failedUnlocks = (data.failedUnlocks || 0) + 1;
+    if (failedUnlocks >= MAX_FAILED_UNLOCKS) {
+      tx.update(ref, {
+        failedUnlocks: 0,
+        unlockLockedUntil: Timestamp.fromMillis(now + UNLOCK_LOCKOUT_MS),
+      });
+      failure = { statusCode: 429, message: "Too many attempts. Try again later." };
+    } else {
+      tx.update(ref, { failedUnlocks });
+      failure = { statusCode: 401, message: "Incorrect password" };
+    }
+  });
+
+  if (failure) {
+    const error = new Error(failure.message);
+    error.statusCode = failure.statusCode;
     throw error;
   }
   return { unlockToken: createUnlockToken(token) };
@@ -325,7 +393,7 @@ export function getShareLinkPublicMeta(data) {
   };
 }
 
-export async function redeemShareLink(token, { unlockToken, password } = {}) {
+export async function redeemShareLink(token, { unlockToken } = {}) {
   assertValidToken(token);
   const ref = shareLinkRef(token);
   let fileMeta = null;
@@ -347,10 +415,7 @@ export async function redeemShareLink(token, { unlockToken, password } = {}) {
     }
 
     if (data.passwordHash) {
-      const unlocked =
-        verifyUnlockToken(token, unlockToken) ||
-        verifyPassword(password, data.passwordHash);
-      if (!unlocked) {
+      if (!verifyUnlockToken(token, unlockToken)) {
         const error = new Error("Password required");
         error.statusCode = 401;
         error.code = "PASSWORD_REQUIRED";
@@ -383,17 +448,19 @@ export async function redeemShareLink(token, { unlockToken, password } = {}) {
     contentType: fileMeta.contentType,
     size: fileMeta.size,
     downloadUrl,
-    viewUrl: `/api/share-link/${token}/content`,
     allowDownload: fileMeta.allowDownload !== false,
-    unlockToken:
-      fileMeta.passwordHash && !unlockToken
-        ? createUnlockToken(token)
-        : unlockToken || null,
+    accessToken: createAccessToken(token),
   };
 }
 
-export async function streamShareLinkContent(token, { range, unlockToken } = {}) {
+export async function streamShareLinkContent(token, { range, accessToken } = {}) {
   assertValidToken(token);
+
+  if (!verifyAccessToken(token, accessToken)) {
+    const error = new Error("Open the share link to view this file");
+    error.statusCode = 403;
+    throw error;
+  }
 
   const snap = await shareLinkRef(token).get();
   if (!snap.exists) {
@@ -403,21 +470,16 @@ export async function streamShareLinkContent(token, { range, unlockToken } = {})
   }
 
   const data = snap.data();
-  if (!data.redeemed && !(data.viewCount > 0)) {
-    const error = new Error("Share link has not been opened yet");
-    error.statusCode = 403;
-    throw error;
-  }
-
   if (data.revoked) {
     const error = new Error("This link has been revoked");
     error.statusCode = 410;
     throw error;
   }
 
-  if (data.passwordHash && !verifyUnlockToken(token, unlockToken)) {
-    const error = new Error("Password required");
-    error.statusCode = 401;
+  const expiresAt = toMillis(data.expiresAt);
+  if (expiresAt && Date.now() > expiresAt) {
+    const error = new Error("This link has expired");
+    error.statusCode = 410;
     throw error;
   }
 

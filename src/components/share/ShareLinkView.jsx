@@ -105,11 +105,7 @@ export default function ShareLinkView({ state: initial }) {
         });
         return;
       }
-      setState({
-        status: "ready",
-        ...data,
-        unlockToken: unlockData.unlockToken,
-      });
+      setState({ status: "ready", ...data });
     } catch {
       setError("Unable to open this link");
     } finally {
@@ -193,28 +189,28 @@ export default function ShareLinkView({ state: initial }) {
               {kind === "image" && (
                 <ShareSecureImage
                   token={state.token}
-                  unlockToken={state.unlockToken}
+                  accessToken={state.accessToken}
                   alt={state.filename}
                 />
               )}
               {kind === "pdf" && (
                 <ShareSecurePdf
                   token={state.token}
-                  unlockToken={state.unlockToken}
+                  accessToken={state.accessToken}
                   title={state.filename}
                 />
               )}
               {kind === "video" && (
                 <ShareSecureVideo
                   token={state.token}
-                  unlockToken={state.unlockToken}
+                  accessToken={state.accessToken}
                   title={state.filename}
                 />
               )}
               {kind === "audio" && (
                 <ShareSecureAudio
                   token={state.token}
-                  unlockToken={state.unlockToken}
+                  accessToken={state.accessToken}
                   title={state.filename}
                 />
               )}

@@ -19,7 +19,7 @@ export async function POST(request) {
       );
     }
 
-    if (typeof fileSize !== "number" || fileSize <= 0) {
+    if (!Number.isInteger(fileSize) || fileSize <= 0) {
       return NextResponse.json({ error: "Invalid file size" }, { status: 400 });
     }
 
@@ -38,7 +38,7 @@ export async function POST(request) {
     }
 
     const s3Key = buildObjectKey(decoded.uid, filename);
-    const uploadUrl = await createPresignedUploadUrl(s3Key, contentType);
+    const uploadUrl = await createPresignedUploadUrl(s3Key, contentType, fileSize);
 
     return NextResponse.json({ uploadUrl, s3Key });
   } catch (error) {

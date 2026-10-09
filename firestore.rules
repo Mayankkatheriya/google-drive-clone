@@ -1,0 +1,71 @@
+rules_version = '2';
+
+// The Admin SDK (API routes) bypasses these rules; they only constrain browser clients.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(data) {
+      return signedIn() && data.userId == request.auth.uid;
+    }
+
+    function ownsKey(key) {
+      return key is string && key.matches('files/' + request.auth.uid + '/.+');
+    }
+
+    function validNewItem(data) {
+      return isOwner(data)
+        && (!('s3Key' in data) || ownsKey(data.s3Key))
+        && (!('size' in data) || (data.size is number && data.size >= 0))
+        && (!('versionsBytes' in data)
+            || (data.versionsBytes is number && data.versionsBytes >= 0));
+    }
+
+    function changed(key) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny([key]);
+    }
+
+    function validUpdate() {
+      let next = request.resource.data;
+      return isOwner(resource.data)
+        && next.userId == resource.data.userId
+        && (!changed('s3Key') || ownsKey(next.s3Key))
+        && (!changed('size') || (next.size is number && next.size >= 0))
+        && (!changed('versionsBytes')
+            || (next.versionsBytes is number && next.versionsBytes >= 0));
+    }
+
+    function ownsParentFile(fileId) {
+      let parent = get(/databases/$(database)/documents/myfiles/$(fileId));
+      return parent != null && isOwner(parent.data);
+    }
+
+    match /myfiles/{fileId} {
+      allow read: if isOwner(resource.data);
+      allow create: if validNewItem(request.resource.data);
+      allow update: if validUpdate();
+      allow delete: if isOwner(resource.data);
+
+      match /versions/{versionId} {
+        allow read, delete: if ownsParentFile(fileId);
+        allow create: if ownsParentFile(fileId)
+          && ownsKey(request.resource.data.s3Key);
+        allow update: if false;
+      }
+    }
+
+    match /trash/{fileId} {
+      allow read, delete: if isOwner(resource.data);
+      allow create: if validNewItem(request.resource.data);
+      allow update: if false;
+    }
+
+    // shareLinks and anything else: server only.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

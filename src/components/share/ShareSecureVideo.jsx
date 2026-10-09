@@ -2,17 +2,17 @@
 
 import styled from "styled-components";
 
-function contentUrl(token, unlockToken) {
+function contentUrl(token, accessToken) {
   const base = `/api/share-link/${token}/content`;
-  return unlockToken
-    ? `${base}?unlock=${encodeURIComponent(unlockToken)}`
+  return accessToken
+    ? `${base}?access=${encodeURIComponent(accessToken)}`
     : base;
 }
 
-export default function ShareSecureVideo({ token, unlockToken, title }) {
+export default function ShareSecureVideo({ token, accessToken, title }) {
   return (
     <Video
-      src={contentUrl(token, unlockToken)}
+      src={contentUrl(token, accessToken)}
       controls
       playsInline
       preload="metadata"

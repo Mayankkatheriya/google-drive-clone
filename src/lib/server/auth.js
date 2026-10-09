@@ -1,20 +1,35 @@
 import { verifyIdToken } from "./firebaseAdmin";
 
+function unauthorized() {
+  const error = new Error("Unauthorized");
+  error.statusCode = 401;
+  return error;
+}
+
 export async function requireAuth(authorizationHeader) {
   if (!authorizationHeader?.startsWith("Bearer ")) {
-    const error = new Error("Unauthorized");
-    error.statusCode = 401;
-    throw error;
+    throw unauthorized();
   }
 
   const token = authorizationHeader.slice(7);
-  return verifyIdToken(token);
+  try {
+    return await verifyIdToken(token);
+  } catch (error) {
+    if (error?.code?.startsWith?.("auth/")) {
+      throw unauthorized();
+    }
+    throw error;
+  }
 }
 
 export function toErrorResponse(error) {
   const statusCode = error.statusCode || 500;
+  if (statusCode >= 500) {
+    console.error(error);
+    return { statusCode, message: "Internal server error" };
+  }
   return {
     statusCode,
-    message: error.message || "Internal server error",
+    message: error.message || "Request failed",
   };
 }
