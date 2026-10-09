@@ -9,13 +9,20 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
+import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import { auth, provider } from "../../firebase";
-import { signInWithPopup } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  updateProfile,
+} from "firebase/auth";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserLoginDetails, selectUserName } from "../../store/UserSlice";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthProvider";
+import { getUserDisplayName, useAuth } from "@/context/AuthProvider";
 import AuthSplash from "../common/AuthSplash";
 import DiskDriveLogo from "../common/DiskDriveLogo";
 
@@ -51,8 +58,36 @@ const BENEFITS = [
 
 const SIGNIN_POINTS = [
   { icon: VisibilityOutlinedIcon, text: "Preview files in your browser" },
-  { icon: VpnKeyOutlinedIcon, text: "No extra password to remember" },
+  { icon: VpnKeyOutlinedIcon, text: "Sign in with Google or email" },
   { icon: ShieldOutlinedIcon, text: "Your files stay private" },
+];
+
+const EMAIL_AUTH_ERRORS = {
+  "auth/invalid-credential": "Incorrect email or password.",
+  "auth/wrong-password": "Incorrect email or password.",
+  "auth/user-not-found": "Incorrect email or password.",
+  "auth/invalid-email": "Enter a valid email address.",
+  "auth/missing-password": "Enter your password.",
+  "auth/weak-password": "Password is too weak. Follow all the password rules.",
+  "auth/password-does-not-meet-requirements": "Password is too weak. Follow all the password rules.",
+  "auth/email-already-in-use":
+    "An account already exists for this email. Sign in instead, or use Continue with Google if you signed up with Google.",
+  "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
+  "auth/network-request-failed": "Network error. Check your connection and try again.",
+  "auth/operation-not-allowed": "Email sign-in is not enabled yet.",
+};
+
+function getEmailAuthError(error) {
+  return EMAIL_AUTH_ERRORS[error?.code] || "Something went wrong. Please try again.";
+}
+
+const PASSWORD_RULES = [
+  { label: "At least 8 characters", test: (pw) => pw.length >= 8 },
+  { label: "One uppercase letter", test: (pw) => /[A-Z]/.test(pw) },
+  { label: "One lowercase letter", test: (pw) => /[a-z]/.test(pw) },
+  { label: "One number", test: (pw) => /\d/.test(pw) },
+  { label: "One special character", test: (pw) => /[^A-Za-z0-9]/.test(pw) },
+  { label: "No spaces", test: (pw) => pw.length > 0 && !/\s/.test(pw) },
 ];
 
 const Login = () => {
@@ -61,15 +96,85 @@ const Login = () => {
   const { authReady } = useAuth();
   const userName = useSelector(selectUserName);
   const [loading, setLoading] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [mode, setMode] = useState("signin");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [formInfo, setFormInfo] = useState("");
 
   const setUser = (user) => {
     dispatch(
       setUserLoginDetails({
-        name: user.displayName,
-        email: user.email,
+        name: getUserDisplayName(user),
         photo: user.photoURL,
       })
     );
+  };
+
+  const switchMode = (nextMode) => {
+    setMode(nextMode);
+    setPassword("");
+    setConfirmPassword("");
+    setFormError("");
+    setFormInfo("");
+  };
+
+  const handleEmailSubmit = async (event) => {
+    event.preventDefault();
+    if (formLoading) return;
+
+    const trimmedEmail = email.trim();
+    setFormError("");
+    setFormInfo("");
+
+    if (!trimmedEmail) {
+      setFormError("Enter your email address.");
+      return;
+    }
+
+    if (mode === "signup") {
+      if (!PASSWORD_RULES.every((rule) => rule.test(password))) {
+        setFormError("Password doesn't meet all the rules above.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setFormError("Passwords don't match.");
+        return;
+      }
+    }
+
+    setFormLoading(true);
+    try {
+      if (mode === "reset") {
+        await sendPasswordResetEmail(auth, trimmedEmail);
+        setFormInfo("If an account exists for this email, a reset link is on its way.");
+        return;
+      }
+
+      if (mode === "signup") {
+        const { user } = await createUserWithEmailAndPassword(
+          auth,
+          trimmedEmail,
+          password,
+        );
+        const displayName = name.trim();
+        if (displayName) {
+          await updateProfile(user, { displayName });
+          dispatch(setUserLoginDetails({ name: displayName, photo: null }));
+        }
+        return;
+      }
+
+      await signInWithEmailAndPassword(auth, trimmedEmail, password);
+    } catch (error) {
+      setFormError(getEmailAuthError(error));
+    } finally {
+      setFormLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -161,7 +266,7 @@ const Login = () => {
                 Continue to <GradientText>Disk Drive</GradientText>
               </AuthTitle>
               <AuthSub>
-                Use your Google account — one tap and your personal drive is ready.
+                Continue with Google, or use your email — your personal drive is ready in seconds.
               </AuthSub>
 
               <GoogleBtn onClick={handleAuth} disabled={loading} $loading={loading}>
@@ -169,16 +274,134 @@ const Login = () => {
                 {loading ? "Signing in…" : "Continue with Google"}
               </GoogleBtn>
 
-              <SignInList>
-                {SIGNIN_POINTS.map((point) => (
-                  <SignInItem key={point.text}>
-                    <SignInIcon>
-                      <point.icon style={{ fontSize: 16 }} />
-                    </SignInIcon>
-                    <span>{point.text}</span>
-                  </SignInItem>
-                ))}
-              </SignInList>
+              {!emailOpen ? (
+                <EmailToggle type="button" onClick={() => setEmailOpen(true)}>
+                  <MailOutlineIcon style={{ fontSize: 19 }} />
+                  Continue with email
+                </EmailToggle>
+              ) : (
+                <EmailForm onSubmit={handleEmailSubmit} noValidate>
+                  <Divider>
+                    <span>
+                      {mode === "signup"
+                        ? "Create account"
+                        : mode === "reset"
+                          ? "Reset password"
+                          : "Sign in with email"}
+                    </span>
+                  </Divider>
+
+                  {mode === "signup" && (
+                    <Input
+                      type="text"
+                      placeholder="Your name"
+                      autoComplete="name"
+                      maxLength={60}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      disabled={formLoading}
+                    />
+                  )}
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={formLoading}
+                    autoFocus
+                  />
+                  {mode !== "reset" && (
+                    <Input
+                      type="password"
+                      placeholder="Password"
+                      autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                      required
+                      maxLength={128}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={formLoading}
+                    />
+                  )}
+                  {mode === "signup" && (
+                    <>
+                      <Input
+                        type="password"
+                        placeholder="Confirm password"
+                        autoComplete="new-password"
+                        required
+                        maxLength={128}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={formLoading}
+                      />
+                      <PasswordRules>
+                        {PASSWORD_RULES.map((rule) => {
+                          const met = rule.test(password);
+                          return (
+                            <PasswordRule key={rule.label} $met={met}>
+                              <span aria-hidden="true">{met ? "✓" : "•"}</span>
+                              {rule.label}
+                            </PasswordRule>
+                          );
+                        })}
+                        {confirmPassword && (
+                          <PasswordRule $met={password === confirmPassword}>
+                            <span aria-hidden="true">
+                              {password === confirmPassword ? "✓" : "•"}
+                            </span>
+                            Passwords match
+                          </PasswordRule>
+                        )}
+                      </PasswordRules>
+                    </>
+                  )}
+
+                  {formError && <FormMessage $error role="alert">{formError}</FormMessage>}
+                  {formInfo && <FormMessage role="status">{formInfo}</FormMessage>}
+
+                  <SubmitBtn type="submit" disabled={formLoading}>
+                    {formLoading
+                      ? "Please wait…"
+                      : mode === "signup"
+                        ? "Create account"
+                        : mode === "reset"
+                          ? "Send reset link"
+                          : "Sign in"}
+                  </SubmitBtn>
+
+                  <FormLinks>
+                    {mode === "signin" ? (
+                      <>
+                        <LinkBtn type="button" onClick={() => switchMode("reset")}>
+                          Forgot password?
+                        </LinkBtn>
+                        <LinkBtn type="button" onClick={() => switchMode("signup")}>
+                          Create account
+                        </LinkBtn>
+                      </>
+                    ) : (
+                      <LinkBtn type="button" onClick={() => switchMode("signin")}>
+                        Back to sign in
+                      </LinkBtn>
+                    )}
+                  </FormLinks>
+                </EmailForm>
+              )}
+
+              {!emailOpen && (
+                <SignInList>
+                  {SIGNIN_POINTS.map((point) => (
+                    <SignInItem key={point.text}>
+                      <SignInIcon>
+                        <point.icon style={{ fontSize: 16 }} />
+                      </SignInIcon>
+                      <span>{point.text}</span>
+                    </SignInItem>
+                  ))}
+                </SignInList>
+              )}
             </AuthBlock>
 
             <AuthFooter>
@@ -217,12 +440,13 @@ const Page = styled.div`
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: #04070f;
 `;
 
 const Orb1 = styled.div`
-  position: absolute;
+  position: fixed;
   width: 560px;
   height: 560px;
   border-radius: 50%;
@@ -234,7 +458,7 @@ const Orb1 = styled.div`
 `;
 
 const Orb2 = styled.div`
-  position: absolute;
+  position: fixed;
   width: 480px;
   height: 480px;
   border-radius: 50%;
@@ -313,8 +537,7 @@ const NavTag = styled.span`
 const Content = styled.div`
   position: relative;
   z-index: 10;
-  flex: 1;
-  min-height: 0;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -580,6 +803,158 @@ const Spinner = styled.span`
   border-top-color: #2563eb;
   border-radius: 50%;
   animation: ${spin} 0.7s linear infinite;
+`;
+
+const EmailToggle = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 20px;
+  margin: -8px 0 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(96, 165, 250, 0.4);
+  }
+`;
+
+const EmailForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: -6px;
+  text-align: left;
+`;
+
+const Divider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+
+  &::placeholder {
+    color: #64748b;
+  }
+
+  &:focus {
+    border-color: #60a5fa;
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+`;
+
+const PasswordRules = styled.ul`
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+
+  @media (max-width: 380px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const PasswordRule = styled.li`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: ${(p) => (p.$met ? "#86efac" : "#64748b")};
+  transition: color 0.2s ease;
+
+  span {
+    width: 10px;
+    text-align: center;
+  }
+`;
+
+const FormMessage = styled.p`
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: ${(p) => (p.$error ? "#fca5a5" : "#86efac")};
+`;
+
+const SubmitBtn = styled.button`
+  width: 100%;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+`;
+
+const FormLinks = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+`;
+
+const LinkBtn = styled.button`
+  border: none;
+  background: none;
+  padding: 2px 0;
+  color: #60a5fa;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 const SignInList = styled.ul`

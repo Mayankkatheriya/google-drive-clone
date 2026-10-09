@@ -65,7 +65,7 @@ A full-stack Google Drive–style cloud storage app built with **Next.js**, **Fi
 
 ### Auth & UX
 
-- **Google sign-in** via Firebase Auth
+- **Google sign-in** or **email + password** (with password reset) via Firebase Auth
 - Dark / light theme
 - Grid / list view toggle (persisted in `localStorage`)
 - Skeleton loaders, toast notifications, Lottie animations
@@ -201,7 +201,7 @@ flowchart TB
 | Framework      | Next.js 14 (App Router)                  |
 | UI             | React 18, styled-components, MUI         |
 | State          | Redux Toolkit, React Context             |
-| Auth           | Firebase Authentication (Google)         |
+| Auth           | Firebase Authentication (Google, Email)  |
 | Database       | Cloud Firestore (real-time `onSnapshot`) |
 | Server auth    | Firebase Admin SDK                       |
 | Object storage | AWS S3                                   |

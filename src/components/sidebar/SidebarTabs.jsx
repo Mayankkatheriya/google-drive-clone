@@ -84,7 +84,13 @@ const SidebarTabs = () => {
       {/* User profile */}
       {userName && (
         <UserSection>
-          <UserAvatar src={userPhoto} alt={userName} />
+          {userPhoto ? (
+            <UserAvatar src={userPhoto} alt={userName} />
+          ) : (
+            <UserAvatarFallback aria-hidden="true">
+              {userName.charAt(0).toUpperCase()}
+            </UserAvatarFallback>
+          )}
           <UserInfo>
             <Tooltip label={userName} onlyIfTruncated>
               <UserName>{userName.split(" ")[0]}</UserName>
@@ -274,6 +280,21 @@ const UserAvatar = styled.img`
   object-fit: cover;
   border: 2px solid var(--border);
   flex-shrink: 0;
+`;
+
+const UserAvatarFallback = styled.span`
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 700;
 `;
 
 const UserInfo = styled.div`

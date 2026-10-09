@@ -8,6 +8,11 @@ import { setSignOutState, setUserLoginDetails } from "@/store/UserSlice";
 
 const AuthContext = createContext({ user: null, authReady: false });
 
+/** Email/password users have no displayName; the app treats an empty name as signed out. */
+export function getUserDisplayName(user) {
+  return user?.displayName || user?.email?.split("@")[0] || "User";
+}
+
 export function AuthProvider({ children }) {
   const dispatch = useDispatch();
   const [user, setUser] = useState(null);
@@ -20,7 +25,7 @@ export function AuthProvider({ children }) {
       if (nextUser) {
         dispatch(
           setUserLoginDetails({
-            name: nextUser.displayName,
+            name: getUserDisplayName(nextUser),
             photo: nextUser.photoURL,
           })
         );
