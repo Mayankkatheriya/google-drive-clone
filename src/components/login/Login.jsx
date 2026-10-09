@@ -13,9 +13,11 @@ import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import { auth, provider } from "../../firebase";
 import {
   createUserWithEmailAndPassword,
+  sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signOut,
   updateProfile,
 } from "firebase/auth";
 import { useDispatch, useSelector } from "react-redux";
@@ -81,6 +83,18 @@ function getEmailAuthError(error) {
   return EMAIL_AUTH_ERRORS[error?.code] || "Something went wrong. Please try again.";
 }
 
+const RESEND_COOLDOWN_MS = 60 * 1000;
+
+async function sendVerificationEmail(user) {
+  try {
+    await sendEmailVerification(user, { url: `${window.location.origin}/` });
+  } catch (error) {
+    // Continue URL must be an authorized domain in Firebase; fall back to Firebase's default page.
+    if (error?.code !== "auth/unauthorized-continue-uri") throw error;
+    await sendEmailVerification(user);
+  }
+}
+
 const PASSWORD_RULES = [
   { label: "At least 8 characters", test: (pw) => pw.length >= 8 },
   { label: "One uppercase letter", test: (pw) => /[A-Z]/.test(pw) },
@@ -93,9 +107,10 @@ const PASSWORD_RULES = [
 const Login = () => {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { authReady } = useAuth();
+  const { authReady, user: authUser, needsEmailVerification, refreshUser } = useAuth();
   const userName = useSelector(selectUserName);
   const [loading, setLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [mode, setMode] = useState("signin");
   const [name, setName] = useState("");
@@ -164,8 +179,10 @@ const Login = () => {
         const displayName = name.trim();
         if (displayName) {
           await updateProfile(user, { displayName });
-          dispatch(setUserLoginDetails({ name: displayName, photo: null }));
         }
+        await sendVerificationEmail(user);
+        startResendCooldown();
+        setFormInfo(`Verification link sent to ${trimmedEmail}.`);
         return;
       }
 
@@ -176,6 +193,62 @@ const Login = () => {
       setFormLoading(false);
     }
   };
+
+  const startResendCooldown = () => {
+    setResendCooldown(true);
+    setTimeout(() => setResendCooldown(false), RESEND_COOLDOWN_MS);
+  };
+
+  const handleCheckVerified = async () => {
+    if (formLoading) return;
+    setFormError("");
+    setFormInfo("");
+    setFormLoading(true);
+    try {
+      const verified = await refreshUser();
+      if (!verified) {
+        setFormError("Not verified yet. Open the link in the email first.");
+      }
+    } catch (error) {
+      setFormError(getEmailAuthError(error));
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!authUser || resendCooldown || formLoading) return;
+    setFormError("");
+    setFormInfo("");
+    setFormLoading(true);
+    try {
+      await sendVerificationEmail(authUser);
+      startResendCooldown();
+      setFormInfo(`Verification link sent to ${authUser.email}.`);
+    } catch (error) {
+      setFormError(getEmailAuthError(error));
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleUseAnotherAccount = async () => {
+    await signOut(auth);
+    setPassword("");
+    setConfirmPassword("");
+    setFormError("");
+    setFormInfo("");
+    setMode("signin");
+  };
+
+  useEffect(() => {
+    if (!needsEmailVerification) return undefined;
+    const check = () => {
+      refreshUser().catch(() => {});
+    };
+    window.addEventListener("focus", check);
+    return () => window.removeEventListener("focus", check);
+  }, [needsEmailVerification, refreshUser]);
 
   useEffect(() => {
     if (authReady && userName) {
@@ -269,138 +342,172 @@ const Login = () => {
                 Continue with Google, or use your email — your personal drive is ready in seconds.
               </AuthSub>
 
-              <GoogleBtn onClick={handleAuth} disabled={loading} $loading={loading}>
-                {loading ? <Spinner /> : <GoogleG />}
-                {loading ? "Signing in…" : "Continue with Google"}
-              </GoogleBtn>
-
-              {!emailOpen ? (
-                <EmailToggle type="button" onClick={() => setEmailOpen(true)}>
-                  <MailOutlineIcon style={{ fontSize: 19 }} />
-                  Continue with email
-                </EmailToggle>
-              ) : (
-                <EmailForm onSubmit={handleEmailSubmit} noValidate>
+              {needsEmailVerification ? (
+                <EmailForm as="div">
                   <Divider>
-                    <span>
-                      {mode === "signup"
-                        ? "Create account"
-                        : mode === "reset"
-                          ? "Reset password"
-                          : "Sign in with email"}
-                    </span>
+                    <span>Verify your email</span>
                   </Divider>
-
-                  {mode === "signup" && (
-                    <Input
-                      type="text"
-                      placeholder="Your name"
-                      autoComplete="name"
-                      maxLength={60}
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      disabled={formLoading}
-                    />
-                  )}
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={formLoading}
-                    autoFocus
-                  />
-                  {mode !== "reset" && (
-                    <Input
-                      type="password"
-                      placeholder="Password"
-                      autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                      required
-                      maxLength={128}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      disabled={formLoading}
-                    />
-                  )}
-                  {mode === "signup" && (
-                    <>
-                      <Input
-                        type="password"
-                        placeholder="Confirm password"
-                        autoComplete="new-password"
-                        required
-                        maxLength={128}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        disabled={formLoading}
-                      />
-                      <PasswordRules>
-                        {PASSWORD_RULES.map((rule) => {
-                          const met = rule.test(password);
-                          return (
-                            <PasswordRule key={rule.label} $met={met}>
-                              <span aria-hidden="true">{met ? "✓" : "•"}</span>
-                              {rule.label}
-                            </PasswordRule>
-                          );
-                        })}
-                        {confirmPassword && (
-                          <PasswordRule $met={password === confirmPassword}>
-                            <span aria-hidden="true">
-                              {password === confirmPassword ? "✓" : "•"}
-                            </span>
-                            Passwords match
-                          </PasswordRule>
-                        )}
-                      </PasswordRules>
-                    </>
-                  )}
+                  <VerifyText>
+                    We sent a verification link to <strong>{authUser?.email}</strong>. Open it,
+                    then come back here. Check your spam folder if you don&apos;t see it.
+                  </VerifyText>
 
                   {formError && <FormMessage $error role="alert">{formError}</FormMessage>}
                   {formInfo && <FormMessage role="status">{formInfo}</FormMessage>}
 
-                  <SubmitBtn type="submit" disabled={formLoading}>
-                    {formLoading
-                      ? "Please wait…"
-                      : mode === "signup"
-                        ? "Create account"
-                        : mode === "reset"
-                          ? "Send reset link"
-                          : "Sign in"}
+                  <SubmitBtn type="button" onClick={handleCheckVerified} disabled={formLoading}>
+                    {formLoading ? "Please wait…" : "I've verified my email"}
                   </SubmitBtn>
 
                   <FormLinks>
-                    {mode === "signin" ? (
-                      <>
-                        <LinkBtn type="button" onClick={() => switchMode("reset")}>
-                          Forgot password?
-                        </LinkBtn>
-                        <LinkBtn type="button" onClick={() => switchMode("signup")}>
-                          Create account
-                        </LinkBtn>
-                      </>
-                    ) : (
-                      <LinkBtn type="button" onClick={() => switchMode("signin")}>
-                        Back to sign in
-                      </LinkBtn>
-                    )}
+                    <LinkBtn
+                      type="button"
+                      onClick={handleResendVerification}
+                      disabled={resendCooldown || formLoading}
+                    >
+                      {resendCooldown ? "Email sent" : "Resend email"}
+                    </LinkBtn>
+                    <LinkBtn type="button" onClick={handleUseAnotherAccount}>
+                      Use another account
+                    </LinkBtn>
                   </FormLinks>
                 </EmailForm>
-              )}
+              ) : (
+              <>
+                <GoogleBtn onClick={handleAuth} disabled={loading} $loading={loading}>
+                  {loading ? <Spinner /> : <GoogleG />}
+                  {loading ? "Signing in…" : "Continue with Google"}
+                </GoogleBtn>
 
-              {!emailOpen && (
-                <SignInList>
-                  {SIGNIN_POINTS.map((point) => (
-                    <SignInItem key={point.text}>
-                      <SignInIcon>
-                        <point.icon style={{ fontSize: 16 }} />
-                      </SignInIcon>
-                      <span>{point.text}</span>
-                    </SignInItem>
-                  ))}
-                </SignInList>
+                {!emailOpen ? (
+                  <EmailToggle type="button" onClick={() => setEmailOpen(true)}>
+                    <MailOutlineIcon style={{ fontSize: 19 }} />
+                    Continue with email
+                  </EmailToggle>
+                ) : (
+                  <EmailForm onSubmit={handleEmailSubmit} noValidate>
+                    <Divider>
+                      <span>
+                        {mode === "signup"
+                          ? "Create account"
+                          : mode === "reset"
+                            ? "Reset password"
+                            : "Sign in with email"}
+                      </span>
+                    </Divider>
+
+                    {mode === "signup" && (
+                      <Input
+                        type="text"
+                        placeholder="Your name"
+                        autoComplete="name"
+                        maxLength={60}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        disabled={formLoading}
+                      />
+                    )}
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={formLoading}
+                      autoFocus
+                    />
+                    {mode !== "reset" && (
+                      <Input
+                        type="password"
+                        placeholder="Password"
+                        autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                        required
+                        maxLength={128}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={formLoading}
+                      />
+                    )}
+                    {mode === "signup" && (
+                      <>
+                        <Input
+                          type="password"
+                          placeholder="Confirm password"
+                          autoComplete="new-password"
+                          required
+                          maxLength={128}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          disabled={formLoading}
+                        />
+                        <PasswordRules>
+                          {PASSWORD_RULES.map((rule) => {
+                            const met = rule.test(password);
+                            return (
+                              <PasswordRule key={rule.label} $met={met}>
+                                <span aria-hidden="true">{met ? "✓" : "•"}</span>
+                                {rule.label}
+                              </PasswordRule>
+                            );
+                          })}
+                          {confirmPassword && (
+                            <PasswordRule $met={password === confirmPassword}>
+                              <span aria-hidden="true">
+                                {password === confirmPassword ? "✓" : "•"}
+                              </span>
+                              Passwords match
+                            </PasswordRule>
+                          )}
+                        </PasswordRules>
+                      </>
+                    )}
+
+                    {formError && <FormMessage $error role="alert">{formError}</FormMessage>}
+                    {formInfo && <FormMessage role="status">{formInfo}</FormMessage>}
+
+                    <SubmitBtn type="submit" disabled={formLoading}>
+                      {formLoading
+                        ? "Please wait…"
+                        : mode === "signup"
+                          ? "Create account"
+                          : mode === "reset"
+                            ? "Send reset link"
+                            : "Sign in"}
+                    </SubmitBtn>
+
+                    <FormLinks>
+                      {mode === "signin" ? (
+                        <>
+                          <LinkBtn type="button" onClick={() => switchMode("reset")}>
+                            Forgot password?
+                          </LinkBtn>
+                          <LinkBtn type="button" onClick={() => switchMode("signup")}>
+                            Create account
+                          </LinkBtn>
+                        </>
+                      ) : (
+                        <LinkBtn type="button" onClick={() => switchMode("signin")}>
+                          Back to sign in
+                        </LinkBtn>
+                      )}
+                    </FormLinks>
+                  </EmailForm>
+                )}
+
+                {!emailOpen && (
+                  <SignInList>
+                    {SIGNIN_POINTS.map((point) => (
+                      <SignInItem key={point.text}>
+                        <SignInIcon>
+                          <point.icon style={{ fontSize: 16 }} />
+                        </SignInIcon>
+                        <span>{point.text}</span>
+                      </SignInItem>
+                    ))}
+                  </SignInList>
+                )}
+              </>
               )}
             </AuthBlock>
 
@@ -952,8 +1059,25 @@ const LinkBtn = styled.button`
   font-weight: 600;
   cursor: pointer;
 
-  &:hover {
+  &:hover:not(:disabled) {
     text-decoration: underline;
+  }
+
+  &:disabled {
+    color: #64748b;
+    cursor: default;
+  }
+`;
+
+const VerifyText = styled.p`
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: #94a3b8;
+
+  strong {
+    color: #e2e8f0;
+    font-weight: 600;
+    word-break: break-all;
   }
 `;
 

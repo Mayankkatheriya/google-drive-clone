@@ -12,14 +12,22 @@ export async function requireAuth(authorizationHeader) {
   }
 
   const token = authorizationHeader.slice(7);
+  let decoded;
   try {
-    return await verifyIdToken(token);
+    decoded = await verifyIdToken(token);
   } catch (error) {
     if (error?.code?.startsWith?.("auth/")) {
       throw unauthorized();
     }
     throw error;
   }
+
+  if (decoded.firebase?.sign_in_provider === "password" && decoded.email_verified !== true) {
+    const error = new Error("Verify your email to continue");
+    error.statusCode = 403;
+    throw error;
+  }
+  return decoded;
 }
 
 export function toErrorResponse(error) {
