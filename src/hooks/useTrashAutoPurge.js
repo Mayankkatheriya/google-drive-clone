@@ -5,6 +5,9 @@ import { toast } from "react-toastify";
 import { useAuth } from "@/context/AuthProvider";
 import { purgeExpiredTrash } from "@/lib/fileAccess";
 
+// Keeps this background cleanup off the critical path of the first page load.
+const PURGE_DELAY_MS = 3000;
+
 export function useTrashAutoPurge() {
   const { user, authReady } = useAuth();
   const ranForUser = useRef(null);
@@ -22,9 +25,8 @@ export function useTrashAutoPurge() {
       return;
     }
 
-    ranForUser.current = userId;
-
-    (async () => {
+    const timer = setTimeout(async () => {
+      ranForUser.current = userId;
       try {
         const { deletedCount } = await purgeExpiredTrash();
         if (deletedCount > 0) {
@@ -37,6 +39,8 @@ export function useTrashAutoPurge() {
       } catch {
         // Ignore — purge will retry on next sign-in
       }
-    })();
+    }, PURGE_DELAY_MS);
+
+    return () => clearTimeout(timer);
   }, [authReady, userId]);
 }

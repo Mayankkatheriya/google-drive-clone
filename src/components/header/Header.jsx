@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import styled from "styled-components";
-import { auth, provider } from "../../firebase";
+import { auth, provider, clearFirestoreCache } from "../../firebase";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -12,7 +12,6 @@ import {
   setUserLoginDetails,
 } from "../../store/UserSlice";
 import { selectSidebarBool, setSidebarBool } from "../../store/BoolSlice";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthProvider";
 import { useFocus } from "@/context/FocusContext";
 import { usePathname } from "next/navigation";
@@ -31,7 +30,6 @@ const Header = () => {
   const userPhoto = useSelector(selectUserPhoto);
   const sidebarBool = useSelector(selectSidebarBool);
   const [showSearch, setShowSearch] = useState(false);
-  const router = useRouter();
   const isFocusShell = focusActive && pathname === "/home";
 
   const handleAuth = async () => {
@@ -46,7 +44,8 @@ const Header = () => {
       try {
         await signOut(auth);
         dispatch(setSignOutState());
-        router.push("/");
+        await clearFirestoreCache().catch(() => {});
+        window.location.assign("/");
       } catch (error) {
         console.log("Error signing out: ", error.message);
       }

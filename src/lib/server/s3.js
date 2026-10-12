@@ -16,14 +16,20 @@ function getRequiredEnv(name) {
   return value;
 }
 
+let s3Client;
+
+// Reused across requests on a warm instance so TLS connections to S3 stay open.
 function getS3Client() {
-  return new S3Client({
-    region: getRequiredEnv("AWS_REGION"),
-    credentials: {
-      accessKeyId: getRequiredEnv("AWS_ACCESS_KEY_ID"),
-      secretAccessKey: getRequiredEnv("AWS_SECRET_ACCESS_KEY"),
-    },
-  });
+  if (!s3Client) {
+    s3Client = new S3Client({
+      region: getRequiredEnv("AWS_REGION"),
+      credentials: {
+        accessKeyId: getRequiredEnv("AWS_ACCESS_KEY_ID"),
+        secretAccessKey: getRequiredEnv("AWS_SECRET_ACCESS_KEY"),
+      },
+    });
+  }
+  return s3Client;
 }
 
 function sanitizeFilename(filename) {
