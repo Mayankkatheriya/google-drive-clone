@@ -4,6 +4,7 @@ import {
   getShareLinkPublicMeta,
 } from "@/lib/server/shareLinks";
 import { shouldSkipShareRedeem } from "@/lib/server/linkPreviewBots";
+import { getCapsuleUnlockAt } from "@/lib/server/timeCapsule";
 import ShareLinkView from "@/components/share/ShareLinkView";
 
 export async function generateMetadata({ params }) {
@@ -52,6 +53,21 @@ export default async function Page({ params }) {
         state={{
           status: meta.unavailable.status,
           message: meta.unavailable.message,
+        }}
+      />
+    );
+  }
+
+  const unlockAt = await getCapsuleUnlockAt(record.s3Key).catch(() => null);
+  if (unlockAt) {
+    return (
+      <ShareLinkView
+        state={{
+          status: "sealed",
+          filename: record.filename,
+          contentType: record.contentType,
+          size: record.size || 0,
+          unlockAt,
         }}
       />
     );

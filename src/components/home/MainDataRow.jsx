@@ -17,6 +17,7 @@ import AutoDeleteIcon from "@mui/icons-material/AutoDeleteOutlined";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
+import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import { changeBytes, convertDates } from "../common/common";
 import FileIcons from "../common/FileIcons";
 import SecureFileLink from "../common/SecureFileLink";
@@ -34,6 +35,8 @@ import {
   getSelfDestructRemainingLabel,
 } from "@/lib/selfDestruct";
 import { useSelfDestruct } from "@/context/SelfDestructProvider";
+import { useTimeCapsule } from "@/context/TimeCapsuleProvider";
+import { isSealed, getSealedRemainingLabel, formatUnlockDate } from "@/lib/timeCapsule";
 import { useMyFiles } from "@/context/FilesContext";
 import CompareSelectMark from "../common/CompareSelectMark";
 import Tooltip from "../common/Tooltip";
@@ -56,6 +59,7 @@ function FileRowOptionsMenu({
 }) {
   const triggerRef = useRef(null);
   const openSelfDestruct = useSelfDestruct();
+  const openTimeCapsule = useTimeCapsule();
   const allFiles = useMyFiles();
   const { top, right, flip, ready } = useMenuPlacement(
     triggerRef,
@@ -63,6 +67,7 @@ function FileRowOptionsMenu({
     isOpen,
   );
   const sdActive = hasSelfDestruct(file.data);
+  const sealed = isSealed(file.data);
 
   return (
     <>
@@ -132,7 +137,7 @@ function FileRowOptionsMenu({
             <MenuItem onClick={onMove}>
               <DriveFileMoveOutlinedIcon /> Move
             </MenuItem>
-            {!folder && (
+            {!folder && !sealed && (
               <MenuItem onClick={onVersionHistory}>
                 <HistoryRoundedIcon /> Version history
               </MenuItem>
@@ -148,6 +153,19 @@ function FileRowOptionsMenu({
                 {sdActive
                   ? `Self-destruct · ${getSelfDestructRemainingLabel(file.data)}`
                   : "Self-destruct"}
+              </MenuItem>
+            )}
+            {!folder && (
+              <MenuItem
+                onClick={() => {
+                  onToggle();
+                  openTimeCapsule(file.id, file.data);
+                }}
+              >
+                <HourglassTopRoundedIcon />{" "}
+                {sealed
+                  ? `Sealed · ${getSealedRemainingLabel(file.data)}`
+                  : "Time capsule"}
               </MenuItem>
             )}
             <MenuDivider />
@@ -205,7 +223,9 @@ function MainDataRow({
   );
   const comparable = !folder && canCompareFile(file.data.contentType);
   const openSelfDestruct = useSelfDestruct();
+  const openTimeCapsule = useTimeCapsule();
   const sdActive = hasSelfDestruct(file.data);
+  const sealed = !folder && isSealed(file.data);
   const pickMode = compareMode || selectMode;
   const sizeLabel = folder
     ? changeBytes(getFolderSizeBytes(files, file.id))
@@ -330,6 +350,25 @@ function MainDataRow({
                 </SelfDestructPill>
               </Tooltip>
             )}
+            {sealed && (
+              <Tooltip
+                label={
+                  file.data.capsuleOwnerAccess
+                    ? `Time capsule · share links open ${formatUnlockDate(file.data)}`
+                    : `Time capsule · locked until ${formatUnlockDate(file.data)}`
+                }
+              >
+                <SelfDestructPill>
+                  <HourglassTopRoundedIcon />
+                  {getSealedRemainingLabel(file.data)}
+                </SelfDestructPill>
+              </Tooltip>
+            )}
+            {!folder && file.data.uploadedBy && (
+              <Tooltip label="Received through a file request">
+                <SelfDestructPill>From {file.data.uploadedBy}</SelfDestructPill>
+              </Tooltip>
+            )}
             <MobileMeta>
               {folder ? `Folder · ${sizeLabel}` : sizeLabel} ·{" "}
               {convertDates(file.data.timestamp?.seconds)}
@@ -414,10 +453,27 @@ function MainDataRow({
               <DriveFileMoveOutlinedIcon />
             </QuickBtn>
           </Tooltip>
-          {!folder && (
+          {!folder && !sealed && (
             <Tooltip label="Version history" iconOnly>
               <QuickBtn onClick={onVersionHistory}>
                 <HistoryRoundedIcon />
+              </QuickBtn>
+            </Tooltip>
+          )}
+          {!folder && (
+            <Tooltip
+              label={
+                sealed
+                  ? `Sealed · ${getSealedRemainingLabel(file.data)}`
+                  : "Time capsule"
+              }
+              iconOnly
+            >
+              <QuickBtn
+                $active={sealed}
+                onClick={() => openTimeCapsule(file.id, file.data)}
+              >
+                <HourglassTopRoundedIcon />
               </QuickBtn>
             </Tooltip>
           )}
@@ -522,7 +578,7 @@ const DateCol = styled.div`
 `;
 
 const ActionsCol = styled.div`
-  flex: 0 0 252px;
+  flex: 0 0 284px;
   display: flex;
   align-items: center;
   justify-content: flex-end;

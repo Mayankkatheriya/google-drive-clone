@@ -12,6 +12,7 @@ import { FocusProvider } from "@/context/FocusContext";
 import { FileUploadProvider } from "@/context/FileUploadContext";
 import { CurrentFolderProvider } from "@/context/CurrentFolderContext";
 import { SelfDestructProvider } from "@/context/SelfDestructProvider";
+import { TimeCapsuleProvider } from "@/context/TimeCapsuleProvider";
 import { TourProvider } from "@/context/TourProvider";
 import FilePreviewModal from "@/components/common/FilePreviewModal";
 import CompareModal from "@/components/common/CompareModal";
@@ -44,6 +45,7 @@ export default function HomeLayout({ children }) {
             <FileUploadProvider>
               <TourProvider>
               <SelfDestructProvider>
+              <TimeCapsuleProvider>
               <ProtectedRoute>
                 <AppShell>
                   <Header />
@@ -64,6 +66,7 @@ export default function HomeLayout({ children }) {
               <FilePreviewModal />
               <CompareModal />
               <CommandPalette />
+              </TimeCapsuleProvider>
               </SelfDestructProvider>
               </TourProvider>
             </FileUploadProvider>

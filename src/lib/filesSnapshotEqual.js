@@ -24,7 +24,10 @@ function fileEntryEqual(a, b) {
     tsSeconds(da.timestamp) === tsSeconds(db.timestamp) &&
     tsSeconds(da.lastOpenedAt) === tsSeconds(db.lastOpenedAt) &&
     tsSeconds(da.trashedAt) === tsSeconds(db.trashedAt) &&
-    tsSeconds(da.selfDestructAt) === tsSeconds(db.selfDestructAt)
+    tsSeconds(da.selfDestructAt) === tsSeconds(db.selfDestructAt) &&
+    tsSeconds(da.unlockAt) === tsSeconds(db.unlockAt) &&
+    da.capsuleMessage === db.capsuleMessage &&
+    Boolean(da.capsuleOwnerAccess) === Boolean(db.capsuleOwnerAccess)
   );
 }
 

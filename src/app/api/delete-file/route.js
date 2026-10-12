@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth, toErrorResponse } from "@/lib/server/auth";
 import { assertUserOwnsKey, deleteObject } from "@/lib/server/s3";
+import { deleteCapsuleForKey } from "@/lib/server/timeCapsule";
 
 export async function POST(request) {
   try {
@@ -14,6 +15,7 @@ export async function POST(request) {
     assertUserOwnsKey(decoded.uid, s3Key);
 
     await deleteObject(s3Key);
+    await deleteCapsuleForKey(s3Key);
 
     return NextResponse.json({ success: true });
   } catch (error) {

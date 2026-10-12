@@ -5,12 +5,14 @@ import {
   getShareLinkRecord,
   redeemShareLink,
 } from "@/lib/server/shareLinks";
+import { getViewerInfo } from "@/lib/server/viewerInfo";
 
 export async function POST(request, { params }) {
   try {
     const body = (await request.json().catch(() => ({}))) ?? {};
     const result = await redeemShareLink(params.token, {
       unlockToken: body.unlockToken,
+      viewer: getViewerInfo(request.headers),
     });
     return NextResponse.json(result);
   } catch (error) {

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { OneTimeLinkIcon } from "@/components/common/SvgIcons";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutlineOutlined";
+import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import DiskDriveLogo from "@/components/common/DiskDriveLogo";
 import FileIcons from "@/components/common/FileIcons";
 import { changeBytes } from "@/components/common/common";
@@ -21,6 +22,78 @@ function getPreviewKind(contentType = "") {
   if (contentType.includes("video")) return "video";
   if (contentType.includes("audio")) return "audio";
   return "other";
+}
+
+// Redeeming spends a view; dedupe so effect re-runs (Strict Mode, remounts) don't burn one-time links.
+const redeemRequests = new Map();
+
+function redeemOnce(token) {
+  if (!redeemRequests.has(token)) {
+    const request = fetch(`/api/share-link/${token}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    })
+      .then(async (res) => ({
+        ok: res.ok,
+        status: res.status,
+        data: await res.json().catch(() => ({})),
+      }))
+      .catch((err) => {
+        redeemRequests.delete(token);
+        throw err;
+      });
+    redeemRequests.set(token, request);
+  }
+  return redeemRequests.get(token);
+}
+
+function splitRemaining(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return [
+    { label: "days", value: Math.floor(total / 86400) },
+    { label: "hours", value: Math.floor((total % 86400) / 3600) },
+    { label: "min", value: Math.floor((total % 3600) / 60) },
+    { label: "sec", value: total % 60 },
+  ];
+}
+
+function CapsuleCountdown({ unlockAt }) {
+  const [now, setNow] = useState(null);
+
+  useEffect(() => {
+    setNow(Date.now());
+    const id = setInterval(() => {
+      const next = Date.now();
+      setNow(next);
+      if (next >= unlockAt) {
+        clearInterval(id);
+        window.location.reload();
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [unlockAt]);
+
+  return (
+    <>
+      <CardSub>
+        {now == null
+          ? "Unlocks soon"
+          : `Unlocks ${new Date(unlockAt).toLocaleString(undefined, {
+              dateStyle: "long",
+              timeStyle: "short",
+            })}`}
+      </CardSub>
+      <CountdownRow>
+        {splitRemaining(now == null ? 0 : unlockAt - now).map((part) => (
+          <CountdownCell key={part.label}>
+            <strong>{now == null ? "--" : String(part.value).padStart(2, "0")}</strong>
+            <span>{part.label}</span>
+          </CountdownCell>
+        ))}
+      </CountdownRow>
+    </>
+  );
 }
 
 export default function ShareLinkView({ state: initial }) {
@@ -46,16 +119,11 @@ export default function ShareLinkView({ state: initial }) {
     (async () => {
       setBusy(true);
       try {
-        const res = await fetch(`/api/share-link/${state.token}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        });
-        const data = await res.json().catch(() => ({}));
+        const { ok, status, data } = await redeemOnce(state.token);
         if (cancelled) return;
-        if (!res.ok) {
+        if (!ok) {
           setState({
-            status: res.status === 410 ? "used" : "error",
+            status: status === 410 ? "used" : "error",
             message: data.error || "Unable to open this link",
           });
           return;
@@ -116,7 +184,10 @@ export default function ShareLinkView({ state: initial }) {
   const kind =
     state.status === "ready" ? getPreviewKind(state.contentType) : null;
   const tokens =
-    state.status === "ready" || state.status === "gate" || state.status === "preview"
+    state.status === "ready" ||
+    state.status === "gate" ||
+    state.status === "preview" ||
+    state.status === "sealed"
       ? getFileTypeTokens(state.contentType, state.filename)
       : null;
 
@@ -247,6 +318,20 @@ export default function ShareLinkView({ state: initial }) {
               </FileMeta>
             </FileHead>
             <Notice>Open this link in your browser to view the file.</Notice>
+          </Card>
+        )}
+
+        {state.status === "sealed" && (
+          <Card $muted>
+            <StatusIcon>
+              <HourglassTopRoundedIcon />
+            </StatusIcon>
+            <CardTitle>Time capsule</CardTitle>
+            <CardSub>
+              <strong>{state.filename}</strong> is sealed. Come back when the
+              timer runs out.
+            </CardSub>
+            <CapsuleCountdown unlockAt={state.unlockAt} />
           </Card>
         )}
 
@@ -488,6 +573,39 @@ const StatusIcon = styled.div`
 
   svg {
     font-size: 26px;
+  }
+`;
+
+const CountdownRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 20px;
+`;
+
+const CountdownCell = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 4px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+
+  strong {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  span {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-3);
   }
 `;
 

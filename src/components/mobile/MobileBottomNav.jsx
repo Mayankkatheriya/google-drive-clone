@@ -8,6 +8,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import CreateNewFolderOutlinedIcon from "@mui/icons-material/CreateNewFolderOutlined";
+import MoveToInboxRoundedIcon from "@mui/icons-material/MoveToInboxRounded";
 import {
   MobileScreenShareIcon,
   QueryBuilderIcon,
@@ -18,6 +19,7 @@ import { useFileUploadContext } from "@/context/FileUploadContext";
 import { useSelection } from "@/context/SelectionContext";
 import { useCompare } from "@/context/CompareContext";
 import CreateFolderModal from "../common/CreateFolderModal";
+import FileRequestModal from "../common/FileRequestModal";
 
 const navItems = [
   { href: "/home", label: "Drive", icon: MobileScreenShareIcon },
@@ -33,6 +35,7 @@ const MobileBottomNav = () => {
   const { active: compareActive } = useCompare();
   const [menuOpen, setMenuOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
   const fabWrapRef = useRef(null);
   const hideFab = selectActive || compareActive;
 
@@ -95,6 +98,17 @@ const MobileBottomNav = () => {
                 <CreateNewFolderOutlinedIcon />
                 New folder
               </FabMenuItem>
+              <FabMenuItem
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setRequestOpen(true);
+                }}
+              >
+                <MoveToInboxRoundedIcon />
+                Request files
+              </FabMenuItem>
             </FabMenu>
           )}
           <Fab
@@ -115,6 +129,9 @@ const MobileBottomNav = () => {
         open={createFolderOpen}
         onClose={() => setCreateFolderOpen(false)}
       />
+      {requestOpen && (
+        <FileRequestModal open={requestOpen} onClose={() => setRequestOpen(false)} />
+      )}
     </>
   );
 };

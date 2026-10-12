@@ -32,7 +32,10 @@ export default function ShareQrButton({ url, filename, fileData, size = 28 }) {
 
     if (fileData?.s3Key) {
       setStatus("loading");
-      getFileDownloadUrl(fileData, { expiresIn: QR_LINK_TTL_SECONDS })
+      getFileDownloadUrl(fileData, {
+        expiresIn: QR_LINK_TTL_SECONDS,
+        forSharing: true,
+      })
         .then((freshUrl) => {
           if (cancelled) return;
           setQrUrl(freshUrl);

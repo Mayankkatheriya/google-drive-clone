@@ -5,6 +5,7 @@ import {
   buildContentDisposition,
   getObjectBytes,
 } from "@/lib/server/s3";
+import { assertNotSealed } from "@/lib/server/timeCapsule";
 
 export async function POST(request) {
   try {
@@ -16,6 +17,7 @@ export async function POST(request) {
 
     const decoded = await requireAuth(request.headers.get("authorization"));
     assertUserOwnsKey(decoded.uid, s3Key);
+    await assertNotSealed(s3Key, { owner: true });
 
     const { bytes, contentType, contentLength } = await getObjectBytes(s3Key);
     const displayName = filename || "download";

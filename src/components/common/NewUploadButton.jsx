@@ -5,10 +5,12 @@ import styled, { css } from "styled-components";
 import AddIcon from "@mui/icons-material/Add";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import CreateNewFolderOutlinedIcon from "@mui/icons-material/CreateNewFolderOutlined";
+import MoveToInboxRoundedIcon from "@mui/icons-material/MoveToInboxRounded";
 
 export default function NewUploadButton({
   onClick,
   onCreateFolder,
+  onRequestFiles,
   variant = "sidebar",
 }) {
   const [open, setOpen] = useState(false);
@@ -71,6 +73,18 @@ export default function NewUploadButton({
             <CreateNewFolderOutlinedIcon />
             New folder
           </MenuItem>
+          {onRequestFiles && (
+            <MenuItem
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onRequestFiles();
+              }}
+            >
+              <MoveToInboxRoundedIcon />
+              Request files
+            </MenuItem>
+          )}
         </Menu>
       )}
     </Wrap>

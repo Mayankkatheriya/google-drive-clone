@@ -5,9 +5,11 @@ import styled from "styled-components";
 import { Modal } from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
+import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import {
   createShareLink,
   listShareLinks,
+  listShareLinkViews,
   revokeShareLink,
 } from "@/lib/shareLink";
 import { toast } from "react-toastify";
@@ -40,6 +42,74 @@ function formatExpiry(expiresAt) {
   return `${Math.ceil(hours / 24)}d left`;
 }
 
+function timeAgo(ms) {
+  if (!ms) return "";
+  const minutes = Math.floor((Date.now() - ms) / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(ms).toLocaleDateString();
+}
+
+function placeLabel(view) {
+  const parts = [view.city, view.country].filter(Boolean);
+  return parts.length ? parts.join(", ") : "Unknown location";
+}
+
+function deviceLabel(view) {
+  const base = [view.browser, view.os].filter(Boolean).join(" on ");
+  return view.device ? `${base || "Unknown"} · ${view.device}` : base || "Unknown device";
+}
+
+function topPlaces(views, limit = 3) {
+  const counts = new Map();
+  views.forEach((view) => {
+    const key = placeLabel(view);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+}
+
+function LinkActivity({ state }) {
+  if (!state || state.loading) return <ActivityPanel>Loading activity…</ActivityPanel>;
+  if (state.error) return <ActivityPanel>{state.error}</ActivityPanel>;
+  if (state.items.length === 0) return <ActivityPanel>No views yet</ActivityPanel>;
+
+  return (
+    <ActivityPanel>
+      <ActivitySummary>
+        {state.items.length} view{state.items.length === 1 ? "" : "s"} · last{" "}
+        {timeAgo(state.items[0].viewedAt)}
+      </ActivitySummary>
+      <PlaceChips>
+        {topPlaces(state.items).map(([place, count]) => (
+          <PlaceChip key={place}>
+            {place}
+            {count > 1 ? ` ×${count}` : ""}
+          </PlaceChip>
+        ))}
+      </PlaceChips>
+      <ViewList>
+        {state.items.map((view) => (
+          <ViewRow key={view.id}>
+            <div>
+              <strong>{placeLabel(view)}</strong>
+              <span>
+                {deviceLabel(view)}
+                {view.referrer ? ` · via ${view.referrer}` : ""}
+              </span>
+            </div>
+            <time>{timeAgo(view.viewedAt)}</time>
+          </ViewRow>
+        ))}
+      </ViewList>
+    </ActivityPanel>
+  );
+}
+
 export default function ShareLinkModal({ open, onClose, file }) {
   const [preset, setPreset] = useState("once");
   const [password, setPassword] = useState("");
@@ -50,6 +120,9 @@ export default function ShareLinkModal({ open, onClose, file }) {
   const [revoking, setRevoking] = useState(null);
   const [createdUrl, setCreatedUrl] = useState("");
   const [links, setLinks] = useState([]);
+  const [activityToken, setActivityToken] = useState(null);
+  const [activity, setActivity] = useState({});
+  const [showPast, setShowPast] = useState(false);
 
   const fileId = file?.id;
 
@@ -57,6 +130,31 @@ export default function ShareLinkModal({ open, onClose, file }) {
     () => (links || []).filter(isLinkAvailable),
     [links],
   );
+  const pastLinks = useMemo(
+    () =>
+      (links || [])
+        .filter((link) => !isLinkAvailable(link))
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
+    [links],
+  );
+
+  const toggleActivity = async (token) => {
+    if (activityToken === token) {
+      setActivityToken(null);
+      return;
+    }
+    setActivityToken(token);
+    setActivity((prev) => ({ ...prev, [token]: { loading: true, items: [] } }));
+    try {
+      const items = await listShareLinkViews(token);
+      setActivity((prev) => ({ ...prev, [token]: { loading: false, items } }));
+    } catch (error) {
+      setActivity((prev) => ({
+        ...prev,
+        [token]: { loading: false, items: [], error: error.message },
+      }));
+    }
+  };
 
   const refreshLinks = async () => {
     if (!fileId) return;
@@ -78,6 +176,9 @@ export default function ShareLinkModal({ open, onClose, file }) {
     setCreatedUrl("");
     setBusy(false);
     setRevoking(null);
+    setActivityToken(null);
+    setActivity({});
+    setShowPast(false);
     refreshLinks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, fileId]);
@@ -246,14 +347,15 @@ export default function ShareLinkModal({ open, onClose, file }) {
               <Count>{availableLinks.length}</Count>
             )}
           </ManageTitle>
-          {availableLinks.length === 0 ? (
-            <EmptyLinks>No active share links for this file</EmptyLinks>
-          ) : (
-            <LinkList>
-              {availableLinks.map((link) => {
-                const url = shareUrlFor(link.token);
-                return (
-                  <LinkRow key={link.token}>
+          <LinkList>
+            {availableLinks.length === 0 && (
+              <EmptyLinks>No active share links for this file</EmptyLinks>
+            )}
+            {availableLinks.map((link) => {
+              const url = shareUrlFor(link.token);
+              return (
+                <LinkItem key={link.token}>
+                  <LinkRow>
                     <LinkMeta>
                       <LinkUrl title={url}>{url}</LinkUrl>
                       <small>
@@ -268,6 +370,15 @@ export default function ShareLinkModal({ open, onClose, file }) {
                       </small>
                     </LinkMeta>
                     <LinkActions>
+                      <IconBtn
+                        type="button"
+                        $active={activityToken === link.token}
+                        onClick={() => toggleActivity(link.token)}
+                        aria-label="View activity"
+                        title="Activity"
+                      >
+                        <InsightsRoundedIcon />
+                      </IconBtn>
                       <IconBtn
                         type="button"
                         onClick={() => copyLink(link.token)}
@@ -285,10 +396,60 @@ export default function ShareLinkModal({ open, onClose, file }) {
                       </RevokeBtn>
                     </LinkActions>
                   </LinkRow>
-                );
-              })}
-            </LinkList>
-          )}
+                  {activityToken === link.token && (
+                    <LinkActivity state={activity[link.token]} />
+                  )}
+                </LinkItem>
+              );
+            })}
+
+            {pastLinks.length > 0 && (
+              <PastToggle type="button" onClick={() => setShowPast((v) => !v)}>
+                {showPast ? "Hide" : "Show"} used & expired links ({pastLinks.length})
+              </PastToggle>
+            )}
+            {showPast &&
+              pastLinks.map((link) => (
+                <LinkItem key={link.token} $muted>
+                  <LinkRow>
+                    <LinkMeta>
+                      <LinkUrl>
+                        {link.maxViews === 1 ? "One-time link" : "Link"}
+                        {link.createdAt ? ` · created ${timeAgo(link.createdAt)}` : ""}
+                      </LinkUrl>
+                      <small>
+                        {link.viewCount || 0}
+                        {link.maxViews != null ? `/${link.maxViews}` : ""} views ·{" "}
+                        {link.expiresAt && link.expiresAt <= Date.now()
+                          ? "Expired"
+                          : "View limit reached"}
+                      </small>
+                    </LinkMeta>
+                    <LinkActions>
+                      <IconBtn
+                        type="button"
+                        $active={activityToken === link.token}
+                        onClick={() => toggleActivity(link.token)}
+                        aria-label="View activity"
+                        title="Activity"
+                      >
+                        <InsightsRoundedIcon />
+                      </IconBtn>
+                      <RevokeBtn
+                        type="button"
+                        disabled={revoking === link.token}
+                        onClick={() => handleRevoke(link.token)}
+                      >
+                        {revoking === link.token ? "…" : "Delete"}
+                      </RevokeBtn>
+                    </LinkActions>
+                  </LinkRow>
+                  {activityToken === link.token && (
+                    <LinkActivity state={activity[link.token]} />
+                  )}
+                </LinkItem>
+              ))}
+          </LinkList>
         </Manage>
       </Box>
     </Modal>
@@ -457,7 +618,7 @@ const IconBtn = styled.button`
   justify-content: center;
   border: none;
   border-radius: 8px;
-  background: transparent;
+  background: ${(p) => (p.$active ? "var(--primary-light)" : "transparent")};
   color: var(--primary);
   cursor: pointer;
   flex-shrink: 0;
@@ -515,7 +676,7 @@ const EmptyLinks = styled.p`
 const LinkList = styled.div`
   flex: 1;
   min-height: 0;
-  max-height: min(280px, 32vh);
+  max-height: min(360px, 40vh);
   overflow-y: auto;
   padding-right: 4px;
   -webkit-overflow-scrolling: touch;
@@ -529,17 +690,101 @@ const LinkList = styled.div`
   }
 `;
 
+const LinkItem = styled.div`
+  border-bottom: 1px solid var(--border-light);
+  opacity: ${(p) => (p.$muted ? 0.75 : 1)};
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
 const LinkRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   padding: 10px 0;
-  border-bottom: 1px solid var(--border-light);
+`;
 
-  &:last-child {
-    border-bottom: none;
+const ActivityPanel = styled.div`
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  font-size: 0.76rem;
+  color: var(--text-3);
+`;
+
+const ActivitySummary = styled.p`
+  font-weight: 700;
+  color: var(--text-1);
+`;
+
+const PlaceChips = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0 8px;
+`;
+
+const PlaceChip = styled.span`
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 600;
+`;
+
+const ViewList = styled.div`
+  display: flex;
+  flex-direction: column;
+  max-height: 160px;
+  overflow-y: auto;
+`;
+
+const ViewRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border-light);
+
+  div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
   }
+
+  strong {
+    font-size: 0.76rem;
+    color: var(--text-1);
+  }
+
+  span {
+    font-size: 0.7rem;
+    color: var(--text-3);
+  }
+
+  time {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    color: var(--text-3);
+  }
+`;
+
+const PastToggle = styled.button`
+  margin: 10px 0 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
 `;
 
 const LinkMeta = styled.div`

@@ -117,11 +117,11 @@ const MainData = ({
     async (fileData) => {
       if (!showShareIcons) {
         try {
-          const url = await getFileDownloadUrl(fileData);
+          const url = await getFileDownloadUrl(fileData, { forSharing: true });
           setShareUrl(url);
           setShowShareIcons(true);
-        } catch {
-          toast.error("Unable to share file");
+        } catch (error) {
+          toast.error(error?.code === "SEALED" ? error.message : "Unable to share file");
         }
         return;
       }
@@ -140,11 +140,11 @@ const MainData = ({
       }
 
       try {
-        const url = await getFileDownloadUrl(file.data);
+        const url = await getFileDownloadUrl(file.data, { forSharing: true });
         setShareUrl(url);
         setShareFileId(file.id);
-      } catch {
-        toast.error("Unable to share file");
+      } catch (error) {
+        toast.error(error?.code === "SEALED" ? error.message : "Unable to share file");
       }
     },
     [shareFileId],

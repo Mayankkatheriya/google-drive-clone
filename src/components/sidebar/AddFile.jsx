@@ -4,13 +4,14 @@ import React from "react";
 import styled from "styled-components";
 import NewUploadButton from "../common/NewUploadButton";
 
-const AddFile = ({ onClick, onCreateFolder }) => {
+const AddFile = ({ onClick, onCreateFolder, onRequestFiles }) => {
   return (
     <Wrap data-tour="upload">
       <NewUploadButton
         variant="sidebar"
         onClick={onClick}
         onCreateFolder={onCreateFolder}
+        onRequestFiles={onRequestFiles}
       />
     </Wrap>
   );

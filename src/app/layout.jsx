@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "./Providers";
+import StyledComponentsRegistry from "@/lib/StyledComponentsRegistry";
 
 const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
 
@@ -35,7 +36,9 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://firestore.googleapis.com" crossOrigin="anonymous" />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <StyledComponentsRegistry>
+          <Providers>{children}</Providers>
+        </StyledComponentsRegistry>
       </body>
     </html>
   );

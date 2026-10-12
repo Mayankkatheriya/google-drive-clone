@@ -1,6 +1,16 @@
 import { auth } from "@/firebase";
 import { toast } from "react-toastify";
 import { collectZipEntries, isFolder } from "@/lib/folders";
+import {
+  isSealed,
+  isLockedForOwner,
+  sealedError,
+  shareBlockedError,
+} from "@/lib/timeCapsule";
+
+function toastErrorText(error, fallback) {
+  return error?.code === "SEALED" ? error.message : fallback;
+}
 
 async function getAuthHeaders() {
   const user = auth.currentUser;
@@ -17,11 +27,17 @@ async function getAuthHeaders() {
 
 export async function getFileDownloadUrl(
   fileData,
-  { download = false, expiresIn } = {},
+  { download = false, expiresIn, forSharing = false } = {},
 ) {
   const s3Key = fileData?.s3Key;
   if (!s3Key) {
     throw new Error("File not available");
+  }
+  if (forSharing && isSealed(fileData)) {
+    throw shareBlockedError(fileData);
+  }
+  if (isLockedForOwner(fileData)) {
+    throw sealedError(fileData);
   }
 
   const response = await fetch("/api/download-url", {
@@ -47,7 +63,7 @@ export async function getFileDownloadUrl(
 export async function copyFileLinkWithToast(fileData) {
   const toastId = toast.loading("Copying link…");
   try {
-    const url = await getFileDownloadUrl(fileData);
+    const url = await getFileDownloadUrl(fileData, { forSharing: true });
     await navigator.clipboard.writeText(url);
     toast.update(toastId, {
       render: "Link copied",
@@ -59,7 +75,7 @@ export async function copyFileLinkWithToast(fileData) {
     return url;
   } catch (error) {
     toast.update(toastId, {
-      render: "Unable to copy link",
+      render: toastErrorText(error, "Unable to copy link"),
       type: "error",
       isLoading: false,
       autoClose: 4000,
@@ -73,6 +89,9 @@ export async function downloadFile(fileData) {
   const s3Key = fileData?.s3Key;
   if (!s3Key) {
     throw new Error("File not available");
+  }
+  if (isLockedForOwner(fileData)) {
+    throw sealedError(fileData);
   }
 
   const response = await fetch("/api/download-file", {
@@ -113,7 +132,7 @@ export async function downloadFileWithToast(fileData) {
     });
   } catch (error) {
     toast.update(toastId, {
-      render: "Unable to download file",
+      render: toastErrorText(error, "Unable to download file"),
       type: "error",
       isLoading: false,
       autoClose: 4000,

@@ -14,6 +14,8 @@ import {
   RestoreIcon,
 } from "./SvgIcons";
 import AutoDeleteIcon from "@mui/icons-material/AutoDeleteOutlined";
+import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
+import { isSealed, getSealedRemainingLabel } from "@/lib/timeCapsule";
 import {
   downloadFileWithToast,
   downloadSelectionAsZipWithToast,
@@ -202,6 +204,23 @@ function FileGridCard({
             <AutoDeleteIcon />
             {getSelfDestructRemainingLabel(file.data)}
           </SelfDestructTag>
+        )}
+        {!folder && isSealed(file.data) && (
+          <SelfDestructTag
+            title={
+              file.data.capsuleOwnerAccess
+                ? "Time capsule · share links open later"
+                : "Time capsule · locked for everyone"
+            }
+          >
+            <HourglassTopRoundedIcon />
+            {getSealedRemainingLabel(file.data)}
+          </SelfDestructTag>
+        )}
+        {!folder && file.data.uploadedBy && (
+          <FromTag title={`Received through a file request from ${file.data.uploadedBy}`}>
+            From {file.data.uploadedBy}
+          </FromTag>
         )}
       </CardMeta>
     </CardBody>
@@ -627,6 +646,16 @@ const SelfDestructTag = styled.span`
   svg {
     font-size: 12px;
   }
+`;
+
+const FromTag = styled(SelfDestructTag)`
+  display: inline-block;
+  flex-shrink: 1;
+  min-width: 0;
+  padding: 2px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const CardActions = styled.div`

@@ -1,6 +1,7 @@
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
@@ -129,6 +130,24 @@ export async function deleteObject(s3Key) {
   });
 
   await getS3Client().send(command);
+}
+
+/** Size in bytes, or null if the object does not exist. */
+export async function getObjectSize(s3Key) {
+  try {
+    const result = await getS3Client().send(
+      new HeadObjectCommand({
+        Bucket: getRequiredEnv("S3_BUCKET_NAME"),
+        Key: s3Key,
+      })
+    );
+    return result.ContentLength ?? 0;
+  } catch (error) {
+    if (error?.name === "NotFound" || error?.$metadata?.httpStatusCode === 404) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function getObjectBytes(s3Key) {

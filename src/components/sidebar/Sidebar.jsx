@@ -9,11 +9,13 @@ import AddFile from "./AddFile";
 import VoiceMemoButton from "./VoiceMemoButton";
 import SidebarTabs from "./SidebarTabs";
 import CreateFolderModal from "../common/CreateFolderModal";
+import FileRequestModal from "../common/FileRequestModal";
 
 const Sidebar = () => {
   const sidebarBool = useSelector(selectSidebarBool);
   const upload = useFileUploadContext();
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
 
   return (
     <SidebarContainer $open={sidebarBool}>
@@ -21,6 +23,7 @@ const Sidebar = () => {
         <AddFile
           onClick={() => upload.setOpen(true)}
           onCreateFolder={() => setCreateFolderOpen(true)}
+          onRequestFiles={() => setRequestOpen(true)}
         />
         <VoiceMemoButton onClick={() => upload.openVoiceMemo()} />
       </ActionsBlock>
@@ -30,6 +33,9 @@ const Sidebar = () => {
         open={createFolderOpen}
         onClose={() => setCreateFolderOpen(false)}
       />
+      {requestOpen && (
+        <FileRequestModal open={requestOpen} onClose={() => setRequestOpen(false)} />
+      )}
     </SidebarContainer>
   );
 };

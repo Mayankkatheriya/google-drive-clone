@@ -3,7 +3,7 @@ import {
   isFileWithinUploadLimit,
 } from "@/lib/uploadLimits";
 
-function uploadWithProgress(uploadUrl, file, contentType, onProgress) {
+export function uploadWithProgress(uploadUrl, file, contentType, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
 

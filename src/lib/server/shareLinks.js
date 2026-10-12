@@ -3,6 +3,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getAdminFirestore } from "./firestoreAdmin";
 import { createDownloadUrl } from "./cloudfront";
 import { assertUserOwnsKey, getObjectStream } from "./s3";
+import { assertNotSealed } from "./timeCapsule";
 
 const COLLECTION = "shareLinks";
 const SIGNED_TOKEN_TTL_MS = 60 * 60 * 1000;
@@ -21,12 +22,12 @@ function assertValidToken(token) {
   }
 }
 
-function hashPassword(password, salt = randomBytes(16).toString("hex")) {
+export function hashPassword(password, salt = randomBytes(16).toString("hex")) {
   const hash = scryptSync(password, salt, 32).toString("hex");
   return `${salt}:${hash}`;
 }
 
-function verifyPassword(password, stored) {
+export function verifyPassword(password, stored) {
   if (!stored || !password) return false;
   const [salt, hash] = stored.split(":");
   if (!salt || !hash) return false;
@@ -53,12 +54,12 @@ function signShareToken(purpose, shareToken, exp) {
     .digest("hex");
 }
 
-function createSignedToken(purpose, shareToken) {
+export function createSignedToken(purpose, shareToken) {
   const exp = Date.now() + SIGNED_TOKEN_TTL_MS;
   return `${exp}.${signShareToken(purpose, shareToken, exp)}`;
 }
 
-function verifySignedToken(purpose, shareToken, signedToken) {
+export function verifySignedToken(purpose, shareToken, signedToken) {
   if (!signedToken || typeof signedToken !== "string") return false;
   const [expStr, sig] = signedToken.split(".");
   const exp = Number(expStr);
@@ -293,7 +294,7 @@ export async function revokeShareLink({ token, userId }) {
     throw error;
   }
   // Hard-delete so the token stops working and disappears from all lists/cleanup.
-  await ref.delete();
+  await getAdminFirestore().recursiveDelete(ref);
   return { ok: true };
 }
 
@@ -311,8 +312,45 @@ export async function deleteShareLink({ token, userId }) {
     error.statusCode = 403;
     throw error;
   }
-  await ref.delete();
+  await getAdminFirestore().recursiveDelete(ref);
   return { ok: true };
+}
+
+export async function listShareLinkViews({ token, userId, limit = 50 }) {
+  assertValidToken(token);
+  const ref = shareLinkRef(token);
+  const snap = await ref.get();
+  if (!snap.exists) {
+    const error = new Error("Share link not found");
+    error.statusCode = 404;
+    throw error;
+  }
+  if (snap.data().userId !== userId) {
+    const error = new Error("Forbidden");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const views = await ref
+    .collection("views")
+    .orderBy("viewedAt", "desc")
+    .limit(limit)
+    .get();
+
+  return views.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      viewedAt: data.viewedAt?.toMillis?.() ?? null,
+      country: data.country || null,
+      region: data.region || null,
+      city: data.city || null,
+      device: data.device || null,
+      browser: data.browser || null,
+      os: data.os || null,
+      referrer: data.referrer || null,
+    };
+  });
 }
 
 export async function unlockShareLink(token, password) {
@@ -393,10 +431,15 @@ export function getShareLinkPublicMeta(data) {
   };
 }
 
-export async function redeemShareLink(token, { unlockToken } = {}) {
+export async function redeemShareLink(token, { unlockToken, viewer } = {}) {
   assertValidToken(token);
   const ref = shareLinkRef(token);
   let fileMeta = null;
+
+  const existing = await ref.get();
+  if (existing.exists) {
+    await assertNotSealed(existing.data().s3Key);
+  }
 
   await getAdminFirestore().runTransaction(async (tx) => {
     const snap = await tx.get(ref);
@@ -429,6 +472,10 @@ export async function redeemShareLink(token, { unlockToken } = {}) {
       redeemed: true,
       redeemedAt: FieldValue.serverTimestamp(),
       lastViewedAt: FieldValue.serverTimestamp(),
+    });
+    tx.set(ref.collection("views").doc(), {
+      ...(viewer || {}),
+      viewedAt: FieldValue.serverTimestamp(),
     });
 
     fileMeta = { ...data, viewCount: nextCount };
@@ -482,6 +529,8 @@ export async function streamShareLinkContent(token, { range, accessToken } = {})
     error.statusCode = 410;
     throw error;
   }
+
+  await assertNotSealed(data.s3Key);
 
   const stream = await getObjectStream(data.s3Key, { range });
 

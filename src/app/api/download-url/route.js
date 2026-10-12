@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth, toErrorResponse } from "@/lib/server/auth";
 import { createDownloadUrl } from "@/lib/server/cloudfront";
 import { assertUserOwnsKey } from "@/lib/server/s3";
+import { assertNotSealed } from "@/lib/server/timeCapsule";
 
 export async function POST(request) {
   try {
@@ -18,6 +19,7 @@ export async function POST(request) {
 
     const decoded = await requireAuth(request.headers.get("authorization"));
     assertUserOwnsKey(decoded.uid, s3Key);
+    await assertNotSealed(s3Key, { owner: true });
 
     const safeDisposition = disposition === "attachment" ? "attachment" : "inline";
     const safeExpiresIn =

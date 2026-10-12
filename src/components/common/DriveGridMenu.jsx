@@ -17,6 +17,7 @@ import AutoDeleteIcon from "@mui/icons-material/AutoDeleteOutlined";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
+import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import {
   downloadFileWithToast,
   downloadSelectionAsZipWithToast,
@@ -33,6 +34,8 @@ import {
   getSelfDestructRemainingLabel,
 } from "@/lib/selfDestruct";
 import { useSelfDestruct } from "@/context/SelfDestructProvider";
+import { useTimeCapsule } from "@/context/TimeCapsuleProvider";
+import { isSealed, getSealedRemainingLabel } from "@/lib/timeCapsule";
 import { useMyFiles } from "@/context/FilesContext";
 import { isFolder } from "@/lib/folders";
 import Tooltip from "./Tooltip";
@@ -52,6 +55,7 @@ export function DriveGridMenu({
 }) {
   const { confirmMoveToTrash } = useFileTrashActions();
   const openSelfDestruct = useSelfDestruct();
+  const openTimeCapsule = useTimeCapsule();
   const allFiles = useMyFiles();
   const triggerRef = useRef(null);
   const { top, right, flip, ready } = useMenuPlacement(
@@ -61,6 +65,7 @@ export function DriveGridMenu({
   );
   const folder = isFolder(file);
   const sdActive = hasSelfDestruct(file.data);
+  const sealed = isSealed(file.data);
 
   const handleCopyLink = async () => {
     onToggle(null);
@@ -155,7 +160,7 @@ export function DriveGridMenu({
             >
               <DriveFileMoveOutlinedIcon /> Move
             </MenuItem>
-            {!folder && (
+            {!folder && !sealed && (
               <MenuItem
                 onClick={() => {
                   onToggle(null);
@@ -176,6 +181,19 @@ export function DriveGridMenu({
                 {sdActive
                   ? `Self-destruct · ${getSelfDestructRemainingLabel(file.data)}`
                   : "Self-destruct"}
+              </MenuItem>
+            )}
+            {!folder && (
+              <MenuItem
+                onClick={() => {
+                  onToggle(null);
+                  openTimeCapsule(file.id, file.data);
+                }}
+              >
+                <HourglassTopRoundedIcon />{" "}
+                {sealed
+                  ? `Sealed · ${getSealedRemainingLabel(file.data)}`
+                  : "Time capsule"}
               </MenuItem>
             )}
             <MenuItem onClick={() => handleStarred(file.id)}>
@@ -232,11 +250,11 @@ export function useDriveGridMenuState() {
   const handleShareClick = async (fileData, fileId) => {
     if (shareMenuId !== fileId) {
       try {
-        const url = await getFileDownloadUrl(fileData);
+        const url = await getFileDownloadUrl(fileData, { forSharing: true });
         setShareUrl(url);
         setShareMenuId(fileId);
-      } catch {
-        toast.error("Unable to share file");
+      } catch (error) {
+        toast.error(error?.code === "SEALED" ? error.message : "Unable to share file");
       }
       return;
     }

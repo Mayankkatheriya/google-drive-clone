@@ -52,6 +52,18 @@ export async function listAllShareLinks() {
   return data.links || [];
 }
 
+export async function listShareLinkViews(token) {
+  const response = await fetch(
+    `/api/share-link/views?token=${encodeURIComponent(token)}`,
+    { headers: await getAuthHeaders() },
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to load link activity");
+  }
+  return data.views || [];
+}
+
 export async function revokeShareLink(token) {
   const response = await fetch("/api/share-link/revoke", {
     method: "POST",
