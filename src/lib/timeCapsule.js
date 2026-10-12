@@ -7,6 +7,26 @@ export const TIME_CAPSULE_PRESETS = [
   { id: "1y", label: "1 year", ms: 365 * 24 * 60 * 60 * 1000 },
 ];
 
+export const MIN_SEAL_MS = 5 * 60 * 1000;
+export const MAX_SEAL_MS = 10 * 365 * 24 * 60 * 60 * 1000;
+export const MAX_CAPSULE_MESSAGE = 280;
+
+/** Formats millis for a `datetime-local` input in the browser's timezone. */
+export function toLocalInput(ms) {
+  const d = new Date(ms);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours(),
+  )}:${pad(d.getMinutes())}`;
+}
+
+export function getUnlockInputError(unlockAt, now = Date.now()) {
+  if (!Number.isFinite(unlockAt)) return "Pick a date and time";
+  if (unlockAt < now + MIN_SEAL_MS) return "Pick a time at least 5 minutes from now";
+  if (unlockAt > now + MAX_SEAL_MS) return "Time capsules can be sealed for up to 10 years";
+  return "";
+}
+
 export function getUnlockMillis(fileData) {
   const value = fileData?.unlockAt;
   if (value?.toMillis) return value.toMillis();

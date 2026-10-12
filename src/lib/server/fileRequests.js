@@ -14,6 +14,7 @@ import {
   verifyPassword,
   verifySignedToken,
 } from "./shareLinks";
+import { capsuleRef, parseCapsuleInput } from "./timeCapsule";
 import { canAddToUserStorage, isFileWithinUploadLimit } from "../uploadLimits";
 
 const COLLECTION = "fileRequests";
@@ -303,7 +304,7 @@ export async function createFileRequestUpload(token, { filename, contentType, fi
 
 export async function completeFileRequestUpload(
   token,
-  { s3Key, ticket, filename, contentType, fileSize, uploaderName },
+  { s3Key, ticket, filename, contentType, fileSize, uploaderName, capsule },
 ) {
   assertValidToken(token);
   if (!verifySignedToken("request-upload", uploadSubject(token, s3Key, fileSize), ticket)) {
@@ -319,9 +320,14 @@ export async function completeFileRequestUpload(
   const ref = requestRef(token);
   const name = cleanFilename(filename) || "Untitled";
   const from = cleanText(uploaderName, 40) || "Anonymous";
+  const fileRef = db.collection("myfiles").doc();
   let rejected = null;
+  let seal = null;
 
   try {
+    // Uploader-set capsules always lock the recipient out too; that's the point of sending one.
+    if (capsule?.unlockAt != null) seal = parseCapsuleInput(capsule);
+
     await db.runTransaction(async (tx) => {
       rejected = null;
       const snap = await tx.get(ref);
@@ -340,7 +346,7 @@ export async function completeFileRequestUpload(
         uploadCount: FieldValue.increment(1),
         lastUploadAt: FieldValue.serverTimestamp(),
       });
-      tx.create(db.collection("myfiles").doc(), {
+      const fileDoc = {
         userId: data.userId,
         timestamp: FieldValue.serverTimestamp(),
         filename: name,
@@ -354,7 +360,28 @@ export async function completeFileRequestUpload(
         versionsBytes: 0,
         uploadedBy: from,
         fileRequestId: token,
-      });
+      };
+
+      if (seal) {
+        const unlockTs = Timestamp.fromMillis(seal.unlockMs);
+        tx.set(capsuleRef(s3Key), {
+          userId: data.userId,
+          fileId: fileRef.id,
+          s3Key,
+          unlockAt: unlockTs,
+          ownerAccess: false,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+        Object.assign(fileDoc, {
+          unlockAt: unlockTs,
+          capsuleOwnerAccess: false,
+          capsuleSealedBy: from,
+          sealedAt: FieldValue.serverTimestamp(),
+          ...(seal.note ? { capsuleMessage: seal.note } : {}),
+        });
+      }
+
+      tx.create(fileRef, fileDoc);
     });
   } catch (error) {
     rejected = error;
@@ -365,5 +392,5 @@ export async function completeFileRequestUpload(
     throw rejected;
   }
 
-  return { ok: true, filename: name };
+  return { ok: true, filename: name, unlockAt: seal?.unlockMs ?? null };
 }

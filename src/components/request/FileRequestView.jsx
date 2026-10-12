@@ -9,10 +9,20 @@ import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutlineOutlined";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import MoveToInboxRoundedIcon from "@mui/icons-material/MoveToInboxRounded";
+import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import DiskDriveLogo from "@/components/common/DiskDriveLogo";
 import FileIcons from "@/components/common/FileIcons";
 import { changeBytes } from "@/components/common/common";
 import { uploadWithProgress } from "@/lib/awsStorage";
+import {
+  TIME_CAPSULE_PRESETS,
+  MIN_SEAL_MS,
+  MAX_SEAL_MS,
+  MAX_CAPSULE_MESSAGE,
+  formatUnlockDate,
+  getUnlockInputError,
+  toLocalInput,
+} from "@/lib/timeCapsule";
 import {
   MAX_UPLOAD_BYTES,
   getUploadLimitLabel,
@@ -47,11 +57,39 @@ export default function FileRequestView({ state: initial }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [capsuleOn, setCapsuleOn] = useState(false);
+  const [presetId, setPresetId] = useState(TIME_CAPSULE_PRESETS[1].id);
+  const [unlockInput, setUnlockInput] = useState("");
+  const [capsuleNote, setCapsuleNote] = useState("");
   const inputRef = useRef(null);
+  const unlockInputRef = useRef(null);
 
   const { token, title, ownerName } = initial;
   const queued = items.filter((item) => item.status === "queued");
   const sentCount = items.filter((item) => item.status === "done").length;
+  const now = Date.now();
+  const unlockAt = unlockInput ? new Date(unlockInput).getTime() : NaN;
+  const capsuleError = capsuleOn ? getUnlockInputError(unlockAt, now) : "";
+
+  const toggleCapsule = () => {
+    if (!capsuleOn && !unlockInput) {
+      const preset = TIME_CAPSULE_PRESETS.find((p) => p.id === presetId);
+      setUnlockInput(toLocalInput(Date.now() + (preset?.ms ?? TIME_CAPSULE_PRESETS[1].ms)));
+    }
+    setCapsuleOn((on) => !on);
+  };
+
+  const chooseCustomDate = () => {
+    setPresetId(null);
+    const input = unlockInputRef.current;
+    if (!input) return;
+    input.focus();
+    try {
+      input.showPicker?.();
+    } catch {
+      // showPicker throws outside a user gesture or in unsupported browsers; focus is enough.
+    }
+  };
 
   const updateItem = (id, patch) =>
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
@@ -110,21 +148,22 @@ export default function FileRequestView({ state: initial }) {
       updateItem(item.id, { progress }),
     );
 
-    await postJson(`/api/file-request/${token}/complete`, {
+    const result = await postJson(`/api/file-request/${token}/complete`, {
       s3Key: session.s3Key,
       ticket: session.ticket,
       filename: file.name,
       contentType: session.contentType,
       fileSize: file.size,
       uploaderName,
+      capsule: capsuleOn ? { unlockAt, message: capsuleNote.trim() } : undefined,
     });
 
-    updateItem(item.id, { status: "done", progress: 100 });
+    updateItem(item.id, { status: "done", progress: 100, unlockAt: result.unlockAt });
     setRemaining((n) => Math.max(0, n - 1));
   };
 
   const handleSend = async () => {
-    if (busy || queued.length === 0) return;
+    if (busy || queued.length === 0 || capsuleError) return;
     setBusy(true);
     setError("");
 
@@ -246,7 +285,9 @@ export default function FileRequestView({ state: initial }) {
                           : item.status === "uploading"
                             ? `Uploading… ${item.progress}%`
                             : item.status === "done"
-                              ? "Sent"
+                              ? item.unlockAt
+                                ? `Sent · sealed until ${formatUnlockDate(item.unlockAt)}`
+                                : "Sent"
                               : changeBytes(item.file.size)}
                       </FileSub>
                       {item.status === "uploading" && (
@@ -289,6 +330,79 @@ export default function FileRequestView({ state: initial }) {
               disabled={busy}
             />
 
+            <CapsuleToggle
+              type="button"
+              role="switch"
+              aria-checked={capsuleOn}
+              $active={capsuleOn}
+              onClick={toggleCapsule}
+              disabled={busy}
+            >
+              <HourglassTopRoundedIcon />
+              <CapsuleToggleText>
+                <strong>Send as a time capsule</strong>
+                <span>{ownerName} won&apos;t be able to open these files until the date you pick.</span>
+              </CapsuleToggleText>
+              <Switch $on={capsuleOn} aria-hidden />
+            </CapsuleToggle>
+
+            {capsuleOn && (
+              <CapsulePanel>
+                <PresetGrid>
+                  {TIME_CAPSULE_PRESETS.map((preset) => (
+                    <PresetBtn
+                      key={preset.id}
+                      type="button"
+                      $active={presetId === preset.id}
+                      disabled={busy}
+                      onClick={() => {
+                        setPresetId(preset.id);
+                        setUnlockInput(toLocalInput(Date.now() + preset.ms));
+                      }}
+                    >
+                      {preset.label}
+                    </PresetBtn>
+                  ))}
+                  <CustomPresetBtn
+                    type="button"
+                    $active={presetId === null}
+                    disabled={busy}
+                    onClick={chooseCustomDate}
+                  >
+                    Custom date &amp; time
+                  </CustomPresetBtn>
+                </PresetGrid>
+
+                <Label htmlFor="capsule-unlock">Opens on</Label>
+                <Input
+                  ref={unlockInputRef}
+                  id="capsule-unlock"
+                  type="datetime-local"
+                  value={unlockInput}
+                  min={toLocalInput(now + MIN_SEAL_MS)}
+                  max={toLocalInput(now + MAX_SEAL_MS)}
+                  aria-invalid={Boolean(capsuleError)}
+                  disabled={busy}
+                  onChange={(event) => {
+                    setPresetId(null);
+                    setUnlockInput(event.target.value);
+                  }}
+                />
+                {capsuleError && <ErrorText role="alert">{capsuleError}</ErrorText>}
+
+                <Label htmlFor="capsule-note">Note for when it opens (optional)</Label>
+                <TextArea
+                  id="capsule-note"
+                  rows={3}
+                  maxLength={MAX_CAPSULE_MESSAGE}
+                  value={capsuleNote}
+                  onChange={(event) => setCapsuleNote(event.target.value)}
+                  placeholder="Happy birthday! Open this when…"
+                  disabled={busy}
+                />
+              </CapsulePanel>
+            )}
+
             {error && <ErrorText>{error}</ErrorText>}
             {sentCount > 0 && queued.length === 0 && !busy && (
               <Success>
@@ -300,12 +414,14 @@ export default function FileRequestView({ state: initial }) {
             <PrimaryBtn
               type="button"
               onClick={handleSend}
-              disabled={busy || queued.length === 0}
+              disabled={busy || queued.length === 0 || Boolean(capsuleError)}
             >
               {busy
                 ? "Sending…"
                 : queued.length > 0
-                  ? `Send ${queued.length} file${queued.length === 1 ? "" : "s"}`
+                  ? `${capsuleOn ? "Seal & send" : "Send"} ${queued.length} file${
+                      queued.length === 1 ? "" : "s"
+                    }`
                   : "Send files"}
             </PrimaryBtn>
           </Card>
@@ -568,6 +684,137 @@ const Input = styled.input`
   ${Label} + & {
     margin-top: 0;
   }
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+`;
+
+const CapsuleToggle = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid ${(p) => (p.$active ? "var(--primary)" : "var(--border-light)")};
+  border-radius: 10px;
+  background: ${(p) => (p.$active ? "var(--primary-light)" : "var(--surface-2)")};
+  text-align: left;
+  cursor: pointer;
+
+  > svg {
+    flex-shrink: 0;
+    font-size: 20px;
+    color: var(--primary);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const CapsuleToggleText = styled.span`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-size: 0.84rem;
+    color: var(--text-1);
+  }
+
+  span {
+    font-size: 0.74rem;
+    line-height: 1.4;
+    color: var(--text-3);
+  }
+`;
+
+const Switch = styled.span`
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: ${(p) => (p.$on ? "var(--primary)" : "var(--border)")};
+  transition: background 0.15s ease;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: ${(p) => (p.$on ? "16px" : "2px")};
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.15s ease;
+  }
+`;
+
+const CapsulePanel = styled.div`
+  margin-bottom: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  background: var(--surface-2);
+
+  ${Input} {
+    background: var(--surface);
+    color-scheme: light dark;
+
+    &[aria-invalid="true"] {
+      border-color: var(--danger);
+    }
+  }
+`;
+
+const PresetGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr 1fr;
+  }
+`;
+
+const PresetBtn = styled.button`
+  height: 36px;
+  border: 1px solid ${(p) => (p.$active ? "var(--primary)" : "var(--border-light)")};
+  border-radius: 10px;
+  background: ${(p) => (p.$active ? "var(--primary-light)" : "var(--surface)")};
+  color: ${(p) => (p.$active ? "var(--primary)" : "var(--text-1)")};
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const CustomPresetBtn = styled(PresetBtn)`
+  grid-column: 1 / -1;
+`;
+
+const TextArea = styled.textarea`
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-1);
+  font-size: 0.86rem;
+  font-family: inherit;
+  resize: vertical;
 
   &:focus {
     outline: none;

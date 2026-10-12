@@ -9,7 +9,7 @@ const MAX_SEAL_MS = 10 * 365 * 24 * 60 * 60 * 1000;
 const MAX_MESSAGE_LENGTH = 280;
 
 /** Keyed by S3 object so the seal holds even if client-written file docs are copied or edited. */
-function capsuleRef(s3Key) {
+export function capsuleRef(s3Key) {
   const id = createHash("sha256").update(s3Key).digest("hex");
   return getAdminFirestore().collection(COLLECTION).doc(id);
 }
@@ -58,7 +58,7 @@ export async function assertNotSealed(s3Key, { owner = false } = {}) {
   throw error;
 }
 
-export async function sealFile({ fileId, userId, unlockAt, message, ownerAccess }) {
+export function parseCapsuleInput({ unlockAt, message }) {
   const unlockMs = Number(unlockAt);
   const now = Date.now();
   if (!Number.isFinite(unlockMs) || unlockMs < now + MIN_SEAL_MS) {
@@ -72,6 +72,12 @@ export async function sealFile({ fileId, userId, unlockAt, message, ownerAccess 
   if (note.length > MAX_MESSAGE_LENGTH) {
     throw httpError(`Message must be ${MAX_MESSAGE_LENGTH} characters or fewer`, 400);
   }
+
+  return { unlockMs, note };
+}
+
+export async function sealFile({ fileId, userId, unlockAt, message, ownerAccess }) {
+  const { unlockMs, note } = parseCapsuleInput({ unlockAt, message });
 
   const db = getAdminFirestore();
   const fileRef = db.collection("myfiles").doc(fileId);

@@ -7,22 +7,15 @@ import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import CloseIcon from "@mui/icons-material/Close";
 import {
   TIME_CAPSULE_PRESETS,
+  MIN_SEAL_MS,
+  MAX_SEAL_MS,
+  MAX_CAPSULE_MESSAGE,
   isSealed,
   formatUnlockDate,
   getSealedRemainingLabel,
+  getUnlockInputError,
+  toLocalInput,
 } from "@/lib/timeCapsule";
-
-const MAX_MESSAGE = 280;
-const MIN_SEAL_MS = 5 * 60 * 1000;
-const MAX_SEAL_MS = 10 * 365 * 24 * 60 * 60 * 1000;
-
-function toLocalInput(ms) {
-  const d = new Date(ms);
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-    d.getHours(),
-  )}:${pad(d.getMinutes())}`;
-}
 
 export default function TimeCapsuleModal({ fileData, onSeal, onClose }) {
   const sealed = isSealed(fileData);
@@ -45,10 +38,7 @@ export default function TimeCapsuleModal({ fileData, onSeal, onClose }) {
 
   const unlockAt = unlockInput ? new Date(unlockInput).getTime() : NaN;
   const now = Date.now();
-  let dateError = "";
-  if (!Number.isFinite(unlockAt)) dateError = "Pick a date and time";
-  else if (unlockAt < now + MIN_SEAL_MS) dateError = "Pick a time at least 5 minutes from now";
-  else if (unlockAt > now + MAX_SEAL_MS) dateError = "Time capsules can be sealed for up to 10 years";
+  const dateError = getUnlockInputError(unlockAt, now);
   const valid = !dateError;
 
   const chooseCustom = () => {
@@ -90,7 +80,13 @@ export default function TimeCapsuleModal({ fileData, onSeal, onClose }) {
           <>
             <Sub>
               <strong title={fileData?.filename}>{fileData?.filename}</strong> is
-              sealed until <strong>{formatUnlockDate(fileData)}</strong>.{" "}
+              sealed until <strong>{formatUnlockDate(fileData)}</strong>
+              {fileData?.capsuleSealedBy && (
+                <>
+                  {" "}by <strong>{fileData.capsuleSealedBy}</strong>
+                </>
+              )}
+              .{" "}
               {fileData?.capsuleOwnerAccess
                 ? "You can still open it. Share links open for others after that time."
                 : "Nobody, including you, can open it before then."}
@@ -182,7 +178,7 @@ export default function TimeCapsuleModal({ fileData, onSeal, onClose }) {
               <TextArea
                 id="capsule-message"
                 rows={3}
-                maxLength={MAX_MESSAGE}
+                maxLength={MAX_CAPSULE_MESSAGE}
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 placeholder="Dear future me…"

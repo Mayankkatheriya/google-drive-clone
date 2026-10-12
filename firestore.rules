@@ -38,6 +38,7 @@ service cloud.firestore {
         && !changed('unlockAt')
         && !changed('capsuleMessage')
         && !changed('capsuleOwnerAccess')
+        && !changed('capsuleSealedBy')
         && (!changed('s3Key') || ownsKey(next.s3Key))
         && (!changed('size') || (next.size is number && next.size >= 0))
         && (!changed('versionsBytes')
