@@ -607,14 +607,18 @@ const RenameInput = styled.input`
 
 const CardMeta = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 4px 6px;
   font-size: 0.72rem;
   color: var(--text-3);
   min-width: 0;
 
-  span:last-child {
+  > span {
     white-space: nowrap;
+  }
+
+  span:last-child {
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -652,6 +656,7 @@ const FromTag = styled(SelfDestructTag)`
   display: inline-block;
   flex-shrink: 1;
   min-width: 0;
+  max-width: 100%;
   padding: 2px 6px;
   white-space: nowrap;
   overflow: hidden;
@@ -670,6 +675,11 @@ const CardActions = styled.div`
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s ease;
+  }
+
+  @media (min-width: 769px) and (hover: none) {
+    opacity: 1;
+    pointer-events: auto;
   }
 `;
 

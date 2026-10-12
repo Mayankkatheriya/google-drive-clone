@@ -181,6 +181,10 @@ const TopRow = styled.div`
   gap: 12px;
   min-width: 0;
   flex: 1;
+
+  @media (min-width: 769px) and (max-width: 1024px) {
+    flex-basis: 100%;
+  }
 `;
 
 const TitleBlock = styled.div`
@@ -242,6 +246,10 @@ const ModeActions = styled.div`
     width: auto;
     margin-left: auto;
     align-self: flex-start;
+  }
+
+  @media (min-width: 769px) and (max-width: 1024px) {
+    margin-left: 0;
   }
 `;
 

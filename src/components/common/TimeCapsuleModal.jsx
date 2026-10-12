@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styled from "styled-components";
 import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
@@ -13,6 +13,8 @@ import {
 } from "@/lib/timeCapsule";
 
 const MAX_MESSAGE = 280;
+const MIN_SEAL_MS = 5 * 60 * 1000;
+const MAX_SEAL_MS = 10 * 365 * 24 * 60 * 60 * 1000;
 
 function toLocalInput(ms) {
   const d = new Date(ms);
@@ -31,6 +33,7 @@ export default function TimeCapsuleModal({ fileData, onSeal, onClose }) {
   const [message, setMessage] = useState("");
   const [ownerAccess, setOwnerAccess] = useState(true);
   const [busy, setBusy] = useState(false);
+  const unlockInputRef = useRef(null);
 
   useEffect(() => {
     const onKey = (event) => {
@@ -41,7 +44,24 @@ export default function TimeCapsuleModal({ fileData, onSeal, onClose }) {
   }, [onClose, busy]);
 
   const unlockAt = unlockInput ? new Date(unlockInput).getTime() : NaN;
-  const valid = Number.isFinite(unlockAt) && unlockAt > Date.now() + 5 * 60 * 1000;
+  const now = Date.now();
+  let dateError = "";
+  if (!Number.isFinite(unlockAt)) dateError = "Pick a date and time";
+  else if (unlockAt < now + MIN_SEAL_MS) dateError = "Pick a time at least 5 minutes from now";
+  else if (unlockAt > now + MAX_SEAL_MS) dateError = "Time capsules can be sealed for up to 10 years";
+  const valid = !dateError;
+
+  const chooseCustom = () => {
+    setPresetId(null);
+    const input = unlockInputRef.current;
+    if (!input) return;
+    input.focus();
+    try {
+      input.showPicker?.();
+    } catch {
+      // showPicker throws outside a user gesture or in unsupported browsers; focus is enough.
+    }
+  };
 
   const handleSeal = async (event) => {
     event.preventDefault();
@@ -133,20 +153,28 @@ export default function TimeCapsuleModal({ fileData, onSeal, onClose }) {
                   {preset.label}
                 </PresetBtn>
               ))}
+              <CustomBtn type="button" $active={presetId === null} onClick={chooseCustom}>
+                Custom date &amp; time
+              </CustomBtn>
             </PresetGrid>
 
             <Field>
               <Label htmlFor="capsule-unlock">Opens on</Label>
               <Input
+                ref={unlockInputRef}
                 id="capsule-unlock"
                 type="datetime-local"
                 value={unlockInput}
-                min={toLocalInput(Date.now() + 5 * 60 * 1000)}
+                min={toLocalInput(now + MIN_SEAL_MS)}
+                max={toLocalInput(now + MAX_SEAL_MS)}
+                aria-invalid={!valid}
+                $invalid={!valid}
                 onChange={(event) => {
                   setPresetId(null);
                   setUnlockInput(event.target.value);
                 }}
               />
+              {dateError && <FieldError role="alert">{dateError}</FieldError>}
             </Field>
 
             <Field>
@@ -320,6 +348,10 @@ const PresetBtn = styled.button`
   cursor: pointer;
 `;
 
+const CustomBtn = styled(PresetBtn)`
+  grid-column: 1 / -1;
+`;
+
 const Field = styled.div`
   margin-top: 14px;
   text-align: left;
@@ -337,7 +369,7 @@ const Input = styled.input`
   width: 100%;
   height: 40px;
   padding: 0 12px;
-  border: 1px solid var(--border);
+  border: 1px solid ${(p) => (p.$invalid ? "var(--danger)" : "var(--border)")};
   border-radius: 10px;
   background: var(--surface-2);
   color: var(--text-1);
@@ -346,8 +378,14 @@ const Input = styled.input`
 
   &:focus {
     outline: none;
-    border-color: var(--primary);
+    border-color: ${(p) => (p.$invalid ? "var(--danger)" : "var(--primary)")};
   }
+`;
+
+const FieldError = styled.p`
+  margin-top: 6px;
+  font-size: 0.74rem;
+  color: var(--danger);
 `;
 
 const TextArea = styled.textarea`

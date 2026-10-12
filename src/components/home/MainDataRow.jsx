@@ -342,33 +342,38 @@ function MainDataRow({
                 </FileName>
               </Tooltip>
             )}
-            {!folder && hasSelfDestruct(file.data) && (
-              <Tooltip label="Auto-deletes to Trash">
-                <SelfDestructPill>
-                  <AutoDeleteIcon />
-                  {getSelfDestructRemainingLabel(file.data)}
-                </SelfDestructPill>
-              </Tooltip>
-            )}
-            {sealed && (
-              <Tooltip
-                label={
-                  file.data.capsuleOwnerAccess
-                    ? `Time capsule · share links open ${formatUnlockDate(file.data)}`
-                    : `Time capsule · locked until ${formatUnlockDate(file.data)}`
-                }
-              >
-                <SelfDestructPill>
-                  <HourglassTopRoundedIcon />
-                  {getSealedRemainingLabel(file.data)}
-                </SelfDestructPill>
-              </Tooltip>
-            )}
-            {!folder && file.data.uploadedBy && (
-              <Tooltip label="Received through a file request">
-                <SelfDestructPill>From {file.data.uploadedBy}</SelfDestructPill>
-              </Tooltip>
-            )}
+            {!folder &&
+              (hasSelfDestruct(file.data) || sealed || file.data.uploadedBy) && (
+                <PillRow>
+                  {hasSelfDestruct(file.data) && (
+                    <Tooltip label="Auto-deletes to Trash">
+                      <SelfDestructPill>
+                        <AutoDeleteIcon />
+                        {getSelfDestructRemainingLabel(file.data)}
+                      </SelfDestructPill>
+                    </Tooltip>
+                  )}
+                  {sealed && (
+                    <Tooltip
+                      label={
+                        file.data.capsuleOwnerAccess
+                          ? `Time capsule · share links open ${formatUnlockDate(file.data)}`
+                          : `Time capsule · locked until ${formatUnlockDate(file.data)}`
+                      }
+                    >
+                      <SelfDestructPill>
+                        <HourglassTopRoundedIcon />
+                        {getSealedRemainingLabel(file.data)}
+                      </SelfDestructPill>
+                    </Tooltip>
+                  )}
+                  {file.data.uploadedBy && (
+                    <Tooltip label={`Received through a file request from ${file.data.uploadedBy}`}>
+                      <FromPill>From {file.data.uploadedBy}</FromPill>
+                    </Tooltip>
+                  )}
+                </PillRow>
+              )}
             <MobileMeta>
               {folder ? `Folder · ${sizeLabel}` : sizeLabel} ·{" "}
               {convertDates(file.data.timestamp?.seconds)}
@@ -575,6 +580,11 @@ const DateCol = styled.div`
   flex: 1;
   display: flex;
   align-items: center;
+  min-width: 0;
+
+  @media (min-width: 769px) and (max-width: 1024px) {
+    flex: 0 0 168px;
+  }
 `;
 
 const ActionsCol = styled.div`
@@ -584,6 +594,11 @@ const ActionsCol = styled.div`
   justify-content: flex-end;
   gap: 2px;
   position: relative;
+
+  @media (min-width: 769px) and (max-width: 1024px),
+    (min-width: 769px) and (hover: none) {
+    flex: 0 0 44px;
+  }
 
   @media (max-width: 768px) {
     flex: 0 0 auto;
@@ -800,6 +815,32 @@ const SelfDestructPill = styled.span`
   }
 `;
 
+const PillRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin-top: 3px;
+
+  ${SelfDestructPill} {
+    margin-top: 0;
+    flex-shrink: 0;
+  }
+`;
+
+const FromPill = styled(SelfDestructPill)`
+  display: block;
+  min-width: 0;
+  padding: 1px 7px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  ${PillRow} && {
+    flex-shrink: 1;
+  }
+`;
+
 const MobileMeta = styled.span`
   display: none;
 
@@ -822,6 +863,9 @@ const FocusMeta = styled.span`
 const MetaText = styled.span`
   font-size: 0.82rem;
   color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const HoverActions = styled.div`
@@ -829,14 +873,14 @@ const HoverActions = styled.div`
   align-items: center;
   gap: 2px;
 
-  @media (min-width: 769px) {
+  @media (min-width: 1025px) and (hover: hover) {
     ${Row}:hover &,
     ${Row}[data-share-open="true"] & {
       display: flex;
     }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 1024px), (hover: none) {
     display: none !important;
   }
 `;
@@ -894,7 +938,7 @@ const MobileMenu = styled.div`
   position: relative;
   align-items: center;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1024px), (hover: none) {
     display: flex;
   }
 `;
