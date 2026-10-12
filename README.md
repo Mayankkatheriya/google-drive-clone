@@ -187,7 +187,7 @@ flowchart TB
 - **Restore:** copy back to `myfiles`, delete `trash` doc.
 - **Permanent delete:** `POST /api/delete-file` removes the S3 object, then the `trash` doc is deleted.
 - **Auto-purge:** items trashed more than 15 days ago are removed by a daily Vercel cron (`GET /api/purge-trash`) and by a per-user check when the app loads (`POST /api/purge-trash`).
-- **Self-destruct:** files past their `selfDestructAt` time are moved to Trash. This check runs in the browser every minute while the app is open.
+- **Self-destruct:** files past their `selfDestructAt` time are moved to Trash. An external scheduler (e.g. cron-job.org) calls `GET /api/self-destruct` every 5 minutes, so this happens even when nobody has the app open; the browser also checks every minute while the app is open.
 
 ---
 
@@ -351,6 +351,7 @@ npm start
 | `/api/delete-file`                | POST   | User         | Auth + ownership → delete S3 object               |
 | `/api/purge-trash`                | POST   | User         | Delete the user's trash items older than 15 days  |
 | `/api/purge-trash`                | GET    | Cron secret  | Delete all expired trash (Vercel cron)            |
+| `/api/self-destruct`              | GET    | Cron secret  | Move expired self-destruct files to Trash         |
 | `/api/share-link/create`          | POST   | User         | Create a share link for an owned file             |
 | `/api/share-link/list`            | GET    | User         | List the user's share links (optionally per file) |
 | `/api/share-link/revoke`          | POST   | User         | Revoke a share link                               |
@@ -361,7 +362,7 @@ npm start
 | `/api/share-link/[token]/content` | GET    | Access token | Stream file content (range requests supported)    |
 
 
-"User" routes require `Authorization: Bearer <Firebase ID token>`. The cron route requires `Authorization: Bearer <CRON_SECRET>`.
+"User" routes require `Authorization: Bearer <Firebase ID token>`. Cron routes require `Authorization: Bearer <CRON_SECRET>`.
 
 ---
 
